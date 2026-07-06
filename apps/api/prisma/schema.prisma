@@ -1,0 +1,364 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  OFFLINE
+  INACTIVE
+}
+
+enum TruckStatus {
+  AVAILABLE
+  ON_TRIP
+  MAINTENANCE
+  INACTIVE
+}
+
+enum TrailerStatus {
+  AVAILABLE
+  ON_TRIP
+  MAINTENANCE
+  INACTIVE
+}
+
+enum CargoStatus {
+  CREATED
+  WAITING_PICKUP
+  PICKED_UP
+  IN_TRANSIT
+  NEAR_DESTINATION
+  DELIVERED
+  CANCELLED
+  INCIDENT
+}
+
+enum TripStatus {
+  WAITING_APPOINTMENT
+  APPOINTMENT_DONE
+  LOADED
+  DISPATCHED_ORIGIN
+  AT_BORDER
+  BORDER_CLEARED
+  ARRIVED
+  DISCHARGED
+  CANCELLED
+}
+
+enum Border {
+  CHIRUNDU
+  CHANIDA
+}
+
+enum TripEventType {
+  DISPATCHED_ORIGIN
+  AT_BORDER
+  BORDER_CLEARED
+  ARRIVED
+  DISCHARGED
+  STATUS_CHANGE
+}
+
+enum IncidentType {
+  ACCIDENT
+  BREAKDOWN
+  TRAFFIC
+  ROAD_BLOCKED
+  OTHER
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
+}
+
+model Role {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique @db.VarChar(50)
+  description String?   @db.VarChar(255)
+  users       User[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([createdAt])
+  @@map("roles")
+}
+
+model User {
+  id            String         @id @default(uuid()) @db.Uuid
+  roleId        String         @db.Uuid
+  firstName     String         @db.VarChar(100)
+  lastName      String         @db.VarChar(100)
+  email         String         @unique @db.VarChar(150)
+  password      String
+  phone         String?        @db.VarChar(30)
+  isActive      Boolean        @default(true)
+  lastLogin     DateTime?
+  clientId      String?        @db.Uuid
+  role          Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  client        Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  driverProfile Driver?
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  @@index([roleId])
+  @@index([email])
+  @@index([isActive])
+  @@index([clientId])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Client {
+  id          String    @id @default(uuid()) @db.Uuid
+  companyName String    @db.VarChar(150)
+  contactName String?   @db.VarChar(150)
+  nuit        String?   @db.VarChar(30)
+  phone       String?   @db.VarChar(30)
+  email       String?   @db.VarChar(150)
+  address     String?   @db.VarChar(255)
+  city        String?   @db.VarChar(100)
+  province    String?   @db.VarChar(100)
+  country     String    @default("Moçambique") @db.VarChar(100)
+  isActive    Boolean   @default(true)
+  cargos      Cargo[]
+  users       User[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([companyName])
+  @@index([email])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("clients")
+}
+
+model Driver {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String?      @unique @db.Uuid
+  fullName       String       @db.VarChar(150)
+  licenseNumber  String       @unique @db.VarChar(80)
+  passportNumber String?      @db.VarChar(30)
+  phone          String?      @db.VarChar(30)
+  email          String?      @db.VarChar(150)
+  status         DriverStatus @default(AVAILABLE)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  trips          Trip[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  @@index([licenseNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@map("drivers")
+}
+
+model Truck {
+  id          String      @id @default(uuid()) @db.Uuid
+  plateNumber String      @unique @db.VarChar(30)
+  brand       String?     @db.VarChar(100)
+  model       String?     @db.VarChar(100)
+  year        Int?
+  status      TruckStatus @default(AVAILABLE)
+  trailers    Trailer[]
+  trips       Trip[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+
+  @@index([plateNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@map("trucks")
+}
+
+model Trailer {
+  id          String        @id @default(uuid()) @db.Uuid
+  truckId     String?       @db.Uuid
+  plateNumber String        @unique @db.VarChar(30)
+  brand       String?       @db.VarChar(100)
+  model       String?       @db.VarChar(100)
+  year        Int?
+  tonnage     Decimal?      @db.Decimal(12, 3)
+  status      TrailerStatus @default(AVAILABLE)
+  truck       Truck?        @relation(fields: [truckId], references: [id], onDelete: SetNull)
+  trips       Trip[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  @@index([truckId])
+  @@index([plateNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@map("trailers")
+}
+
+model Cargo {
+  id               String      @id @default(uuid()) @db.Uuid
+  clientId         String      @db.Uuid
+  code             String      @unique @db.VarChar(80)
+  description      String?     @db.VarChar(255)
+  weightKg         Decimal?    @db.Decimal(12, 2)
+  volumeM3         Decimal?    @db.Decimal(12, 3)
+  origin           String      @db.VarChar(150)
+  destination      String      @db.VarChar(150)
+  pickupDate       DateTime?
+  expectedDelivery DateTime?
+  status           CargoStatus @default(CREATED)
+  observations     String?
+  client           Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  trips            Trip[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+
+  @@index([clientId])
+  @@index([code])
+  @@index([status])
+  @@index([createdAt])
+  @@map("cargos")
+}
+
+model Trip {
+  id              String          @id @default(uuid()) @db.Uuid
+  cargoId         String          @db.Uuid
+  truckId         String          @db.Uuid
+  trailerId       String?         @db.Uuid
+  driverId        String          @db.Uuid
+  departureDate   DateTime?
+  arrivalEstimate DateTime?
+  arrivalDate     DateTime?
+  loadedDate      DateTime?
+  currentStatus   TripStatus      @default(WAITING_APPOINTMENT)
+  currentPosition String?         @db.VarChar(150)
+  border          Border?
+  tonnage         Decimal?        @db.Decimal(12, 3)
+  trackingToken   String          @unique @default(uuid()) @db.Uuid
+  cargo           Cargo           @relation(fields: [cargoId], references: [id], onDelete: Restrict)
+  truck           Truck           @relation(fields: [truckId], references: [id], onDelete: Restrict)
+  trailer         Trailer?        @relation(fields: [trailerId], references: [id], onDelete: Restrict)
+  driver          Driver          @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  trackingPoints  TrackingPoint[]
+  deliveries      Delivery[]
+  incidents       Incident[]
+  events          TripEvent[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+
+  @@index([cargoId])
+  @@index([truckId])
+  @@index([trailerId])
+  @@index([driverId])
+  @@index([currentStatus])
+  @@index([createdAt])
+  @@map("trips")
+}
+
+model TripEvent {
+  id         String        @id @default(uuid()) @db.Uuid
+  tripId     String        @db.Uuid
+  type       TripEventType
+  occurredAt DateTime
+  fromStatus TripStatus?
+  toStatus   TripStatus?
+  note       String?
+  createdBy  String?       @db.Uuid
+  createdAt  DateTime      @default(now())
+  trip       Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, occurredAt])
+  @@map("trip_events")
+}
+
+model TrackingPoint {
+  id         String   @id @default(uuid()) @db.Uuid
+  tripId     String   @db.Uuid
+  latitude   Decimal  @db.Decimal(10, 7)
+  longitude  Decimal  @db.Decimal(10, 7)
+  speed      Decimal? @db.Decimal(8, 2)
+  heading    Decimal? @db.Decimal(6, 2)
+  accuracy   Decimal? @db.Decimal(8, 2)
+  recordedAt DateTime @default(now())
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([tripId])
+  @@index([recordedAt])
+  @@index([createdAt])
+  @@map("tracking_points")
+}
+
+model Delivery {
+  id               String    @id @default(uuid()) @db.Uuid
+  tripId           String    @db.Uuid
+  receiverName     String?   @db.VarChar(150)
+  receiverDocument String?   @db.VarChar(80)
+  deliveryPhoto    String?
+  signature        String?
+  deliveredAt      DateTime?
+  observations     String?
+  trip             Trip      @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tripId])
+  @@index([deliveredAt])
+  @@index([createdAt])
+  @@map("deliveries")
+}
+
+model Incident {
+  id          String       @id @default(uuid()) @db.Uuid
+  tripId      String       @db.Uuid
+  type        IncidentType
+  description String?
+  latitude    Decimal?     @db.Decimal(10, 7)
+  longitude   Decimal?     @db.Decimal(10, 7)
+  photo       String?
+  reportedAt  DateTime     @default(now())
+  resolvedAt  DateTime?
+  trip        Trip         @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([tripId])
+  @@index([type])
+  @@index([reportedAt])
+  @@index([resolvedAt])
+  @@index([createdAt])
+  @@map("incidents")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  title     String           @db.VarChar(150)
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}

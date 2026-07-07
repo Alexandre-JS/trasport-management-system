@@ -27,4 +27,7 @@ export class ProfileResponseDto {
 
   @ApiProperty({ required: false, nullable: true })
   lastLogin!: Date | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  driverId!: string | null;
 }

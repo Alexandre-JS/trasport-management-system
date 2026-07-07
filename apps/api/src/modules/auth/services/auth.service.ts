@@ -6,6 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { createHash, randomUUID } from 'crypto';
 import { AuthenticatedUser } from '../../../core/auth/interfaces/authenticated-user.interface';
 import { JwtPayload } from '../../../core/auth/interfaces/jwt-payload.interface';
 import { getPermissionsForRole } from '../../../core/auth/permissions';
@@ -47,16 +48,47 @@ export class AuthService {
 
   async refresh(dto: RefreshTokenDto) {
     const payload = await this.verifyRefreshToken(dto.refreshToken);
+
+    if (!payload.jti) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const record = await this.authRepository.findRefreshTokenById(payload.jti);
+
+    if (!record) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // Reuse detection: a token that was already rotated (revoked) is being
+    // replayed. Treat it as theft and revoke the whole family.
+    if (record.revokedAt) {
+      await this.authRepository.revokeAllRefreshTokensForUser(record.userId);
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const presentedHash = this.hashToken(dto.refreshToken);
+
+    if (
+      record.tokenHash !== presentedHash ||
+      record.expiresAt.getTime() < Date.now()
+    ) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
     const user = await this.authRepository.findActiveUserById(payload.sub);
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
+    // Rotate: invalidate the presented token before issuing a new pair.
+    await this.authRepository.revokeRefreshToken(record.id);
+
     return this.buildAuthResponse(user);
   }
 
-  logout() {
+  async logout(currentUser: AuthenticatedUser) {
+    await this.authRepository.revokeAllRefreshTokensForUser(currentUser.id);
     return { message: 'Logout successful' };
   }
 
@@ -86,18 +118,42 @@ export class AuthService {
       throw new ForbiddenException('Current password is invalid');
     }
 
+    if (dto.newPassword === dto.currentPassword) {
+      throw new ForbiddenException(
+        'New password must be different from the current password',
+      );
+    }
+
     const nextPassword = await bcrypt.hash(dto.newPassword, 12);
     await this.authRepository.updatePassword(user.id, nextPassword);
+
+    // A password change invalidates all existing sessions.
+    await this.authRepository.revokeAllRefreshTokensForUser(user.id);
 
     return { message: 'Password changed successfully' };
   }
 
   private async buildAuthResponse(user: AuthUserEntity) {
     const permissions = getPermissionsForRole(user.role.name);
+    const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken(user, permissions, 'access'),
-      this.signToken(user, permissions, 'refresh'),
+      this.signToken(user, permissions, 'refresh', refreshTokenId),
     ]);
+
+    const decoded = this.jwtService.decode(refreshToken) as {
+      exp: number;
+    } | null;
+    const expiresAt = decoded?.exp
+      ? new Date(decoded.exp * 1000)
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await this.authRepository.createRefreshToken({
+      id: refreshTokenId,
+      userId: user.id,
+      tokenHash: this.hashToken(refreshToken),
+      expiresAt,
+    });
 
     return {
       accessToken,
@@ -106,10 +162,15 @@ export class AuthService {
     };
   }
 
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
   private signToken(
     user: AuthUserEntity,
     permissions: string[],
     tokenType: 'access' | 'refresh',
+    jti?: string,
   ): Promise<string> {
     const payload: JwtPayload = {
       sub: user.id,
@@ -117,6 +178,7 @@ export class AuthService {
       role: user.role.name,
       permissions,
       tokenType,
+      ...(jti ? { jti } : {}),
     };
     const secret =
       tokenType === 'access'
@@ -171,6 +233,7 @@ export class AuthService {
       permissions: getPermissionsForRole(role),
       isActive: user.isActive,
       lastLogin: user.lastLogin,
+      driverId: user.driverProfile?.id ?? null,
     };
   }
 }

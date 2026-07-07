@@ -8,5 +8,6 @@ import { DeliveryService } from './services/delivery.service';
   imports: [EventsModule],
   controllers: [DeliveryController],
   providers: [DeliveryService, DeliveryRepository],
+  exports: [DeliveryService],
 })
 export class DeliveryModule {}

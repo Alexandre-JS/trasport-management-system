@@ -704,32 +704,30 @@ export class TripsRepository {
             OR: [
               {
                 cargo: {
-                  code: { contains: query.search, mode: 'insensitive' },
+                  code: { contains: query.search },
                 },
               },
               {
                 cargo: {
-                  origin: { contains: query.search, mode: 'insensitive' },
+                  origin: { contains: query.search },
                 },
               },
               {
                 cargo: {
                   destination: {
                     contains: query.search,
-                    mode: 'insensitive',
                   },
                 },
               },
               {
                 driver: {
-                  fullName: { contains: query.search, mode: 'insensitive' },
+                  fullName: { contains: query.search },
                 },
               },
               {
                 truck: {
                   plateNumber: {
                     contains: query.search,
-                    mode: 'insensitive',
                   },
                 },
               },

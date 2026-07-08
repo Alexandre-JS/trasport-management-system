@@ -152,29 +152,27 @@ export class ClientsRepository {
               {
                 companyName: {
                   contains: query.search,
-                  mode: 'insensitive',
                 },
               },
               {
                 contactName: {
                   contains: query.search,
-                  mode: 'insensitive',
                 },
               },
-              { email: { contains: query.search, mode: 'insensitive' } },
-              { phone: { contains: query.search, mode: 'insensitive' } },
-              { nuit: { contains: query.search, mode: 'insensitive' } },
+              { email: { contains: query.search } },
+              { phone: { contains: query.search } },
+              { nuit: { contains: query.search } },
             ],
           }
         : {}),
       ...(query.city
-        ? { city: { contains: query.city, mode: 'insensitive' } }
+        ? { city: { contains: query.city } }
         : {}),
       ...(query.province
-        ? { province: { contains: query.province, mode: 'insensitive' } }
+        ? { province: { contains: query.province } }
         : {}),
       ...(query.country
-        ? { country: { contains: query.country, mode: 'insensitive' } }
+        ? { country: { contains: query.country } }
         : {}),
       ...(query.isActive === undefined ? {} : { isActive: query.isActive }),
     };

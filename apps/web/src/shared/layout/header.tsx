@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { IconButton } from "@/src/shared/components/action-button";
 import { Breadcrumb } from "@/src/shared/layout/breadcrumb";
 import { GlobalSearch } from "@/src/shared/layout/global-search";
+import { Notifications } from "@/src/shared/layout/notifications";
 import { ThemeToggle } from "@/src/shared/layout/theme-toggle";
 import { UserMenu } from "@/src/shared/layout/user-menu";
 
@@ -31,6 +32,7 @@ export function Header({ onOpenMenu }: HeaderProps) {
           <div className="hidden w-80 md:block">
             <GlobalSearch />
           </div>
+          <Notifications />
           <ThemeToggle />
           <UserMenu />
         </div>

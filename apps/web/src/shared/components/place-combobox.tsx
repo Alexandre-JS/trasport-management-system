@@ -21,6 +21,7 @@ export function PlaceCombobox({
   const [open, setOpen] = useState(false);
   const suggestions = searchPlaces(value);
   const invalid = value.trim().length > 0 && !isKnownPlace(value);
+  const listboxId = id ? `${id}-suggestions` : undefined;
 
   return (
     <div className="relative">
@@ -37,6 +38,7 @@ export function PlaceCombobox({
         autoComplete="off"
         role="combobox"
         aria-expanded={open}
+        aria-controls={listboxId}
         aria-autocomplete="list"
         className={cn(
           "h-9 w-full rounded-md border bg-white px-3 text-sm text-slate-900 outline-none focus:border-slate-400 dark:bg-slate-900 dark:text-slate-100",
@@ -47,7 +49,10 @@ export function PlaceCombobox({
       />
 
       {open && suggestions.length > 0 ? (
-        <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+        <ul
+          id={listboxId}
+          className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+        >
           {suggestions.map((place) => (
             <li key={place.name}>
               <button

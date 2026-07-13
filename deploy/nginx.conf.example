@@ -1,0 +1,54 @@
+# =============================================================================
+# Nginx reverse proxy — SGRTC / LUMAC
+# Two upstream Node apps behind one server:
+#   api.SEU-DOMINIO.com  -> 127.0.0.1:3000  (NestJS + WebSocket)
+#   app.SEU-DOMINIO.com  -> 127.0.0.1:3001  (Next.js)
+#
+# Copie para /etc/nginx/sites-available/lumac, ajuste os domínios,
+# ative com `ln -s` para sites-enabled e recarregue: `nginx -t && systemctl reload nginx`.
+# Depois gere HTTPS com: `certbot --nginx -d api.SEU-DOMINIO.com -d app.SEU-DOMINIO.com`
+# =============================================================================
+
+# ---- API (NestJS) : precisa de upgrade WebSocket para o realtime/tracking ----
+server {
+    listen 80;
+    server_name api.SEU-DOMINIO.com;
+
+    # Corpo até 2MB (fotos base64 de incidentes — casa com o limite do main.ts).
+    client_max_body_size 2m;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+
+        # Headers necessários para WebSocket (socket.io).
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_read_timeout 60s;
+    }
+}
+
+# ---- WEB (Next.js) ----
+server {
+    listen 80;
+    server_name app.SEU-DOMINIO.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

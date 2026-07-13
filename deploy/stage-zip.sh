@@ -47,8 +47,10 @@ if [[ "$APP" == "api" ]]; then
     const file = process.argv[1] + "/package.json";
     const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
     pkg.scripts.postinstall = "prisma generate";
+    // sem "prisma db seed": só era preciso no primeiro arranque — com dados
+    // reais na base, o seed recriaria os registos de demonstração apagados
     pkg.scripts.build =
-      "nest build && prisma migrate deploy && prisma db seed && node deploy-postbuild.js";
+      "nest build && prisma migrate deploy && node deploy-postbuild.js";
     fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
   ' "$STAGE"
 else

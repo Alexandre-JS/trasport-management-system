@@ -16,7 +16,8 @@
 >   `deploy-postbuild.js` que copia o `.env` para `dist/` e cria um shim
 >   `dist/main.js` (a Hostinger não copia o `.env` para a raiz da app).
 >   O `package.json` do zip acrescenta `postinstall: prisma generate` e o build
->   corre `nest build && prisma migrate deploy && prisma db seed && node deploy-postbuild.js`.
+>   corre `nest build && prisma migrate deploy && node deploy-postbuild.js`
+>   (sem seed — ver a secção de CI/CD).
 > - O zip do web inclui `.env` com
 >   `NEXT_PUBLIC_API_URL=https://api.lumactraspots.com/api/v1` (inlined no build).
 > - **Desde 2026-07-13 o deploy é automático via GitHub Actions** — ver a
@@ -59,8 +60,12 @@ HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs lumactraspots.com deplo
 
 Também dá para disparar qualquer um dos workflows à mão no GitHub
 (Actions → workflow → *Run workflow*). O build da API corre
-`prisma migrate deploy && prisma db seed` no servidor — migrations novas são
-aplicadas automaticamente e o seed é idempotente (não sobrepõe senhas alteradas).
+`prisma migrate deploy` no servidor — migrations novas são aplicadas
+automaticamente (nunca apaga dados; cuidado apenas ao escrever migrations
+destrutivas). O `prisma db seed` **não** corre no deploy desde 2026-07-13:
+só era preciso no primeiro arranque e, com dados reais na base, recriaria
+os registos de demonstração apagados. Para o correr de propósito:
+`pnpm --filter api exec prisma db seed`.
 
 ## O que corre no servidor
 

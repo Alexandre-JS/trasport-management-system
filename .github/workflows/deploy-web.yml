@@ -32,8 +32,10 @@ jobs:
       - name: Verificar secrets
         env:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          API_ENV_PRODUCTION: ${{ secrets.API_ENV_PRODUCTION }}
         run: |
           [ -n "$HOSTINGER_API_TOKEN" ] || { echo "::error::Secret HOSTINGER_API_TOKEN em falta (hPanel → Conta → API)"; exit 1; }
+          [ -n "$API_ENV_PRODUCTION" ] || { echo "::error::Secret API_ENV_PRODUCTION em falta (conteúdo de deploy/.env.api.production)"; exit 1; }
 
       - name: Montar zip do web
         run: bash deploy/stage-zip.sh web "$RUNNER_TEMP/web.zip"
@@ -42,3 +44,17 @@ jobs:
         env:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
         run: node deploy/hostinger-deploy.mjs lumactraspots.com "$RUNNER_TEMP/web.zip"
+
+      # As apps Node dos dois websites instalam na MESMA pasta do servidor
+      # (~/domains/lumactraspots.com/nodejs) e o deploy do web limpa-a,
+      # apagando os ficheiros da API. Redeployar a API logo a seguir garante
+      # que ela fica sempre por último, com os ficheiros no sítio.
+      - name: Montar zip da API
+        env:
+          API_ENV_PRODUCTION: ${{ secrets.API_ENV_PRODUCTION }}
+        run: bash deploy/stage-zip.sh api "$RUNNER_TEMP/api.zip"
+
+      - name: Redeployar API (o deploy do web limpa a pasta partilhada)
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: node deploy/hostinger-deploy.mjs api.lumactraspots.com "$RUNNER_TEMP/api.zip"

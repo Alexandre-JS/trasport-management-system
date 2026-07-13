@@ -40,6 +40,15 @@ Cada workflow monta o zip com `deploy/stage-zip.sh` e envia com
 `deploy/hostinger-deploy.mjs`, que replica o fluxo da API da Hostinger
 (upload TUS + trigger do build no servidor) e espera pelo resultado do build.
 
+> ⚠️ **Pegadinha da pasta partilhada**: no servidor, o web instala na raiz de
+> `~/domains/lumactraspots.com/nodejs/` e a API em `nodejs/api/`. O deploy do
+> **web limpa a raiz inteira**, apagando os ficheiros da API (a app pode
+> continuar a servir a partir da memória até ao próximo restart — e aí dá 503).
+> Por isso o workflow do web **redeploya sempre a API no fim**. O deploy da API
+> não afeta o web. Diagnóstico: workflow manual "Debug Hostinger"
+> ([hostinger-debug.yml](../.github/workflows/hostinger-debug.yml)) lê logs de
+> build e corre comandos de leitura no servidor via cron temporário.
+
 **Secrets necessários no GitHub** (Settings → Secrets and variables → Actions):
 
 | Secret | Conteúdo |

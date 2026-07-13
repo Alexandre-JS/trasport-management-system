@@ -136,7 +136,7 @@ export function CargasView() {
       return {
         label: "Ainda não despachada",
         tone: "neutral" as const,
-        detail: "Sem motorista e camião atribuídos",
+        detail: "Sem motorista e horse atribuídos",
       };
     }
 
@@ -263,7 +263,7 @@ export function CargasView() {
                           </span>
                           {trip.trailer ? (
                             <span className="text-xs text-slate-500 dark:text-slate-400">
-                              Reboque {trip.trailer.plateNumber}
+                              Trailer {trip.trailer.plateNumber}
                             </span>
                           ) : null}
                         </div>
@@ -446,11 +446,11 @@ export function CargasView() {
                           value={trip.driver.fullName}
                         />
                         <DetailRow
-                          label="Camião"
+                          label="Horse"
                           value={trip.truck.plateNumber}
                         />
                         <DetailRow
-                          label="Reboque"
+                          label="Trailer"
                           value={trip.trailer?.plateNumber}
                         />
                         <DetailRow

@@ -213,7 +213,7 @@ export function CreateTripFromCargoModal({
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className={labelClass}>Camião</span>
+            <span className={labelClass}>Horse</span>
             <select
               value={truckId}
               onChange={(event) => {
@@ -222,7 +222,7 @@ export function CreateTripFromCargoModal({
               }}
               className={inputClass}
             >
-              <option value="">Selecionar camião…</option>
+              <option value="">Selecionar horse…</option>
               {(trucks.data?.data ?? []).map((truck) => (
                 <option key={truck.id} value={truck.id}>
                   {truck.plateNumber}
@@ -233,13 +233,13 @@ export function CreateTripFromCargoModal({
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className={labelClass}>Reboque</span>
+            <span className={labelClass}>Trailer</span>
             <select
               value={trailerId}
               onChange={(event) => setTrailerId(event.target.value)}
               className={inputClass}
             >
-              <option value="">Selecionar reboque…</option>
+              <option value="">Selecionar trailer…</option>
               {compatibleTrailers.map((trailer) => (
                 <option key={trailer.id} value={trailer.id}>
                   {trailer.plateNumber}

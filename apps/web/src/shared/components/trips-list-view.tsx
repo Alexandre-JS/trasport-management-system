@@ -26,8 +26,8 @@ type StatusFilter = TripStatus | "all";
 const columns = [
   { id: "code", header: "Nº" },
   { id: "route", header: "Rota" },
-  { id: "truck", header: "Camião" },
-  { id: "trailer", header: "Reboque" },
+  { id: "truck", header: "Horse" },
+  { id: "trailer", header: "Trailer" },
   { id: "driver", header: "Motorista" },
   { id: "border", header: "Fronteira" },
   { id: "tonnage", header: "Tonelagem" },

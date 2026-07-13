@@ -153,11 +153,11 @@ export function TrailersView() {
       return;
     }
 
-    exportToCsv("reboques.csv", rows, [
+    exportToCsv("trailers.csv", rows, [
       { header: "Matrícula", value: (row) => row.plateNumber },
       { header: "Marca", value: (row) => row.brand ?? "" },
       { header: "Modelo/Tipo", value: (row) => row.model ?? "" },
-      { header: "Camião associado", value: (row) => row.truck?.plateNumber ?? "" },
+      { header: "Horse associado", value: (row) => row.truck?.plateNumber ?? "" },
       { header: "Ano", value: (row) => row.year ?? "" },
       { header: "Tonelagem", value: (row) => row.tonnage ?? "" },
       { header: "Estado", value: (row) => truckStatusMeta[row.status].label },
@@ -192,7 +192,7 @@ export function TrailersView() {
 
     deleteTrailer.mutate(deleteTarget.id, {
       onSuccess: () => {
-        toast({ title: "Reboque eliminado", type: "success" });
+        toast({ title: "Trailer eliminado", type: "success" });
         setDeleteTarget(null);
       },
       onError: (mutationError) =>
@@ -232,7 +232,7 @@ export function TrailersView() {
     },
     {
       id: "truck",
-      header: "Camião",
+      header: "Horse",
       cell: (trailer) => trailer.truck?.plateNumber ?? "—",
     },
     {
@@ -262,7 +262,7 @@ export function TrailersView() {
   const hideableColumns = [
     { id: "brand", label: "Marca" },
     { id: "model", label: "Modelo / Tipo" },
-    { id: "truck", label: "Camião" },
+    { id: "truck", label: "Horse" },
     { id: "updatedAt", label: "Atualização" },
   ];
 
@@ -295,7 +295,7 @@ export function TrailersView() {
         icon: CircleCheck,
         tone: "success",
         onSelect: () =>
-          runStatusAction(trailer, "available", "Reboque disponível"),
+          runStatusAction(trailer, "available", "Trailer disponível"),
       });
     }
 
@@ -305,7 +305,7 @@ export function TrailersView() {
         icon: Wrench,
         tone: "warning",
         onSelect: () =>
-          runStatusAction(trailer, "maintenance", "Reboque em manutenção"),
+          runStatusAction(trailer, "maintenance", "Trailer em manutenção"),
       });
     }
 
@@ -315,7 +315,7 @@ export function TrailersView() {
         icon: PowerOff,
         tone: "muted",
         onSelect: () =>
-          runStatusAction(trailer, "deactivate", "Reboque desativado"),
+          runStatusAction(trailer, "deactivate", "Trailer desativado"),
       });
     }
 
@@ -353,7 +353,7 @@ export function TrailersView() {
           Exportar
         </Button>
         <Button size="sm" icon={<Plus className="size-4" />} onClick={openCreate}>
-          Novo Reboque
+          Novo Trailer
         </Button>
       </div>
 
@@ -449,7 +449,7 @@ export function TrailersView() {
 
       <Modal
         open={detailsTrailer !== null}
-        title={detailsTrailer?.plateNumber ?? "Reboque"}
+        title={detailsTrailer?.plateNumber ?? "Trailer"}
         description={detailsTrailer ? shortCode(detailsTrailer.id) : undefined}
         onClose={() => setDetailsTrailer(null)}
       >
@@ -458,7 +458,7 @@ export function TrailersView() {
             <DetailRow label="Marca" value={detailsTrailer.brand} />
             <DetailRow label="Modelo / Tipo" value={detailsTrailer.model} />
             <DetailRow
-              label="Camião associado"
+              label="Horse associado"
               value={detailsTrailer.truck?.plateNumber}
             />
             <DetailRow
@@ -493,7 +493,7 @@ export function TrailersView() {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Eliminar reboque"
+        title="Eliminar trailer"
         description={
           deleteTarget
             ? `Tem a certeza que pretende eliminar “${deleteTarget.plateNumber}”? Esta ação desativa o registo.`

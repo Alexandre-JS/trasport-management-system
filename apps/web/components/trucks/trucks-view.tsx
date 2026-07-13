@@ -158,7 +158,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
       return;
     }
 
-    exportToCsv("camioes.csv", rows, [
+    exportToCsv("horses.csv", rows, [
       { header: "Matrícula", value: (row) => row.plateNumber },
       { header: "Marca", value: (row) => row.brand ?? "" },
       { header: "Modelo", value: (row) => row.model ?? "" },
@@ -195,7 +195,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
 
     deleteTruck.mutate(deleteTarget.id, {
       onSuccess: () => {
-        toast({ title: "Camião eliminado", type: "success" });
+        toast({ title: "Horse eliminado", type: "success" });
         setDeleteTarget(null);
       },
       onError: (mutationError) =>
@@ -293,7 +293,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
         icon: CircleCheck,
         tone: "success",
         onSelect: () =>
-          runStatusAction(truck, "available", "Camião disponível"),
+          runStatusAction(truck, "available", "Horse disponível"),
       });
     }
 
@@ -303,7 +303,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
         icon: Wrench,
         tone: "warning",
         onSelect: () =>
-          runStatusAction(truck, "maintenance", "Camião em manutenção"),
+          runStatusAction(truck, "maintenance", "Horse em manutenção"),
       });
     }
 
@@ -313,7 +313,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
         icon: PowerOff,
         tone: "muted",
         onSelect: () =>
-          runStatusAction(truck, "deactivate", "Camião desativado"),
+          runStatusAction(truck, "deactivate", "Horse desativado"),
       });
     }
 
@@ -334,8 +334,8 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
     <>
       {showHeader ? (
         <PageHeader
-          title="Camiões"
-          description="Gestão da frota, capacidade e estado operacional dos camiões."
+          title="Horses"
+          description="Gestão da frota, capacidade e estado operacional dos horses."
           actions={
             <>
               <Button
@@ -360,7 +360,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
                 icon={<Plus className="size-4" />}
                 onClick={openCreate}
               >
-                Novo Camião
+                Novo Horse
               </Button>
             </>
           }
@@ -387,7 +387,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
             Exportar
           </Button>
           <Button size="sm" icon={<Plus className="size-4" />} onClick={openCreate}>
-            Novo Camião
+            Novo Horse
           </Button>
         </div>
       ) : null}
@@ -482,7 +482,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
 
       <Modal
         open={detailsTruck !== null}
-        title={detailsTruck?.plateNumber ?? "Camião"}
+        title={detailsTruck?.plateNumber ?? "Horse"}
         description={detailsTruck ? shortCode(detailsTruck.id) : undefined}
         onClose={() => setDetailsTruck(null)}
       >
@@ -518,7 +518,7 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Eliminar camião"
+        title="Eliminar horse"
         description={
           deleteTarget
             ? `Tem a certeza que pretende eliminar “${deleteTarget.plateNumber}”? Esta ação desativa o registo.`

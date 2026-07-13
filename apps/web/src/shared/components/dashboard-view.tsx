@@ -183,7 +183,7 @@ export function DashboardView() {
       tone: "green",
     },
     {
-      label: "Camiões disponíveis",
+      label: "Horses disponíveis",
       value: String(total(trucks.AVAILABLE)),
       tone: "slate",
     },
@@ -242,12 +242,12 @@ export function DashboardView() {
     yAxis: { type: "value" as const, minInterval: 1 },
     series: [
       {
-        name: "Camiões",
+        name: "Horses",
         type: "bar" as const,
         data: fleetStatuses.map((status) => total(trucks[status])),
       },
       {
-        name: "Reboques",
+        name: "Trailers",
         type: "bar" as const,
         data: fleetStatuses.map((status) => total(trailers[status])),
       },
@@ -297,7 +297,7 @@ export function DashboardView() {
         />
         <EChartsPanel
           title="Disponibilidade da frota"
-          description="Comparativo entre camiões e reboques."
+          description="Comparativo entre horses e trailers."
           option={fleetOption}
         />
         <EChartsPanel

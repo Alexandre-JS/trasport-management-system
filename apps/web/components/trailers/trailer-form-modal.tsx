@@ -118,11 +118,11 @@ export function TrailerFormModal({
     try {
       if (isEdit && trailer) {
         await updateTrailer.mutateAsync({ id: trailer.id, payload });
-        toast({ title: "Reboque atualizado", type: "success" });
+        toast({ title: "Trailer atualizado", type: "success" });
         onClose();
       } else {
         await createTrailer.mutateAsync(payload);
-        toast({ title: "Reboque criado", type: "success" });
+        toast({ title: "Trailer criado", type: "success" });
 
         if (continueAfter) {
           reset(emptyValues);
@@ -143,7 +143,7 @@ export function TrailerFormModal({
     <Modal
       open={open}
       size="lg"
-      title={isEdit ? "Editar reboque" : "Novo reboque"}
+      title={isEdit ? "Editar trailer" : "Novo trailer"}
       description="Os campos marcados são obrigatórios."
       onClose={onClose}
     >
@@ -157,12 +157,12 @@ export function TrailerFormModal({
               htmlFor="truckId"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Camião associado
+              Horse associado
             </label>
             <Select
               id="truckId"
               options={[
-                { label: "Sem camião associado", value: "" },
+                { label: "Sem horse associado", value: "" },
                 ...(trucks.data?.data ?? []).map((truck) => ({
                   label: truck.plateNumber,
                   value: truck.id,

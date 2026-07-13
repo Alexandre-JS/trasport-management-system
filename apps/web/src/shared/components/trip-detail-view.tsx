@@ -178,9 +178,9 @@ export function TripDetailView({ id }: { id: string }) {
           <Card className="p-5">
             <Section title="Detalhes da viagem">
               <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-                <Field label="Camião" value={trip.truck.plateNumber} />
+                <Field label="Horse" value={trip.truck.plateNumber} />
                 <Field
-                  label="Reboque"
+                  label="Trailer"
                   value={trip.trailer?.plateNumber ?? "—"}
                 />
                 <Field label="Motorista" value={trip.driver.fullName} />
@@ -281,7 +281,7 @@ export function TripDetailView({ id }: { id: string }) {
                       }
                     />
                     <AssignRow
-                      label="Camião"
+                      label="Horse"
                       current={trip.truck.plateNumber}
                       value={truckId}
                       onChange={setTruckId}
@@ -294,14 +294,14 @@ export function TripDetailView({ id }: { id: string }) {
                         assignTruck.mutate(
                           { id, payload: { truckId } },
                           {
-                            onSuccess: ok("Camião atribuído"),
-                            onError: fail("atribuir o camião"),
+                            onSuccess: ok("Horse atribuído"),
+                            onError: fail("atribuir o horse"),
                           },
                         )
                       }
                     />
                     <AssignRow
-                      label="Reboque"
+                      label="Trailer"
                       current={trip.trailer?.plateNumber ?? "—"}
                       value={trailerId}
                       onChange={setTrailerId}
@@ -314,8 +314,8 @@ export function TripDetailView({ id }: { id: string }) {
                         assignTrailer.mutate(
                           { id, payload: { trailerId } },
                           {
-                            onSuccess: ok("Reboque atribuído"),
-                            onError: fail("atribuir o reboque"),
+                            onSuccess: ok("Trailer atribuído"),
+                            onError: fail("atribuir o trailer"),
                           },
                         )
                       }
@@ -441,7 +441,7 @@ export function TripDetailView({ id }: { id: string }) {
       <ConfirmDialog
         open={confirmCancel}
         title="Cancelar esta viagem?"
-        description="A viagem passa a CANCELADA e os recursos (motorista/camião) são libertados. Esta ação não pode ser revertida."
+        description="A viagem passa a CANCELADA e os recursos (motorista/horse) são libertados. Esta ação não pode ser revertida."
         confirmLabel="Cancelar viagem"
         cancelLabel="Voltar"
         onCancel={() => setConfirmCancel(false)}

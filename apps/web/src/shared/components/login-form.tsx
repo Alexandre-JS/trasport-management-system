@@ -91,7 +91,7 @@ export function LoginForm() {
               // hydrates, causing a benign SSR/client mismatch — suppress it.
               suppressHydrationWarning
               className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
-              placeholder="nome@empresa.com"
+              placeholder="Seu Email"
               {...register("email")}
             />
           </span>

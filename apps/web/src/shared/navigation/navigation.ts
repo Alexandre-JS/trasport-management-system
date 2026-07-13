@@ -59,7 +59,7 @@ export const navigationGroups: NavigationGroup[] = [
       {
         href: "/frota",
         label: "Frota",
-        description: "Camiões, reboques e disponibilidade",
+        description: "Horses, trailers e disponibilidade",
         icon: Truck,
       },
     ],

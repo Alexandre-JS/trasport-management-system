@@ -57,7 +57,7 @@ export const navigationSections: NavigationSection[] = [
       {
         href: "/frota",
         label: "Frota",
-        description: "Camiões, reboques e disponibilidade",
+        description: "Horses, trailers e disponibilidade",
         icon: Truck,
       },
     ],

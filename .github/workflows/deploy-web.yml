@@ -17,6 +17,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # o secret HOSTINGER_API_TOKEN vive neste environment do GitHub
+    environment: HOSTINGER_API_TOKEN
     steps:
       - uses: actions/checkout@v4
 

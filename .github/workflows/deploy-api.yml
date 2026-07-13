@@ -1,0 +1,49 @@
+name: Deploy API → Hostinger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'deploy/deploy-postbuild.js'
+      - 'deploy/stage-zip.sh'
+      - 'deploy/hostinger-deploy.mjs'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+# Grupo partilhado com deploy-web.yml: os deploys correm um de cada vez,
+# porque o servidor partilhado da Hostinger recusa uploads enquanto há um
+# build em curso na mesma conta.
+concurrency:
+  group: hostinger-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # o secret HOSTINGER_API_TOKEN vive neste environment do GitHub
+    environment: HOSTINGER_API_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verificar secrets
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          API_ENV_PRODUCTION: ${{ secrets.API_ENV_PRODUCTION }}
+        run: |
+          [ -n "$HOSTINGER_API_TOKEN" ] || { echo "::error::Secret HOSTINGER_API_TOKEN em falta (hPanel → Conta → API)"; exit 1; }
+          [ -n "$API_ENV_PRODUCTION" ] || { echo "::error::Secret API_ENV_PRODUCTION em falta (conteúdo de deploy/.env.api.production)"; exit 1; }
+
+      - name: Montar zip da API
+        env:
+          API_ENV_PRODUCTION: ${{ secrets.API_ENV_PRODUCTION }}
+        run: bash deploy/stage-zip.sh api "$RUNNER_TEMP/api.zip"
+
+      - name: Deploy para a Hostinger
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: node deploy/hostinger-deploy.mjs api.lumactraspots.com "$RUNNER_TEMP/api.zip"

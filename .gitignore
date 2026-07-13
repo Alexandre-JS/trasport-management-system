@@ -25,3 +25,4 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 deploy/.env.api.production
+deploy/dist-zips/

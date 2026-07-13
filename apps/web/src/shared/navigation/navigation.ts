@@ -15,6 +15,7 @@ import type {
   NavigationGroup,
   NavigationItem,
 } from "@/src/shared/types/navigation";
+import { APP_VERSION } from "@/version";
 
 export const navigationGroups: NavigationGroup[] = [
   {
@@ -156,5 +157,5 @@ export const companyIdentity = {
 export const systemIdentity = {
   name: "SGRTC",
   fullName: "Smart Goods Road Transport Control",
-  version: "0.1.0",
+  version: APP_VERSION,
 };

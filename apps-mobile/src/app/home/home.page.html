@@ -46,6 +46,9 @@
         <span class="card-label">Voce vai para</span>
         <strong>{{ currentTrip.cargo.destination }}</strong>
         <small>Saida: {{ currentTrip.cargo.origin }}</small>
+        <small *ngIf="borderRoute" class="border-route">
+          Fronteiras: {{ borderRoute }}
+        </small>
       </ion-card-content>
     </ion-card>
 
@@ -67,10 +70,9 @@
       <ion-button
         *ngFor="let action of quickActions"
         class="action-button"
-        [color]="action.tone"
+        [class.is-warning]="action.tone === 'warning'"
         expand="block"
         fill="outline"
-        shape="round"
         [disabled]="isSubmitting"
         (click)="handleAction(action)"
       >

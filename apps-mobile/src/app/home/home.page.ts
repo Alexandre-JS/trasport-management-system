@@ -155,7 +155,33 @@ export class HomePage implements OnInit, OnDestroy {
     this.stopAutoTracking();
   }
 
+  /** The crossing the driver still has to clear (first uncleared), if any. */
+  get pendingBorder() {
+    return (
+      this.currentTrip?.borders.find((crossing) => !crossing.clearedAt) ?? null
+    );
+  }
+
+  /** Route summary like "Machipanda ✓ › Chirundu", or null without borders. */
+  get borderRoute() {
+    const borders = this.currentTrip?.borders ?? [];
+    if (borders.length === 0) {
+      return null;
+    }
+    return borders
+      .map(
+        (crossing) => crossing.border.name + (crossing.clearedAt ? ' ✓' : ''),
+      )
+      .join(' › ');
+  }
+
   get statusLabel() {
+    const status = this.currentTrip?.currentStatus ?? '';
+
+    if (status === 'AT_BORDER' && this.pendingBorder) {
+      return `Na fronteira de ${this.pendingBorder.border.name}`;
+    }
+
     const labels: Record<string, string> = {
       WAITING_APPOINTMENT: 'Aguardando instrucoes',
       APPOINTMENT_DONE: 'Pode carregar',
@@ -167,22 +193,35 @@ export class HomePage implements OnInit, OnDestroy {
       DISCHARGED: 'Entregue',
     };
 
-    return labels[this.currentTrip?.currentStatus ?? ''] ?? 'Viagem ativa';
+    return labels[status] ?? 'Viagem ativa';
   }
 
   get mainActionLabel() {
+    const status = this.currentTrip?.currentStatus ?? '';
+
+    // Depois do despacho e de cada fronteira liberada, o proximo passo
+    // depende da rota: mais uma fronteira pendente ou o destino.
+    if (status === 'DISPATCHED_ORIGIN' || status === 'BORDER_CLEARED') {
+      const pending = this.pendingBorder;
+      return pending
+        ? `Cheguei a ${pending.border.name}`
+        : 'Cheguei ao destino';
+    }
+
+    if (status === 'AT_BORDER' && this.pendingBorder) {
+      return `Sai de ${this.pendingBorder.border.name}`;
+    }
+
     const labels: Record<string, string> = {
       WAITING_APPOINTMENT: 'Marcacao feita',
       APPOINTMENT_DONE: 'Carga carregada',
       LOADED: 'Sair da origem',
-      DISPATCHED_ORIGIN: 'Cheguei a fronteira',
       AT_BORDER: 'Fronteira liberada',
-      BORDER_CLEARED: 'Cheguei ao destino',
       ARRIVED: 'Entregar carga',
       DISCHARGED: 'Viagem concluida',
     };
 
-    return labels[this.currentTrip?.currentStatus ?? ''] ?? 'Atualizar etapa';
+    return labels[status] ?? 'Atualizar etapa';
   }
 
   get mainActionHelp() {

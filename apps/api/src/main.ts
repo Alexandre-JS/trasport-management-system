@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AppLoggerService } from './core/logger/app-logger.service';
+import { APP_VERSION } from './version';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -47,7 +48,7 @@ async function bootstrap() {
       .setDescription(
         'Backend API do Sistema de Gestão e Rastreamento de Transporte de Cargas',
       )
-      .setVersion('1.0')
+      .setVersion(APP_VERSION)
       .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);

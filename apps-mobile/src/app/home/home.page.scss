@@ -1,3 +1,7 @@
+// UI pensada para quem conduz: uma cor de destaque única (azul da marca no
+// botão principal), sem gradientes nem decoração, texto grande e alvos de
+// toque generosos. Verde e vermelho só quando têm significado (GPS/erro).
+
 .driver-header {
   ion-toolbar {
     --background: #ffffff;
@@ -16,7 +20,7 @@
 }
 
 .driver-home {
-  --background: #eef5fb;
+  --background: #f4f6f8;
 }
 
 .loading-state,
@@ -44,12 +48,12 @@
 }
 
 .simple-hero {
-  background: linear-gradient(135deg, #21146f 0%, #005fae 60%, #1d66d1 100%);
+  background: #0b1738;
   color: #ffffff;
-  padding: 26px 18px 66px;
+  padding: 26px 18px 62px;
 
   p {
-    color: rgba(255, 255, 255, 0.76);
+    color: rgba(255, 255, 255, 0.72);
     font-size: 14px;
     font-weight: 700;
     margin: 0 0 8px;
@@ -64,18 +68,18 @@
   }
 
   span {
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255, 255, 255, 0.8);
     display: block;
-    font-size: 15px;
+    font-size: 16px;
   }
 }
 
 .tracking-pill {
   align-items: center;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.86);
+  color: rgba(255, 255, 255, 0.85);
   display: inline-flex;
   gap: 8px;
   margin-top: 16px;
@@ -89,25 +93,27 @@
 
   strong {
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.2;
   }
 }
 
 .tracking-pill.is-on {
-  background: rgba(83, 214, 141, 0.2);
-  border-color: rgba(136, 230, 176, 0.48);
+  background: rgba(30, 142, 62, 0.28);
+  border-color: rgba(110, 210, 144, 0.5);
+  color: #d9f5e2;
 }
 
 ion-card,
 .destination-card,
 .simple-form {
-  border-radius: 8px;
-  box-shadow: 0 12px 28px rgba(0, 54, 116, 0.12);
+  border: 1px solid #dde4ec;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(11, 23, 56, 0.08);
 }
 
 .destination-card {
-  margin: -42px 14px 0;
+  margin: -40px 14px 0;
 
   ion-card-content {
     display: grid;
@@ -123,14 +129,19 @@ ion-card,
 
   strong {
     color: #0b1738;
-    font-size: 30px;
+    font-size: 32px;
     line-height: 1.1;
   }
 
   small {
-    color: #536872;
-    font-size: 15px;
+    color: #46596a;
+    font-size: 16px;
     line-height: 1.35;
+  }
+
+  .border-route {
+    color: #0b1738;
+    font-weight: 700;
   }
 }
 
@@ -140,10 +151,10 @@ ion-card,
   margin: 18px 14px 0;
 
   ion-button {
-    --border-radius: 999px;
-    font-size: 18px;
+    --border-radius: 14px;
+    font-size: 20px;
     font-weight: 800;
-    height: 64px;
+    height: 72px;
     margin: 0;
     text-transform: none;
   }
@@ -153,6 +164,7 @@ ion-card,
     font-size: 15px;
     line-height: 1.35;
     margin: 0 8px;
+    text-align: center;
   }
 }
 
@@ -162,15 +174,28 @@ ion-card,
   margin: 18px 14px 0;
 }
 
+// Ações secundárias em cartões neutros — a cor fica só no ícone, para o
+// botão principal continuar a ser o único elemento azul forte do ecrã.
 .action-button {
-  --border-radius: 8px;
-  --padding-bottom: 12px;
-  --padding-end: 14px;
-  --padding-start: 14px;
-  --padding-top: 12px;
-  height: 68px;
+  --background: #ffffff;
+  --background-activated: #e9eef4;
+  --background-focused: #e9eef4;
+  --background-hover: #f3f6f9;
+  --border-color: #d5dde6;
+  --border-radius: 12px;
+  --color: #0b1738;
+  --padding-bottom: 14px;
+  --padding-end: 16px;
+  --padding-start: 16px;
+  --padding-top: 14px;
+  height: 72px;
   margin: 0;
   text-transform: none;
+
+  ion-icon {
+    color: #46596a;
+    font-size: 24px;
+  }
 
   span {
     display: grid;
@@ -179,15 +204,19 @@ ion-card,
   }
 
   strong {
-    font-size: 16px;
+    font-size: 17px;
     line-height: 1.1;
   }
 
   small {
-    font-size: 13px;
+    color: #536872;
+    font-size: 14px;
     font-weight: 500;
-    opacity: 0.72;
   }
+}
+
+.action-button.is-warning ion-icon {
+  color: #b45309;
 }
 
 .simple-form {
@@ -207,8 +236,8 @@ ion-card,
   }
 
   ion-button {
-    --border-radius: 999px;
-    height: 52px;
+    --border-radius: 12px;
+    height: 56px;
     margin-top: 14px;
     text-transform: none;
   }
@@ -239,8 +268,8 @@ ion-textarea {
 
   div {
     background: #ffffff;
-    border: 1px solid #d9e5f2;
-    border-radius: 8px;
+    border: 1px solid #dde4ec;
+    border-radius: 10px;
     padding: 14px;
   }
 
@@ -256,27 +285,27 @@ ion-textarea {
   strong {
     color: #0b1738;
     display: block;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.25;
   }
 }
 
 .status-message,
 .error-message {
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 10px;
+  font-size: 16px;
   line-height: 1.35;
   margin: 14px;
-  padding: 12px;
+  padding: 14px;
 }
 
 .status-message {
-  background: #e8f1ff;
-  color: #005499;
+  background: #e6f4ea;
+  color: #1e6b35;
 }
 
 .error-message {
-  background: #fff1f0;
+  background: #fdecea;
   color: #b42318;
 }
 

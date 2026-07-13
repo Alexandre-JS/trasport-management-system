@@ -36,13 +36,13 @@ function die(msg) {
 
 // Retry para falhas transitórias de rede (connect timeout ao servidor de
 // upload da Hostinger já aconteceu em CI) e respostas 5xx.
-async function withRetry(label, fn, tries = 3) {
+async function withRetry(label, fn, tries = 5) {
   for (let i = 1; ; i++) {
     try {
       return await fn();
     } catch (err) {
       if (i >= tries) throw err;
-      const delay = 10000 * i;
+      const delay = 30000 * i;
       console.log(`  (${label}: tentativa ${i} falhou — ${err.message}; retry em ${delay / 1000}s)`);
       await new Promise((r) => setTimeout(r, delay));
     }

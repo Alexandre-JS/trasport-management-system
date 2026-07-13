@@ -10,8 +10,11 @@ on:
       - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
 
+# Grupo partilhado com deploy-api.yml: os deploys correm um de cada vez,
+# porque o servidor partilhado da Hostinger recusa uploads enquanto há um
+# build em curso na mesma conta.
 concurrency:
-  group: deploy-web
+  group: hostinger-deploy
   cancel-in-progress: false
 
 jobs:

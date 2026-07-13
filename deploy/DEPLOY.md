@@ -19,10 +19,48 @@
 >   corre `nest build && prisma migrate deploy && prisma db seed && node deploy-postbuild.js`.
 > - O zip do web inclui `.env` com
 >   `NEXT_PUBLIC_API_URL=https://api.lumactraspots.com/api/v1` (inlined no build).
+> - **Desde 2026-07-13 o deploy é automático via GitHub Actions** — ver a
+>   secção "Deploy automático (CI/CD)" abaixo.
 
 Como hospedar este monorepo. **O app mobile (`apps-mobile/`) NÃO é hospedado
 aqui** — ele vai para a **Play Store** (ver a secção final). Só a **API** e o
 **web** vão para o servidor.
+
+## Deploy automático (CI/CD via GitHub Actions)
+
+Cada push para `main` ou `mobile-app` faz deploy automático **só do que mudou**:
+
+- Mudanças em `apps/api/**` → workflow [deploy-api.yml](../.github/workflows/deploy-api.yml) → api.lumactraspots.com
+- Mudanças em `apps/web/**` → workflow [deploy-web.yml](../.github/workflows/deploy-web.yml) → lumactraspots.com
+- Mudanças em `apps-mobile/**` → **nada** (vai para a Play Store)
+
+Cada workflow monta o zip com `deploy/stage-zip.sh` e envia com
+`deploy/hostinger-deploy.mjs`, que replica o fluxo da API da Hostinger
+(upload TUS + trigger do build no servidor) e espera pelo resultado do build.
+
+**Secrets necessários no GitHub** (Settings → Secrets and variables → Actions):
+
+| Secret | Conteúdo |
+|--------|----------|
+| `HOSTINGER_API_TOKEN` | Token da API da Hostinger (hPanel → perfil → **API** → criar token) |
+| `API_ENV_PRODUCTION` | Conteúdo completo do ficheiro `deploy/.env.api.production` |
+
+**Deploy manual** (sem CI), a partir da raiz do repo:
+
+```bash
+# API
+bash deploy/stage-zip.sh api
+HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs api.lumactraspots.com deploy/dist-zips/api.zip
+
+# Web
+bash deploy/stage-zip.sh web
+HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs lumactraspots.com deploy/dist-zips/web.zip
+```
+
+Também dá para disparar qualquer um dos workflows à mão no GitHub
+(Actions → workflow → *Run workflow*). O build da API corre
+`prisma migrate deploy && prisma db seed` no servidor — migrations novas são
+aplicadas automaticamente e o seed é idempotente (não sobrepõe senhas alteradas).
 
 ## O que corre no servidor
 

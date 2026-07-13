@@ -1,0 +1,39 @@
+name: Deploy Web → Hostinger
+
+on:
+  push:
+    branches: [main, mobile-app]
+    paths:
+      - 'apps/web/**'
+      - 'deploy/stage-zip.sh'
+      - 'deploy/hostinger-deploy.mjs'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verificar secrets
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: |
+          [ -n "$HOSTINGER_API_TOKEN" ] || { echo "::error::Secret HOSTINGER_API_TOKEN em falta (hPanel → Conta → API)"; exit 1; }
+
+      - name: Montar zip do web
+        run: bash deploy/stage-zip.sh web "$RUNNER_TEMP/web.zip"
+
+      - name: Deploy para a Hostinger
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: node deploy/hostinger-deploy.mjs lumactraspots.com "$RUNNER_TEMP/web.zip"

@@ -1,6 +1,14 @@
 import { TripStatus } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayUnique,
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateTripDto {
   @ApiProperty()
@@ -41,4 +49,15 @@ export class CreateTripDto {
   @IsOptional()
   @IsEnum(TripStatus)
   currentStatus?: TripStatus;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Ids of the border posts the route crosses, in order',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ArrayUnique()
+  @IsUUID('all', { each: true })
+  borderIds?: string[];
 }

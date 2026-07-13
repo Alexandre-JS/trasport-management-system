@@ -12,6 +12,7 @@ import { NotificationsCoreModule } from './core/notifications/notifications-core
 import { SharedModule } from './core/shared/shared.module';
 import { TrackingCoreModule } from './core/tracking/tracking-core.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BordersModule } from './modules/borders/borders.module';
 import { CargoModule } from './modules/cargo/cargo.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -54,6 +55,7 @@ import { UsersModule } from './modules/users/users.module';
     DriversModule,
     TrucksModule,
     TrailersModule,
+    BordersModule,
     CargoModule,
     TripsModule,
     TrackingModule,

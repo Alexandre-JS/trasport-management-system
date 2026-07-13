@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  Landmark,
   LayoutDashboard,
   MapPin,
   Package,
@@ -59,6 +60,12 @@ export const navigationSections: NavigationSection[] = [
         label: "Frota",
         description: "Horses, trailers e disponibilidade",
         icon: Truck,
+      },
+      {
+        href: "/fronteiras",
+        label: "Fronteiras",
+        description: "Postos fronteiriços das rotas",
+        icon: Landmark,
       },
     ],
   },

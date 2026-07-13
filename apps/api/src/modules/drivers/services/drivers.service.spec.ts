@@ -27,6 +27,7 @@ describe('DriversService', () => {
     userId: null,
     fullName: 'Carlos Mabunda',
     licenseNumber: 'MZ-DRV-0002',
+    passportNumber: null,
     phone: '+258840000002',
     email: 'driver2@sgrtc.local',
     status: DriverStatus.AVAILABLE,

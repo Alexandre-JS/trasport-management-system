@@ -11,7 +11,33 @@ export type TripStatus =
   | "DISCHARGED"
   | "CANCELLED";
 
-export type Border = "CHIRUNDU" | "CHANIDA";
+/** One border crossing of a trip's route, in sequence order. */
+export type TripBorder = {
+  id: string;
+  sequence: number;
+  arrivedAt: string | null;
+  clearedAt: string | null;
+  border: {
+    id: string;
+    name: string;
+    countryA: string;
+    countryB: string;
+    /** Decimal serialised as string by the API. */
+    lat: string | null;
+    lng: string | null;
+  };
+};
+
+/** Compact crossing projection used by cargo/portal/public tracking. */
+export type TripBorderRef = {
+  sequence: number;
+  arrivedAt: string | null;
+  clearedAt: string | null;
+  border: {
+    id: string;
+    name: string;
+  };
+};
 
 export type TripEventType =
   | "DISPATCHED_ORIGIN"
@@ -44,7 +70,7 @@ export type Trip = {
   loadedDate: string | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
-  border: Border | null;
+  borders: TripBorder[];
   /** Decimal serialised as string by the API. */
   tonnage: string | null;
   cargo: {
@@ -108,6 +134,8 @@ export type CreateTripPayload = {
   arrivalEstimate?: string;
   arrivalDate?: string;
   currentStatus?: TripStatus;
+  /** Ids of the border posts the route crosses, in order. */
+  borderIds?: string[];
 };
 export type UpdateTripStatusPayload = { currentStatus: TripStatus };
 export type RecordTripEventPayload = {

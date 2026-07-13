@@ -39,7 +39,7 @@ import {
   cargoStatusOptions,
 } from "@/utils/cargo-status";
 import {
-  borderLabel,
+  activeBorder,
   isTerminalTripStatus,
   tripStatusBadgeTone,
   tripStatusMeta,
@@ -122,7 +122,7 @@ export function CargasView() {
         tone: tripStatusBadgeTone[trip.currentStatus],
         detail:
           trip.currentPosition ??
-          (trip.border ? borderLabel[trip.border] : null) ??
+          (activeBorder(trip.borders)?.border.name ?? null) ??
           (trip.currentStatus === "WAITING_APPOINTMENT"
             ? "No porto · aguarda marcação"
             : null) ??
@@ -457,7 +457,7 @@ export function CargasView() {
                           label="Posição atual"
                           value={
                             trip.currentPosition ??
-                            (trip.border ? borderLabel[trip.border] : null)
+                            (activeBorder(trip.borders)?.border.name ?? null)
                           }
                         />
                         <DetailRow

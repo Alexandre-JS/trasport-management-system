@@ -7,7 +7,20 @@ import { PrismaService } from '../../../core/database/prisma.service';
 const publicTrackSelect = {
   currentStatus: true,
   currentPosition: true,
-  border: true,
+  borders: {
+    select: {
+      sequence: true,
+      arrivedAt: true,
+      clearedAt: true,
+      border: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { sequence: 'asc' as const },
+  },
   arrivalEstimate: true,
   cargo: {
     select: {

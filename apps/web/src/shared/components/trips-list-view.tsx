@@ -15,7 +15,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useTrips } from "@/hooks/use-trips";
 import type { ListTripsParams, Trip, TripStatus } from "@/types/trip";
 import {
-  borderLabel,
+  borderNames,
   tripStatusBadgeTone,
   tripStatusMeta,
   tripStatusOptions,
@@ -143,7 +143,7 @@ export function TripsListView() {
                       {trip.driver.fullName}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {trip.border ? borderLabel[trip.border] : "—"}
+                      {borderNames(trip.borders) ?? "—"}
                     </td>
                     <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
                       {trip.tonnage ? `${trip.tonnage} t` : "—"}

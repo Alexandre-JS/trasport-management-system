@@ -7,6 +7,7 @@ export type Driver = {
   userId: string | null;
   fullName: string;
   licenseNumber: string;
+  passportNumber: string | null;
   phone: string | null;
   email: string | null;
   status: DriverStatus;
@@ -24,6 +25,7 @@ export type DriverSortBy =
 export type DriverInput = {
   fullName: string;
   licenseNumber: string;
+  passportNumber?: string;
   phone?: string;
   email?: string;
   status?: DriverStatus;

@@ -29,8 +29,24 @@ const driverTripSelect = {
   loadedDate: true,
   currentStatus: true,
   currentPosition: true,
-  border: true,
   tonnage: true,
+  borders: {
+    select: {
+      id: true,
+      sequence: true,
+      arrivedAt: true,
+      clearedAt: true,
+      border: {
+        select: {
+          id: true,
+          name: true,
+          countryA: true,
+          countryB: true,
+        },
+      },
+    },
+    orderBy: { sequence: 'asc' as const },
+  },
   cargo: {
     select: {
       id: true,
@@ -93,13 +109,14 @@ const ACTIVE_STATUSES: TripStatus[] = [
   TripStatus.ARRIVED,
 ];
 
+// Static next steps; DISPATCHED_ORIGIN and BORDER_CLEARED are contextual
+// (AT_BORDER while the route still has pending crossings, else ARRIVED) and
+// are resolved in advanceTrip.
 const NEXT_TRIP_STATUS: Partial<Record<TripStatus, TripStatus>> = {
   [TripStatus.WAITING_APPOINTMENT]: TripStatus.APPOINTMENT_DONE,
   [TripStatus.APPOINTMENT_DONE]: TripStatus.LOADED,
   [TripStatus.LOADED]: TripStatus.DISPATCHED_ORIGIN,
-  [TripStatus.DISPATCHED_ORIGIN]: TripStatus.AT_BORDER,
   [TripStatus.AT_BORDER]: TripStatus.BORDER_CLEARED,
-  [TripStatus.BORDER_CLEARED]: TripStatus.ARRIVED,
 };
 
 @Injectable()
@@ -201,7 +218,10 @@ export class DriverMobileService {
       throw new NotFoundException('Trip not found for this driver');
     }
 
-    const nextStatus = NEXT_TRIP_STATUS[trip.currentStatus];
+    const nextStatus = await this.resolveNextStatus(
+      tripId,
+      trip.currentStatus,
+    );
 
     if (!nextStatus) {
       throw new BadRequestException('Trip cannot be advanced from this status');
@@ -210,6 +230,27 @@ export class DriverMobileService {
     return this.tripsService.updateStatus(tripId, {
       currentStatus: nextStatus,
     });
+  }
+
+  /**
+   * After dispatch and after each cleared border the next step depends on the
+   * route: another pending crossing means AT_BORDER again, otherwise ARRIVED.
+   */
+  private async resolveNextStatus(
+    tripId: string,
+    currentStatus: TripStatus,
+  ): Promise<TripStatus | null> {
+    if (
+      currentStatus === TripStatus.DISPATCHED_ORIGIN ||
+      currentStatus === TripStatus.BORDER_CLEARED
+    ) {
+      const pendingBorders = await this.prisma.tripBorder.count({
+        where: { tripId, clearedAt: null },
+      });
+      return pendingBorders > 0 ? TripStatus.AT_BORDER : TripStatus.ARRIVED;
+    }
+
+    return NEXT_TRIP_STATUS[currentStatus] ?? null;
   }
 
   async confirmPickup(

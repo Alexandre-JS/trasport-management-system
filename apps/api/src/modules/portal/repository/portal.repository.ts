@@ -7,7 +7,20 @@ const portalTripSelect = {
   id: true,
   currentStatus: true,
   currentPosition: true,
-  border: true,
+  borders: {
+    select: {
+      sequence: true,
+      arrivedAt: true,
+      clearedAt: true,
+      border: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { sequence: 'asc' as const },
+  },
   tonnage: true,
   loadedDate: true,
   departureDate: true,

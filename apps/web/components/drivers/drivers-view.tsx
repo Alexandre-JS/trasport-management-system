@@ -161,6 +161,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       { header: "Código", value: (row) => shortCode(row.id) },
       { header: "Nome", value: (row) => row.fullName },
       { header: "Carta", value: (row) => row.licenseNumber },
+      { header: "Passaporte", value: (row) => row.passportNumber ?? "" },
       { header: "Telefone", value: (row) => row.phone ?? "" },
       { header: "Email", value: (row) => row.email ?? "" },
       { header: "Disponibilidade", value: (row) => driverStatusMeta[row.status].label },
@@ -502,6 +503,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
         {detailsDriver ? (
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <DetailRow label="Carta de condução" value={detailsDriver.licenseNumber} />
+            <DetailRow label="Passaporte" value={detailsDriver.passportNumber} />
             <DetailRow label="Telefone" value={detailsDriver.phone} />
             <DetailRow label="Email" value={detailsDriver.email} />
             <DetailRow

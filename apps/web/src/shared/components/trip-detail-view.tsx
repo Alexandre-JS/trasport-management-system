@@ -34,7 +34,6 @@ import { extractErrorMessage } from "@/services/http";
 import type { TripEventType } from "@/types/trip";
 import { formatDate, formatDateTime } from "@/utils/format";
 import {
-  borderLabel,
   isTerminalTripStatus,
   nextTripStatus,
   tripEventTypeLabel,
@@ -189,8 +188,22 @@ export function TripDetailView({ id }: { id: string }) {
                   value={trip.driver.passportNumber ?? "—"}
                 />
                 <Field
-                  label="Fronteira"
-                  value={trip.border ? borderLabel[trip.border] : "—"}
+                  label="Fronteiras"
+                  value={
+                    trip.borders.length > 0
+                      ? trip.borders
+                          .map(
+                            (crossing) =>
+                              crossing.border.name +
+                              (crossing.clearedAt
+                                ? " ✓"
+                                : crossing.arrivedAt
+                                  ? " (na fronteira)"
+                                  : ""),
+                          )
+                          .join(" › ")
+                      : "—"
+                  }
                 />
                 <Field
                   label="Tonelagem"

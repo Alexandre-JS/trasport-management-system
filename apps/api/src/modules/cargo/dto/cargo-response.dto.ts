@@ -1,5 +1,27 @@
-import { Border, CargoStatus, TripStatus } from '@prisma/client';
+import { CargoStatus, TripStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
+
+class CargoBorderRefDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+}
+
+class CargoTripBorderDto {
+  @ApiProperty()
+  sequence!: number;
+
+  @ApiProperty({ required: false, nullable: true })
+  arrivedAt!: Date | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  clearedAt!: Date | null;
+
+  @ApiProperty({ type: CargoBorderRefDto })
+  border!: CargoBorderRefDto;
+}
 
 class CargoClientDto {
   @ApiProperty()
@@ -39,8 +61,8 @@ class CargoTripDto {
   @ApiProperty({ required: false, nullable: true })
   currentPosition!: string | null;
 
-  @ApiProperty({ enum: Border, required: false, nullable: true })
-  border!: Border | null;
+  @ApiProperty({ type: CargoTripBorderDto, isArray: true })
+  borders!: CargoTripBorderDto[];
 
   @ApiProperty()
   driver!: CargoTripResourceDto;

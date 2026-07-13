@@ -1,62 +1,103 @@
-import type { Border, TripStatus } from "@/types/trip";
-import { borderLabel } from "@/utils/trip-status";
-import { findPlace, type Place } from "@/src/shared/data/places";
+import type { TripStatus } from "@/types/trip";
+import { findPlace } from "@/src/shared/data/places";
+
+export type TripGeoBorder = {
+  arrivedAt: string | null;
+  clearedAt: string | null;
+  border: {
+    name: string;
+    /** Decimal serialised as string by the API. */
+    lat: string | null;
+    lng: string | null;
+  };
+};
 
 export type TripGeoInput = {
   currentStatus: TripStatus;
-  border: Border | null;
+  borders: TripGeoBorder[];
   origin: string;
   destination: string;
 };
 
 export type LatLng = { lat: number; lng: number };
 
-function midpoint(a: Place, b: Place): LatLng {
+function midpoint(a: LatLng, b: LatLng): LatLng {
   return { lat: (a.lat + b.lat) / 2, lng: (a.lng + b.lng) / 2 };
 }
 
-function borderPlace(border: Border | null): Place | undefined {
-  return border ? findPlace(borderLabel[border]) : undefined;
+/**
+ * Coordinates of a crossing: the border post's own coordinates when
+ * registered, otherwise a known place matching its name (or the first
+ * segment of a "Machipanda / Forbes" style name).
+ */
+function borderPoint(crossing: TripGeoBorder): LatLng | undefined {
+  const { lat, lng, name } = crossing.border;
+  if (lat && lng) {
+    return { lat: Number(lat), lng: Number(lng) };
+  }
+  const place = findPlace(name) ?? findPlace(name.split(" / ")[0]);
+  return place ? { lat: place.lat, lng: place.lng } : undefined;
 }
 
 /**
- * Estimate a trip's position along the corridor from its origin, border and
- * destination (all known places with coordinates) and its current status.
- * Returns null when origin/destination can't be geocoded.
+ * Estimate a trip's position along the corridor from its origin, border
+ * crossings and destination, and its current status. Returns null when
+ * origin/destination can't be geocoded.
  */
 export function estimateTripPosition(trip: TripGeoInput): LatLng | null {
-  const origin = findPlace(trip.origin);
-  const destination = findPlace(trip.destination);
-  if (!origin || !destination) return null;
-  const border = borderPlace(trip.border);
+  const originPlace = findPlace(trip.origin);
+  const destinationPlace = findPlace(trip.destination);
+  if (!originPlace || !destinationPlace) return null;
+  const origin = { lat: originPlace.lat, lng: originPlace.lng };
+  const destination = { lat: destinationPlace.lat, lng: destinationPlace.lng };
+
+  const points = trip.borders.map(borderPoint);
+  // The crossing the trip still has to clear; -1 when all are cleared.
+  const activeIndex = trip.borders.findIndex((crossing) => !crossing.clearedAt);
 
   switch (trip.currentStatus) {
     case "WAITING_APPOINTMENT":
     case "APPOINTMENT_DONE":
     case "LOADED":
     case "CANCELLED":
-      return { lat: origin.lat, lng: origin.lng };
+      return origin;
     case "DISPATCHED_ORIGIN":
-      return midpoint(origin, border ?? destination);
+      return midpoint(origin, points[0] ?? destination);
     case "AT_BORDER":
-    case "BORDER_CLEARED":
-      return border
-        ? { lat: border.lat, lng: border.lng }
-        : midpoint(origin, destination);
+      return (
+        (activeIndex >= 0 ? points[activeIndex] : undefined) ??
+        midpoint(origin, destination)
+      );
+    case "BORDER_CLEARED": {
+      // Between the last cleared crossing and the next node of the route.
+      const lastClearedIndex =
+        activeIndex === -1 ? trip.borders.length - 1 : activeIndex - 1;
+      const from =
+        (lastClearedIndex >= 0 ? points[lastClearedIndex] : undefined) ??
+        origin;
+      const to =
+        (activeIndex >= 0 ? points[activeIndex] : undefined) ?? destination;
+      return midpoint(from, to);
+    }
     case "ARRIVED":
     case "DISCHARGED":
-      return { lat: destination.lat, lng: destination.lng };
+      return destination;
     default:
-      return { lat: origin.lat, lng: origin.lng };
+      return origin;
   }
 }
 
-/** Ordered route nodes (origin → border → destination) as [lat, lng] pairs. */
+/** Ordered route nodes (origin → borders → destination) as [lat, lng] pairs. */
 export function tripRoute(trip: TripGeoInput): [number, number][] {
-  const origin = findPlace(trip.origin);
-  const destination = findPlace(trip.destination);
-  if (!origin || !destination) return [];
-  const border = borderPlace(trip.border);
-  const nodes = border ? [origin, border, destination] : [origin, destination];
-  return nodes.map((place) => [place.lat, place.lng]);
+  const originPlace = findPlace(trip.origin);
+  const destinationPlace = findPlace(trip.destination);
+  if (!originPlace || !destinationPlace) return [];
+  const nodes: LatLng[] = [
+    { lat: originPlace.lat, lng: originPlace.lng },
+    ...trip.borders
+      .map(borderPoint)
+      .filter((point): point is LatLng => Boolean(point)),
+    { lat: destinationPlace.lat, lng: destinationPlace.lng },
+  ];
+  return nodes.map((point) => [point.lat, point.lng]);
 }

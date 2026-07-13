@@ -30,7 +30,8 @@ describe('TripsRepository (transactional integrity)', () => {
     trip: { findFirst: jest.Mock; update: jest.Mock; count: jest.Mock };
     driver: { findFirst: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
     truck: { findFirst: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
-    cargo: { findFirst: jest.Mock };
+    cargo: { findFirst: jest.Mock; update: jest.Mock };
+    tripBorder: { findFirst: jest.Mock; update: jest.Mock; count: jest.Mock };
     tripEvent: { create: jest.Mock };
   };
   let repo: TripsRepository;
@@ -44,7 +45,12 @@ describe('TripsRepository (transactional integrity)', () => {
         updateMany: jest.fn(),
       },
       truck: { findFirst: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
-      cargo: { findFirst: jest.fn() },
+      cargo: { findFirst: jest.fn(), update: jest.fn() },
+      tripBorder: {
+        findFirst: jest.fn(),
+        update: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
+      },
       tripEvent: { create: jest.fn() },
     };
     const prisma = {
@@ -347,6 +353,133 @@ describe('TripsRepository (transactional integrity)', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('border cycle (multi-border routes)', () => {
+    it('entering AT_BORDER stamps the next pending crossing and notes the border', async () => {
+      tx.trip.findFirst.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.DISPATCHED_ORIGIN,
+        driverId: DRIVER_ID,
+        truckId: TRUCK_ID,
+      });
+      tx.tripBorder.findFirst.mockResolvedValue({
+        id: 'tb-1',
+        border: { name: 'Chirundu' },
+      });
+      tx.trip.update.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.AT_BORDER,
+      });
+
+      await repo.updateStatus(TRIP_ID, TripStatus.AT_BORDER);
+
+      expect(tx.tripBorder.update).toHaveBeenCalledWith({
+        where: { id: 'tb-1' },
+        data: { arrivedAt: expect.any(Date) },
+      });
+      expect(tx.tripEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ note: 'Chirundu' }),
+        }),
+      );
+    });
+
+    it('re-enters AT_BORDER from BORDER_CLEARED for the next crossing', async () => {
+      tx.trip.findFirst.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.BORDER_CLEARED,
+        driverId: DRIVER_ID,
+        truckId: TRUCK_ID,
+      });
+      tx.tripBorder.findFirst.mockResolvedValue({
+        id: 'tb-2',
+        border: { name: 'Machipanda / Forbes' },
+      });
+      tx.trip.update.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.AT_BORDER,
+      });
+
+      await repo.updateStatus(TRIP_ID, TripStatus.AT_BORDER);
+
+      expect(tx.tripBorder.update).toHaveBeenCalledWith({
+        where: { id: 'tb-2' },
+        data: { arrivedAt: expect.any(Date) },
+      });
+    });
+
+    it('rejects AT_BORDER when the trip has no pending crossing', async () => {
+      tx.trip.findFirst.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.DISPATCHED_ORIGIN,
+        driverId: DRIVER_ID,
+        truckId: TRUCK_ID,
+      });
+      tx.tripBorder.findFirst.mockResolvedValue(null);
+
+      await expect(
+        repo.updateStatus(TRIP_ID, TripStatus.AT_BORDER),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(tx.trip.update).not.toHaveBeenCalled();
+      expect(tx.tripEvent.create).not.toHaveBeenCalled();
+    });
+
+    it('clearing the border stamps clearedAt on the crossing being crossed', async () => {
+      tx.trip.findFirst.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.AT_BORDER,
+        driverId: DRIVER_ID,
+        truckId: TRUCK_ID,
+      });
+      tx.tripBorder.findFirst.mockResolvedValue({
+        id: 'tb-1',
+        border: { name: 'Chirundu' },
+      });
+      tx.trip.update.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.BORDER_CLEARED,
+      });
+
+      await repo.updateStatus(TRIP_ID, TripStatus.BORDER_CLEARED);
+
+      expect(tx.tripBorder.update).toHaveBeenCalledWith({
+        where: { id: 'tb-1' },
+        data: { clearedAt: expect.any(Date) },
+      });
+    });
+
+    it('rejects ARRIVED while crossings are still pending', async () => {
+      tx.trip.findFirst.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.BORDER_CLEARED,
+        driverId: DRIVER_ID,
+        truckId: TRUCK_ID,
+      });
+      tx.tripBorder.count.mockResolvedValue(1);
+
+      await expect(
+        repo.updateStatus(TRIP_ID, TripStatus.ARRIVED),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(tx.trip.update).not.toHaveBeenCalled();
+    });
+
+    it('allows DISPATCHED_ORIGIN -> ARRIVED on a route with no borders', async () => {
+      tx.trip.findFirst.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.DISPATCHED_ORIGIN,
+        driverId: DRIVER_ID,
+        truckId: TRUCK_ID,
+      });
+      tx.trip.update.mockResolvedValue({
+        id: TRIP_ID,
+        currentStatus: TripStatus.ARRIVED,
+      });
+
+      await expect(
+        repo.updateStatus(TRIP_ID, TripStatus.ARRIVED),
+      ).resolves.toBeDefined();
     });
   });
 

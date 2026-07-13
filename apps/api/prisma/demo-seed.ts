@@ -1,5 +1,4 @@
 import {
-  Border,
   DriverStatus,
   PrismaClient,
   TrailerStatus,
@@ -41,7 +40,8 @@ type DemoTrip = {
   trailerPlate: string;
   cargo: { code: string; description: string; weightKg: number };
   status: TripStatus;
-  border: Border | null;
+  // Border names (must exist in `borders`, seeded by the main seed), in route order.
+  borders: string[];
   tonnage: number;
   position: string;
 };
@@ -54,7 +54,7 @@ const DEMO: DemoTrip[] = [
     trailerPlate: 'TRL-210-MC',
     cargo: { code: 'LUMAC-2026-0001', description: 'Cobre catódico', weightKg: 30000 },
     status: TripStatus.WAITING_APPOINTMENT,
-    border: null,
+    borders: [],
     tonnage: 30,
     position: 'Porto da Beira — aguardando marcação',
   },
@@ -65,7 +65,7 @@ const DEMO: DemoTrip[] = [
     trailerPlate: 'TRL-455-MP',
     cargo: { code: 'LUMAC-2026-0002', description: 'Fertilizante granulado', weightKg: 32000 },
     status: TripStatus.LOADED,
-    border: Border.CHIRUNDU,
+    borders: ['Chirundu'],
     tonnage: 32,
     position: 'Porto da Beira — carregado',
   },
@@ -76,7 +76,7 @@ const DEMO: DemoTrip[] = [
     trailerPlate: 'TRL-330-MP',
     cargo: { code: 'LUMAC-2026-0003', description: 'Cimento ensacado', weightKg: 28000 },
     status: TripStatus.DISPATCHED_ORIGIN,
-    border: Border.CHIRUNDU,
+    borders: ['Machipanda / Forbes', 'Chirundu'],
     tonnage: 28,
     position: 'EN6 — Inchope',
   },
@@ -87,7 +87,7 @@ const DEMO: DemoTrip[] = [
     trailerPlate: 'TRL-780-MP',
     cargo: { code: 'LUMAC-2026-0004', description: 'Trigo a granel', weightKg: 34000 },
     status: TripStatus.AT_BORDER,
-    border: Border.CHIRUNDU,
+    borders: ['Chirundu'],
     tonnage: 34,
     position: 'Fronteira de Chirundu — fila',
   },
@@ -98,7 +98,7 @@ const DEMO: DemoTrip[] = [
     trailerPlate: 'TRL-612-MP',
     cargo: { code: 'LUMAC-2026-0005', description: 'Máquinas industriais', weightKg: 26000 },
     status: TripStatus.BORDER_CLEARED,
-    border: Border.CHANIDA,
+    borders: ['Chanida'],
     tonnage: 26,
     position: 'Chanida — lado Zâmbia',
   },
@@ -109,7 +109,7 @@ const DEMO: DemoTrip[] = [
     trailerPlate: 'TRL-908-MP',
     cargo: { code: 'LUMAC-2026-0006', description: 'Peças automóveis', weightKg: 22000 },
     status: TripStatus.ARRIVED,
-    border: Border.CHANIDA,
+    borders: ['Chanida'],
     tonnage: 22,
     position: 'Lusaka — armazém do cliente',
   },
@@ -225,7 +225,6 @@ async function main() {
       trailerId: trailer.id,
       driverId: driver.id,
       currentStatus: t.status,
-      border: t.border,
       tonnage: t.tonnage,
       currentPosition: t.position,
       loadedDate,
@@ -239,6 +238,38 @@ async function main() {
       update: tripData,
       create: { id: tripId, ...tripData },
     });
+
+    // Rebuild the trip's border crossings, stamping arrival/clearance to
+    // mirror how far the lifecycle has progressed.
+    await prisma.tripBorder.deleteMany({ where: { tripId } });
+    const borderRecords = await prisma.border.findMany({
+      where: { name: { in: t.borders } },
+      select: { id: true, name: true },
+    });
+    const borderIdByName = new Map(borderRecords.map((b) => [b.name, b.id]));
+    const atBorderIndex = SEQ.indexOf(TripStatus.AT_BORDER);
+    const clearedIndex = SEQ.indexOf(TripStatus.BORDER_CLEARED);
+    for (let i = 0; i < t.borders.length; i++) {
+      const borderId = borderIdByName.get(t.borders[i]);
+      if (!borderId) {
+        throw new Error(
+          `Border "${t.borders[i]}" not seeded — run the main seed first`,
+        );
+      }
+      const isLast = i === t.borders.length - 1;
+      const cleared =
+        targetIndex >= clearedIndex || (targetIndex === atBorderIndex && !isLast);
+      const arrived = cleared || targetIndex >= atBorderIndex;
+      await prisma.tripBorder.create({
+        data: {
+          tripId,
+          borderId,
+          sequence: i + 1,
+          arrivedAt: arrived ? stepDate(base, 4) : null,
+          clearedAt: cleared ? stepDate(base, 5) : null,
+        },
+      });
+    }
 
     // Rebuild the event history so it mirrors the lifecycle up to the current state.
     await prisma.tripEvent.deleteMany({ where: { tripId } });
@@ -260,9 +291,8 @@ async function main() {
   // Give the pre-existing terminal trips some values too (so no "—" in the demo).
   const demoTripIds = DEMO.map((t) => id('791a1a1a', t.n));
   await prisma.trip.updateMany({
-    where: { border: null, id: { notIn: demoTripIds } },
+    where: { tonnage: null, id: { notIn: demoTripIds } },
     data: {
-      border: Border.CHIRUNDU,
       tonnage: 31,
       currentPosition: 'Concluída',
       loadedDate: new Date('2026-06-20T06:00:00.000Z'),

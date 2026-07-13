@@ -51,9 +51,39 @@ enum TripStatus {
   CANCELLED
 }
 
-enum Border {
-  CHIRUNDU
-  CHANIDA
+model Border {
+  id          String       @id @default(uuid()) @db.Char(36)
+  name        String       @unique @db.VarChar(100)
+  countryA    String       @db.VarChar(80)
+  countryB    String       @db.VarChar(80)
+  lat         Decimal?     @db.Decimal(9, 6)
+  lng         Decimal?     @db.Decimal(9, 6)
+  isActive    Boolean      @default(true)
+  tripBorders TripBorder[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@index([name])
+  @@map("borders")
+}
+
+// Ordered border crossings of a trip's route. arrivedAt/clearedAt are stamped
+// as the driver reaches and clears each post (AT_BORDER / BORDER_CLEARED).
+model TripBorder {
+  id        String    @id @default(uuid()) @db.Char(36)
+  tripId    String    @db.Char(36)
+  borderId  String    @db.Char(36)
+  sequence  Int
+  arrivedAt DateTime?
+  clearedAt DateTime?
+  trip      Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  border    Border    @relation(fields: [borderId], references: [id], onDelete: Restrict)
+
+  @@unique([tripId, sequence])
+  @@unique([tripId, borderId])
+  @@index([borderId])
+  @@map("trip_borders")
 }
 
 enum TripEventType {
@@ -260,7 +290,6 @@ model Trip {
   loadedDate      DateTime?
   currentStatus   TripStatus      @default(WAITING_APPOINTMENT)
   currentPosition String?         @db.VarChar(150)
-  border          Border?
   tonnage         Decimal?        @db.Decimal(12, 3)
   trackingToken   String          @unique @default(uuid()) @db.Char(36)
   cargo           Cargo           @relation(fields: [cargoId], references: [id], onDelete: Restrict)
@@ -271,6 +300,7 @@ model Trip {
   deliveries      Delivery[]
   incidents       Incident[]
   events          TripEvent[]
+  borders         TripBorder[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   deletedAt       DateTime?

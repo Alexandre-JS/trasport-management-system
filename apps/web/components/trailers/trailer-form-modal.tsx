@@ -90,7 +90,20 @@ export function TrailerFormModal({
 }: TrailerFormModalProps) {
   const isEdit = trailer !== null;
   const { toast } = useToast();
-  const trucks = useTrucks({ limit: 100 });
+  const trucks = useTrucks({ limit: 100, withoutTrailer: true });
+
+  // O filtro exclui o horse já associado a este trailer; em edição
+  // ele tem de continuar na lista para a associação atual ser visível.
+  const truckOptions = [
+    { label: "Sem horse associado", value: "" },
+    ...(trailer?.truck
+      ? [{ label: trailer.truck.plateNumber, value: trailer.truck.id }]
+      : []),
+    ...(trucks.data?.data ?? []).map((truck) => ({
+      label: truck.plateNumber,
+      value: truck.id,
+    })),
+  ];
   const createTrailer = useCreateTrailer();
   const updateTrailer = useUpdateTrailer();
 
@@ -161,13 +174,7 @@ export function TrailerFormModal({
             </label>
             <Select
               id="truckId"
-              options={[
-                { label: "Sem horse associado", value: "" },
-                ...(trucks.data?.data ?? []).map((truck) => ({
-                  label: truck.plateNumber,
-                  value: truck.id,
-                })),
-              ]}
+              options={truckOptions}
               {...register("truckId")}
             />
           </div>

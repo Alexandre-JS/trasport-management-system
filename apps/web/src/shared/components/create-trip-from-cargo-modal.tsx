@@ -7,6 +7,7 @@ import {
   SecondaryButton,
 } from "@/src/shared/components/action-button";
 import { Modal } from "@/components/ui/modal";
+import { useBorders } from "@/hooks/use-borders";
 import { useDrivers } from "@/hooks/use-drivers";
 import { useCreateTrip, useTrips } from "@/hooks/use-trips";
 import { useTrailers } from "@/hooks/use-trailers";
@@ -42,6 +43,7 @@ export function CreateTripFromCargoModal({
   const [driverId, setDriverId] = useState("");
   const [truckId, setTruckId] = useState("");
   const [trailerId, setTrailerId] = useState("");
+  const [borderIds, setBorderIds] = useState<string[]>([]);
   const [departureDate, setDepartureDate] = useState("");
   const [arrivalEstimate, setArrivalEstimate] = useState("");
 
@@ -61,6 +63,12 @@ export function CreateTripFromCargoModal({
     limit: 100,
     status: "AVAILABLE",
     sortBy: "plateNumber",
+    sortOrder: "asc",
+  });
+  const borders = useBorders({
+    limit: 100,
+    active: true,
+    sortBy: "name",
     sortOrder: "asc",
   });
   const existingTrips = useTrips(
@@ -93,6 +101,12 @@ export function CreateTripFromCargoModal({
     );
   }, [trailers.data?.data, truckId]);
 
+  const allBorders = borders.data?.data ?? [];
+  const borderNameById = new Map(allBorders.map((b) => [b.id, b.name]));
+  const availableBorders = allBorders.filter(
+    (border) => !borderIds.includes(border.id),
+  );
+
   if (!open || !cargo) {
     return null;
   }
@@ -105,6 +119,7 @@ export function CreateTripFromCargoModal({
     setDriverId("");
     setTruckId("");
     setTrailerId("");
+    setBorderIds([]);
     setDepartureDate("");
     setArrivalEstimate("");
     onClose();
@@ -121,6 +136,7 @@ export function CreateTripFromCargoModal({
         driverId,
         truckId,
         trailerId,
+        borderIds: borderIds.length > 0 ? borderIds : undefined,
         departureDate: toIsoDateTime(departureDate),
         arrivalEstimate: toIsoDateTime(arrivalEstimate),
       },
@@ -247,6 +263,55 @@ export function CreateTripFromCargoModal({
                 </option>
               ))}
             </select>
+          </label>
+
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className={labelClass}>
+              Fronteiras da rota (por ordem de travessia)
+            </span>
+            <select
+              value=""
+              onChange={(event) => {
+                const id = event.target.value;
+                if (id) {
+                  setBorderIds((current) => [...current, id]);
+                }
+              }}
+              className={inputClass}
+            >
+              <option value="">Adicionar fronteira…</option>
+              {availableBorders.map((border) => (
+                <option key={border.id} value={border.id}>
+                  {border.name} · {border.countryA} — {border.countryB}
+                </option>
+              ))}
+            </select>
+            {borderIds.length > 0 ? (
+              <ol className="mt-1 flex flex-wrap gap-2">
+                {borderIds.map((id, index) => (
+                  <li
+                    key={id}
+                    className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    <span>
+                      {index + 1}. {borderNameById.get(id) ?? id}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Remover ${borderNameById.get(id) ?? "fronteira"}`}
+                      onClick={() =>
+                        setBorderIds((current) =>
+                          current.filter((value) => value !== id),
+                        )
+                      }
+                      className="text-slate-400 transition hover:text-rose-500"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
           </label>
 
           <label className="flex flex-col gap-1.5">

@@ -2,7 +2,7 @@ name: Deploy Web → Hostinger
 
 on:
   push:
-    branches: [main, mobile-app]
+    branches: [main]
     paths:
       - 'apps/web/**'
       - 'deploy/stage-zip.sh'

@@ -29,7 +29,8 @@ aqui** — ele vai para a **Play Store** (ver a secção final). Só a **API** e
 
 ## Deploy automático (CI/CD via GitHub Actions)
 
-Cada push para `main` ou `mobile-app` faz deploy automático **só do que mudou**:
+Cada push para **`main`** (e só para `main`) faz deploy automático **só do que
+mudou** — trabalhar noutras branches não toca na produção até fazeres merge:
 
 - Mudanças em `apps/api/**` → workflow [deploy-api.yml](../.github/workflows/deploy-api.yml) → api.lumactraspots.com
 - Mudanças em `apps/web/**` → workflow [deploy-web.yml](../.github/workflows/deploy-web.yml) → lumactraspots.com

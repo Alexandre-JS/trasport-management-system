@@ -46,6 +46,7 @@ const sites = await api('GET', `/api/hosting/v1/websites?domain=${encodeURICompo
 const username = sites?.data?.[0]?.username;
 if (!username) throw new Error(`domínio ${domain} não encontrado`);
 console.log(`conta: ${username}`);
+console.log('website:', JSON.stringify(sites.data[0], null, 2));
 
 console.log('\n===== ÚLTIMOS BUILDS =====');
 const builds = await api(

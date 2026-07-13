@@ -85,10 +85,13 @@ async function uploadZip(username) {
     throw new Error(`Pré-upload falhou: HTTP ${create.status}: ${(await create.text()).slice(0, 300)}`);
   }
 
+  // Não reutilizar authHeaders aqui: o "upload-offset" minúsculo duplicaria o
+  // "Upload-Offset" (fetch junta-os em "0, 0" e o servidor rejeita o offset).
   const patch = await fetch(target, {
     method: 'PATCH',
     headers: {
-      ...authHeaders,
+      'X-Auth': authKey,
+      'X-Auth-Rest': restAuthKey,
       'Tus-Resumable': '1.0.0',
       'Upload-Offset': '0',
       'Content-Type': 'application/offset+octet-stream',

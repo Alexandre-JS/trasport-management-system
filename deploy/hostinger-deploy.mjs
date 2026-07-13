@@ -34,15 +34,34 @@ function die(msg) {
   process.exit(1);
 }
 
+// Retry para falhas transitórias de rede (connect timeout ao servidor de
+// upload da Hostinger já aconteceu em CI) e respostas 5xx.
+async function withRetry(label, fn, tries = 3) {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (i >= tries) throw err;
+      const delay = 10000 * i;
+      console.log(`  (${label}: tentativa ${i} falhou — ${err.message}; retry em ${delay / 1000}s)`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+}
+
 async function api(method, urlPath, body) {
-  const res = await fetch(`${BASE}${urlPath}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${TOKEN}`,
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // retry só quando o fetch lança (falha de rede) — nunca em respostas HTTP,
+  // para não disparar builds duplicados
+  const res = await withRetry(`${method} ${urlPath}`, () =>
+    fetch(`${BASE}${urlPath}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  );
   const text = await res.text();
   let data;
   try {
@@ -80,27 +99,31 @@ async function uploadZip(username) {
     'upload-offset': '0',
   };
 
-  const create = await fetch(target, { method: 'POST', headers: authHeaders });
-  if (create.status !== 201) {
-    throw new Error(`Pré-upload falhou: HTTP ${create.status}: ${(await create.text()).slice(0, 300)}`);
-  }
+  // O par POST(criação)+PATCH(conteúdo) é retried como uma unidade: o POST com
+  // override=true repõe o offset a 0, por isso é seguro recomeçar do zero.
+  await withRetry('upload', async () => {
+    const create = await fetch(target, { method: 'POST', headers: authHeaders });
+    if (create.status !== 201) {
+      throw new Error(`Pré-upload falhou: HTTP ${create.status}: ${(await create.text()).slice(0, 300)}`);
+    }
 
-  // Não reutilizar authHeaders aqui: o "upload-offset" minúsculo duplicaria o
-  // "Upload-Offset" (fetch junta-os em "0, 0" e o servidor rejeita o offset).
-  const patch = await fetch(target, {
-    method: 'PATCH',
-    headers: {
-      'X-Auth': authKey,
-      'X-Auth-Rest': restAuthKey,
-      'Tus-Resumable': '1.0.0',
-      'Upload-Offset': '0',
-      'Content-Type': 'application/offset+octet-stream',
-    },
-    body: file,
+    // Não reutilizar authHeaders aqui: o "upload-offset" minúsculo duplicaria o
+    // "Upload-Offset" (fetch junta-os em "0, 0" e o servidor rejeita o offset).
+    const patch = await fetch(target, {
+      method: 'PATCH',
+      headers: {
+        'X-Auth': authKey,
+        'X-Auth-Rest': restAuthKey,
+        'Tus-Resumable': '1.0.0',
+        'Upload-Offset': '0',
+        'Content-Type': 'application/offset+octet-stream',
+      },
+      body: file,
+    });
+    if (!patch.ok) {
+      throw new Error(`Upload TUS falhou: HTTP ${patch.status}: ${(await patch.text()).slice(0, 300)}`);
+    }
   });
-  if (!patch.ok) {
-    throw new Error(`Upload TUS falhou: HTTP ${patch.status}: ${(await patch.text()).slice(0, 300)}`);
-  }
   console.log(`✓ Upload de ${basename} (${(file.length / 1024 / 1024).toFixed(1)} MB) concluído`);
   return basename;
 }

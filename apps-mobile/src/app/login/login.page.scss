@@ -1,0 +1,77 @@
+.login-page {
+  --background: #eef5fb;
+}
+
+.login-panel {
+  display: grid;
+  gap: 22px;
+  min-height: 100%;
+  padding: 64px 20px 28px;
+}
+
+.login-logo {
+  background: #ffffff;
+  border: 1px solid #d9e5f2;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(0, 54, 116, 0.12);
+  display: block;
+  max-width: 240px;
+  padding: 14px;
+  width: 100%;
+}
+
+.login-copy {
+  h1 {
+    color: #0b1738;
+    font-size: 30px;
+    line-height: 1.08;
+    margin: 8px 0 0;
+  }
+
+  p {
+    color: #005fae;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    margin: 0;
+    text-transform: uppercase;
+  }
+}
+
+form {
+  background: #ffffff;
+  border: 1px solid #d9e5f2;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(0, 54, 116, 0.12);
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+ion-item {
+  --background: #f6f9fc;
+  --border-color: #d9e5f2;
+  --border-radius: 8px;
+  --padding-start: 12px;
+  border-radius: 8px;
+}
+
+ion-button {
+  --border-radius: 999px;
+  height: 48px;
+  margin: 4px 0 0;
+  text-transform: none;
+}
+
+.error-message {
+  color: #b42318;
+  font-size: 13px;
+  margin: 0;
+}
+
+@media (min-width: 720px) {
+  .login-panel {
+    margin: 0 auto;
+    max-width: 440px;
+  }
+}

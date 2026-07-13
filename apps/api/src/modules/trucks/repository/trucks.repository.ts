@@ -112,11 +112,10 @@ export class TrucksRepository {
               {
                 plateNumber: {
                   contains: query.search,
-                  mode: 'insensitive',
                 },
               },
-              { brand: { contains: query.search, mode: 'insensitive' } },
-              { model: { contains: query.search, mode: 'insensitive' } },
+              { brand: { contains: query.search } },
+              { model: { contains: query.search } },
             ],
           }
         : {}),

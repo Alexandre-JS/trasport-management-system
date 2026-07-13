@@ -7,5 +7,6 @@ import { TripsService } from './services/trips.service';
 @Module({
   controllers: [TripsController],
   providers: [TripsService, TripsRepository, TripStateMachine],
+  exports: [TripsService],
 })
 export class TripsModule {}

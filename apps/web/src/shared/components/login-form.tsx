@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Mail, ShieldCheck } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -87,6 +87,9 @@ export function LoginForm() {
             <input
               type="email"
               autoComplete="email"
+              // Password managers rewrite autocomplete/attributes before React
+              // hydrates, causing a benign SSR/client mismatch — suppress it.
+              suppressHydrationWarning
               className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
               placeholder="nome@empresa.com"
               {...register("email")}
@@ -108,6 +111,9 @@ export function LoginForm() {
             <input
               type="password"
               autoComplete="current-password"
+              // Password managers rewrite autocomplete/attributes before React
+              // hydrates, causing a benign SSR/client mismatch — suppress it.
+              suppressHydrationWarning
               className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
               placeholder="••••••••"
               {...register("password")}

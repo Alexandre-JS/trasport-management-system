@@ -161,10 +161,10 @@ export class UsersRepository {
       ...(query.search
         ? {
             OR: [
-              { firstName: { contains: query.search, mode: 'insensitive' } },
-              { lastName: { contains: query.search, mode: 'insensitive' } },
-              { email: { contains: query.search, mode: 'insensitive' } },
-              { phone: { contains: query.search, mode: 'insensitive' } },
+              { firstName: { contains: query.search } },
+              { lastName: { contains: query.search } },
+              { email: { contains: query.search } },
+              { phone: { contains: query.search } },
             ],
           }
         : {}),

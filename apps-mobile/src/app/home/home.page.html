@@ -1,20 +1,154 @@
-<ion-header [translucent]="true">
+<ion-header class="driver-header">
   <ion-toolbar>
     <ion-title>
-      Blank
+      <img
+        class="toolbar-logo"
+        src="assets/LUMAC TRANSPORTES LOGO.jpeg"
+        alt="Lumac Transportes e Logistica"
+      />
     </ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Atualizar" (click)="loadCurrentTrip()">
+        <ion-icon name="refresh-outline" aria-hidden="true"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" aria-label="Sair" (click)="logout()">
+        <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="driver-home" [fullscreen]="true">
+  <section class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="crescent"></ion-spinner>
+    <span>A carregar viagem...</span>
+  </section>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+  <section class="empty-state" *ngIf="!isLoading && !currentTrip">
+    <h1>Sem viagem para agora</h1>
+    <p>{{ errorMessage }}</p>
+    <ion-button shape="round" (click)="loadCurrentTrip()">Ver de novo</ion-button>
+  </section>
+
+  <ng-container *ngIf="!isLoading && currentTrip">
+    <section class="simple-hero">
+      <p>Ola, motorista</p>
+      <h1>{{ statusLabel }}</h1>
+      <span>Carga {{ currentTrip.cargo.code }}</span>
+      <div class="tracking-pill" [class.is-on]="isAutoTracking">
+        <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
+        <strong>{{ trackingStatus }}</strong>
+      </div>
+    </section>
+
+    <ion-card class="destination-card">
+      <ion-card-content>
+        <span class="card-label">Voce vai para</span>
+        <strong>{{ currentTrip.cargo.destination }}</strong>
+        <small>Saida: {{ currentTrip.cargo.origin }}</small>
+      </ion-card-content>
+    </ion-card>
+
+    <section class="main-action">
+      <ion-button
+        color="primary"
+        expand="block"
+        shape="round"
+        [disabled]="mainActionDisabled"
+        (click)="handleMainAction()"
+      >
+        <ion-icon slot="start" name="play-outline" aria-hidden="true"></ion-icon>
+        {{ mainActionLabel }}
+      </ion-button>
+      <p>{{ mainActionHelp }}</p>
+    </section>
+
+    <section class="quick-actions">
+      <ion-button
+        *ngFor="let action of quickActions"
+        class="action-button"
+        [color]="action.tone"
+        expand="block"
+        fill="outline"
+        shape="round"
+        [disabled]="isSubmitting"
+        (click)="handleAction(action)"
+      >
+        <ion-icon slot="start" [name]="action.icon" aria-hidden="true"></ion-icon>
+        <span>
+          <strong>{{ action.label }}</strong>
+          <small>{{ action.detail }}</small>
+        </span>
+      </ion-button>
+    </section>
+
+    <ion-card *ngIf="activeForm === 'delivery'" class="simple-form">
+      <ion-card-content>
+        <h2>Confirmar entrega</h2>
+        <p>Preencha so o que tiver em maos.</p>
+        <div class="form-grid">
+          <ion-input
+            label="Nome de quem recebeu"
+            label-placement="stacked"
+            [(ngModel)]="receiverName"
+          ></ion-input>
+          <ion-input
+            label="Documento"
+            label-placement="stacked"
+            [(ngModel)]="receiverDocument"
+          ></ion-input>
+          <ion-textarea
+            label="Nota"
+            label-placement="stacked"
+            [(ngModel)]="deliveryObservations"
+            rows="3"
+          ></ion-textarea>
+        </div>
+        <ion-button expand="block" shape="round" [disabled]="isSubmitting" (click)="confirmDelivery()">
+          Confirmar entrega
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card *ngIf="activeForm === 'incident'" class="simple-form">
+      <ion-card-content>
+        <h2>Tenho problema</h2>
+        <p>Escolha o tipo e escreva uma nota curta.</p>
+        <div class="form-grid">
+          <ion-select
+            label="Tipo"
+            label-placement="stacked"
+            [(ngModel)]="incidentType"
+          >
+            <ion-select-option *ngFor="let type of incidentTypes" [value]="type.value">
+              {{ type.label }}
+            </ion-select-option>
+          </ion-select>
+          <ion-textarea
+            label="O que aconteceu?"
+            label-placement="stacked"
+            [(ngModel)]="incidentDescription"
+            rows="3"
+          ></ion-textarea>
+        </div>
+        <ion-button color="warning" expand="block" shape="round" [disabled]="isSubmitting" (click)="reportIncident()">
+          Enviar problema
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <section class="small-details">
+      <div>
+        <span>Camiao</span>
+        <strong>{{ currentTrip.truck.plateNumber }}</strong>
+      </div>
+      <div>
+        <span>Cliente</span>
+        <strong>{{ currentTrip.cargo.client.companyName }}</strong>
+      </div>
+    </section>
+
+    <p class="status-message" *ngIf="statusMessage">{{ statusMessage }}</p>
+    <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </ng-container>
 </ion-content>

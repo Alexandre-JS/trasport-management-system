@@ -177,20 +177,18 @@ export class CargoRepository {
       ...(query.search
         ? {
             OR: [
-              { code: { contains: query.search, mode: 'insensitive' } },
+              { code: { contains: query.search } },
               {
                 description: {
                   contains: query.search,
-                  mode: 'insensitive',
                 },
               },
-              { origin: { contains: query.search, mode: 'insensitive' } },
-              { destination: { contains: query.search, mode: 'insensitive' } },
+              { origin: { contains: query.search } },
+              { destination: { contains: query.search } },
               {
                 client: {
                   companyName: {
                     contains: query.search,
-                    mode: 'insensitive',
                   },
                 },
               },
@@ -200,13 +198,12 @@ export class CargoRepository {
       ...(query.clientId ? { clientId: query.clientId } : {}),
       ...(query.status ? { status: query.status } : {}),
       ...(query.origin
-        ? { origin: { contains: query.origin, mode: 'insensitive' } }
+        ? { origin: { contains: query.origin } }
         : {}),
       ...(query.destination
         ? {
             destination: {
               contains: query.destination,
-              mode: 'insensitive',
             },
           }
         : {}),

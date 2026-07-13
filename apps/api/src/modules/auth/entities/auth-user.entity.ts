@@ -10,4 +10,7 @@ export type AuthUserEntity = {
   role: {
     name: string;
   };
+  driverProfile: {
+    id: string;
+  } | null;
 };

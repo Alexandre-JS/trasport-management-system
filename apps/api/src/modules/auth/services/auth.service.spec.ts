@@ -11,11 +11,16 @@ describe('AuthService', () => {
     findActiveUserById: jest.fn(),
     updateLastLogin: jest.fn(),
     updatePassword: jest.fn(),
+    createRefreshToken: jest.fn(),
+    findRefreshTokenById: jest.fn(),
+    revokeRefreshToken: jest.fn(),
+    revokeAllRefreshTokensForUser: jest.fn(),
     health: jest.fn(),
   } as unknown as jest.Mocked<AuthRepository>;
   const jwtService = {
     signAsync: jest.fn(),
     verifyAsync: jest.fn(),
+    decode: jest.fn(),
   } as unknown as jest.Mocked<JwtService>;
   const configService = {
     get: jest.fn((_key: string, fallback?: string) => fallback),
@@ -33,6 +38,7 @@ describe('AuthService', () => {
     role: {
       name: 'ADMIN',
     },
+    driverProfile: null,
   };
 
   let service: AuthService;
@@ -44,6 +50,10 @@ describe('AuthService', () => {
     jwtService.signAsync
       .mockResolvedValueOnce('access-token')
       .mockResolvedValueOnce('refresh-token');
+    (jwtService.decode as jest.Mock).mockReturnValue({
+      exp: Math.floor(Date.now() / 1000) + 604800,
+    });
+    authRepository.createRefreshToken.mockResolvedValue(undefined);
   });
 
   it('authenticates valid credentials and returns tokens', async () => {

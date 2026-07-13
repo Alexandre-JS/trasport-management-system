@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import appConfig from './config/app.config';
 import { AuthCoreModule } from './core/auth/auth-core.module';
 import { DatabaseModule } from './core/database/database.module';
@@ -15,6 +16,7 @@ import { CargoModule } from './modules/cargo/cargo.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
+import { DriverMobileModule } from './modules/driver-mobile/driver-mobile.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -57,10 +59,17 @@ import { UsersModule } from './modules/users/users.module';
     TrackingModule,
     IncidentsModule,
     DeliveryModule,
+    DriverMobileModule,
     NotificationsModule,
     DashboardModule,
     PortalModule,
     PublicTrackingModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

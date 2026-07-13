@@ -30,6 +30,11 @@ export class AuthRepository {
             name: true,
           },
         },
+        driverProfile: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
   }
@@ -54,6 +59,11 @@ export class AuthRepository {
             name: true,
           },
         },
+        driverProfile: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
   }
@@ -72,6 +82,49 @@ export class AuthRepository {
       .update({
         where: { id },
         data: { password },
+      })
+      .then(() => undefined);
+  }
+
+  createRefreshToken(input: {
+    id: string;
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    return this.prisma.refreshToken
+      .create({ data: input })
+      .then(() => undefined);
+  }
+
+  findRefreshTokenById(id: string) {
+    return this.prisma.refreshToken.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        userId: true,
+        tokenHash: true,
+        expiresAt: true,
+        revokedAt: true,
+      },
+    });
+  }
+
+  revokeRefreshToken(id: string): Promise<void> {
+    return this.prisma.refreshToken
+      .updateMany({
+        where: { id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      })
+      .then(() => undefined);
+  }
+
+  /** Revoke every active refresh token for a user (logout / theft response). */
+  revokeAllRefreshTokensForUser(userId: string): Promise<void> {
+    return this.prisma.refreshToken
+      .updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
       })
       .then(() => undefined);
   }

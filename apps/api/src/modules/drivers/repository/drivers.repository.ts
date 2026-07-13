@@ -169,15 +169,14 @@ export class DriversRepository {
       ...(query.search
         ? {
             OR: [
-              { fullName: { contains: query.search, mode: 'insensitive' } },
+              { fullName: { contains: query.search } },
               {
                 licenseNumber: {
                   contains: query.search,
-                  mode: 'insensitive',
                 },
               },
-              { email: { contains: query.search, mode: 'insensitive' } },
-              { phone: { contains: query.search, mode: 'insensitive' } },
+              { email: { contains: query.search } },
+              { phone: { contains: query.search } },
             ],
           }
         : {}),

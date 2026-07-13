@@ -8,5 +8,6 @@ import { TrackingService } from './services/tracking.service';
   imports: [EventsModule],
   controllers: [TrackingController],
   providers: [TrackingService, TrackingRepository],
+  exports: [TrackingService],
 })
 export class TrackingModule {}

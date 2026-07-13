@@ -1,0 +1,29 @@
+name: Debug Hostinger (manual)
+
+# Diagnóstico manual: imprime builds/logs da app na Hostinger e corre comandos
+# de LEITURA no servidor via cron temporário. O log do workflow é público —
+# nunca usar comandos que exponham segredos (ex.: cat de .env).
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: Domínio da app
+        default: api.lumactraspots.com
+      cmds:
+        description: Comandos (um por linha, sem metacaracteres de shell, máx 255 chars)
+        default: ''
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    environment: HOSTINGER_API_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Diagnóstico
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          DEBUG_CMDS: ${{ inputs.cmds }}
+        run: node deploy/hostinger-debug.mjs "${{ inputs.domain }}"

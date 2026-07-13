@@ -96,6 +96,42 @@ async function main() {
     },
   });
 
+  // Principais postos fronteiriços rodoviários dos corredores da África
+  // Austral. Coordenadas indicativas (posto de travessia).
+  const borders: Array<{
+    name: string;
+    countryA: string;
+    countryB: string;
+    lat: number;
+    lng: number;
+  }> = [
+    { name: 'Chanida', countryA: 'Moçambique', countryB: 'Zâmbia', lat: -14.05, lng: 32.75 },
+    { name: 'Cassacatiza', countryA: 'Moçambique', countryB: 'Zâmbia', lat: -14.4046, lng: 32.5333 },
+    { name: 'Chirundu', countryA: 'Zâmbia', countryB: 'Zimbabué', lat: -16.0333, lng: 28.85 },
+    { name: 'Machipanda / Forbes', countryA: 'Moçambique', countryB: 'Zimbabué', lat: -18.94, lng: 32.7 },
+    { name: 'Nyamapanda / Cuchamano', countryA: 'Moçambique', countryB: 'Zimbabué', lat: -16.66, lng: 32.75 },
+    { name: 'Zóbuè / Mwanza', countryA: 'Moçambique', countryB: 'Malawi', lat: -15.593, lng: 34.438 },
+    { name: 'Milange / Muloza', countryA: 'Moçambique', countryB: 'Malawi', lat: -16.1033, lng: 35.7654 },
+    { name: 'Mandimba / Chiponde', countryA: 'Moçambique', countryB: 'Malawi', lat: -14.353, lng: 35.654 },
+    { name: 'Calómuè / Dedza', countryA: 'Moçambique', countryB: 'Malawi', lat: -14.375, lng: 34.333 },
+    { name: 'Ressano Garcia / Lebombo', countryA: 'Moçambique', countryB: 'África do Sul', lat: -25.4432, lng: 31.9872 },
+    { name: 'Goba / Mhlumeni', countryA: 'Moçambique', countryB: 'eSwatini', lat: -26.201, lng: 32.13 },
+    { name: 'Namaacha / Lomahasha', countryA: 'Moçambique', countryB: 'eSwatini', lat: -25.98, lng: 32.02 },
+    { name: 'Beitbridge', countryA: 'Zimbabué', countryB: 'África do Sul', lat: -22.216, lng: 29.988 },
+    { name: 'Mchinji / Mwami', countryA: 'Malawi', countryB: 'Zâmbia', lat: -13.79, lng: 32.9 },
+    { name: 'Kasumbalesa', countryA: 'Zâmbia', countryB: 'RD Congo', lat: -12.25, lng: 27.8 },
+    { name: 'Nakonde / Tunduma', countryA: 'Zâmbia', countryB: 'Tanzânia', lat: -9.34, lng: 32.76 },
+    { name: 'Kazungula', countryA: 'Zâmbia', countryB: 'Botsuana', lat: -17.79, lng: 25.26 },
+  ];
+
+  for (const border of borders) {
+    await prisma.border.upsert({
+      where: { name: border.name },
+      update: {},
+      create: border,
+    });
+  }
+
   const client = await prisma.client.upsert({
     where: { id: '11111111-1111-4111-8111-111111111111' },
     update: {},

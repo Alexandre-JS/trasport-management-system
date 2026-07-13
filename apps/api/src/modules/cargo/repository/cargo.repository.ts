@@ -35,7 +35,20 @@ const cargoSelect = {
       arrivalDate: true,
       loadedDate: true,
       currentPosition: true,
-      border: true,
+      borders: {
+        select: {
+          sequence: true,
+          arrivedAt: true,
+          clearedAt: true,
+          border: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: { sequence: 'asc' as const },
+      },
       driver: {
         select: {
           id: true,

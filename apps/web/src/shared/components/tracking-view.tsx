@@ -68,7 +68,7 @@ export function TrackingView() {
     for (const trip of activeTrips) {
       const geo = estimateTripPosition({
         currentStatus: trip.currentStatus,
-        border: trip.border,
+        borders: trip.borders,
         origin: trip.cargo.origin,
         destination: trip.cargo.destination,
       });
@@ -91,7 +91,7 @@ export function TrackingView() {
   const route = selectedTrip
     ? tripRoute({
         currentStatus: selectedTrip.currentStatus,
-        border: selectedTrip.border,
+        borders: selectedTrip.borders,
         origin: selectedTrip.cargo.origin,
         destination: selectedTrip.cargo.destination,
       })

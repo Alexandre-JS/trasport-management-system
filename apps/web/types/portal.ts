@@ -1,4 +1,4 @@
-import type { Border, TripEventType, TripStatus } from "@/types/trip";
+import type { TripBorderRef, TripEventType, TripStatus } from "@/types/trip";
 
 export type PortalEvent = {
   id: string;
@@ -14,7 +14,7 @@ export type PortalShipment = {
   id: string;
   currentStatus: TripStatus;
   currentPosition: string | null;
-  border: Border | null;
+  borders: TripBorderRef[];
   tonnage: string | null;
   loadedDate: string | null;
   departureDate: string | null;

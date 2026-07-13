@@ -11,6 +11,7 @@ const driverSelect = {
   userId: true,
   fullName: true,
   licenseNumber: true,
+  passportNumber: true,
   phone: true,
   email: true,
   status: true,
@@ -172,6 +173,11 @@ export class DriversRepository {
               { fullName: { contains: query.search } },
               {
                 licenseNumber: {
+                  contains: query.search,
+                },
+              },
+              {
+                passportNumber: {
                   contains: query.search,
                 },
               },

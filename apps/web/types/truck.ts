@@ -33,6 +33,7 @@ export type ListTrucksParams = {
   limit?: number;
   search?: string;
   status?: TruckStatus;
+  withoutTrailer?: boolean;
   sortBy?: TruckSortBy;
   sortOrder?: SortOrder;
 };

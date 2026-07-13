@@ -31,8 +31,26 @@ const tripSelect = {
   loadedDate: true,
   currentStatus: true,
   currentPosition: true,
-  border: true,
   tonnage: true,
+  borders: {
+    select: {
+      id: true,
+      sequence: true,
+      arrivedAt: true,
+      clearedAt: true,
+      border: {
+        select: {
+          id: true,
+          name: true,
+          countryA: true,
+          countryB: true,
+          lat: true,
+          lng: true,
+        },
+      },
+    },
+    orderBy: { sequence: 'asc' as const },
+  },
   cargo: {
     select: {
       id: true,
@@ -244,8 +262,24 @@ export class TripsRepository {
         'Trailer',
       );
 
-      const trip = await tx.trip.create({
+      const created = await tx.trip.create({
         data: this.toTripData(data),
+        select: { id: true },
+      });
+
+      if (data.borderIds?.length) {
+        await this.assertBordersUsable(tx, data.borderIds);
+        await tx.tripBorder.createMany({
+          data: data.borderIds.map((borderId, index) => ({
+            tripId: created.id,
+            borderId,
+            sequence: index + 1,
+          })),
+        });
+      }
+
+      const trip = await tx.trip.findUniqueOrThrow({
+        where: { id: created.id },
         select: tripSelect,
       });
 
@@ -277,11 +311,56 @@ export class TripsRepository {
   }
 
   update(id: string, data: UpdateTripDto): Promise<TripEntity> {
-    return this.prisma.trip.update({
-      where: { id },
-      data: this.toTripData(data),
-      select: tripSelect,
+    return this.prisma.$transaction(async (tx) => {
+      // borderIds replaces the whole route — but never after the driver has
+      // reached a border, or the stamped history would be rewritten.
+      if (data.borderIds !== undefined) {
+        const started = await tx.tripBorder.count({
+          where: { tripId: id, arrivedAt: { not: null } },
+        });
+        if (started > 0) {
+          throw new ConflictException(
+            'Cannot change borders after a border crossing has started',
+          );
+        }
+        if (data.borderIds.length > 0) {
+          await this.assertBordersUsable(tx, data.borderIds);
+        }
+        await tx.tripBorder.deleteMany({ where: { tripId: id } });
+        if (data.borderIds.length > 0) {
+          await tx.tripBorder.createMany({
+            data: data.borderIds.map((borderId, index) => ({
+              tripId: id,
+              borderId,
+              sequence: index + 1,
+            })),
+          });
+        }
+      }
+
+      return tx.trip.update({
+        where: { id },
+        data: this.toTripData(data),
+        select: tripSelect,
+      });
     });
+  }
+
+  /** Every referenced border must exist, be active and not deleted. */
+  private async assertBordersUsable(
+    tx: Prisma.TransactionClient,
+    borderIds: string[],
+  ): Promise<void> {
+    const found = await tx.border.count({
+      where: {
+        id: { in: borderIds },
+        deletedAt: null,
+        isActive: true,
+      },
+    });
+    if (found !== borderIds.length) {
+      throw new NotFoundException('One or more borders not found or inactive');
+    }
   }
 
   async updateStatus(id: string, toStatus: TripStatus): Promise<TripEntity> {
@@ -338,6 +417,16 @@ export class TripsRepository {
     const now = new Date();
     const occurredAt = meta.occurredAt ?? now;
 
+    // Border context: the state machine allows the border cycle statically;
+    // whether this trip actually has a pending border is checked here, and the
+    // crossing being entered/cleared is stamped so the route history is kept.
+    const borderName = await this.applyBorderTransition(
+      tx,
+      id,
+      toStatus,
+      occurredAt,
+    );
+
     const updated = await tx.trip.update({
       where: { id },
       data: {
@@ -370,11 +459,70 @@ export class TripsRepository {
       fromStatus,
       toStatus,
       occurredAt,
-      note: meta.note,
+      note: meta.note ?? borderName,
       createdBy: meta.createdBy,
     });
 
     return updated;
+  }
+
+  /**
+   * Contextual border guards for a status transition, stamping the crossing
+   * involved. Returns the border name (to enrich the audit event) or undefined
+   * when the transition has no border meaning.
+   */
+  private async applyBorderTransition(
+    tx: Prisma.TransactionClient,
+    tripId: string,
+    toStatus: TripStatus,
+    occurredAt: Date,
+  ): Promise<string | undefined> {
+    if (toStatus === TripStatus.AT_BORDER) {
+      const next = await tx.tripBorder.findFirst({
+        where: { tripId, clearedAt: null },
+        orderBy: { sequence: 'asc' },
+        select: { id: true, border: { select: { name: true } } },
+      });
+      if (!next) {
+        throw new ConflictException(
+          'Trip has no pending border crossing — assign borders to the trip first',
+        );
+      }
+      await tx.tripBorder.update({
+        where: { id: next.id },
+        data: { arrivedAt: occurredAt },
+      });
+      return next.border.name;
+    }
+
+    if (toStatus === TripStatus.BORDER_CLEARED) {
+      const current = await tx.tripBorder.findFirst({
+        where: { tripId, arrivedAt: { not: null }, clearedAt: null },
+        orderBy: { sequence: 'asc' },
+        select: { id: true, border: { select: { name: true } } },
+      });
+      if (!current) {
+        throw new ConflictException('Trip is not at a border');
+      }
+      await tx.tripBorder.update({
+        where: { id: current.id },
+        data: { clearedAt: occurredAt },
+      });
+      return current.border.name;
+    }
+
+    if (toStatus === TripStatus.ARRIVED) {
+      const pending = await tx.tripBorder.count({
+        where: { tripId, clearedAt: null },
+      });
+      if (pending > 0) {
+        throw new ConflictException(
+          'Trip still has border crossings to clear before arriving',
+        );
+      }
+    }
+
+    return undefined;
   }
 
   async assignDriver(id: string, driverId: string): Promise<TripEntity> {

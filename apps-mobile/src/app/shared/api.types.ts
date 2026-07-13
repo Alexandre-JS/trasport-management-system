@@ -14,6 +14,19 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+export interface DriverTripBorder {
+  id: string;
+  sequence: number;
+  arrivedAt: string | null;
+  clearedAt: string | null;
+  border: {
+    id: string;
+    name: string;
+    countryA: string;
+    countryB: string;
+  };
+}
+
 export interface DriverTrip {
   id: string;
   cargoId: string;
@@ -26,6 +39,7 @@ export interface DriverTrip {
   loadedDate: string | null;
   currentStatus: string;
   currentPosition: string | null;
+  borders: DriverTripBorder[];
   cargo: {
     id: string;
     code: string;

@@ -7,7 +7,7 @@ import { StatusBadge } from "@/src/shared/components/status-badge";
 import { usePublicShipment } from "@/hooks/use-public-tracking";
 import { formatDate, formatDateTime } from "@/utils/format";
 import {
-  borderLabel,
+  borderNames,
   tripEventTypeLabel,
   tripStatusBadgeTone,
   tripStatusMeta,
@@ -81,7 +81,7 @@ export function PublicTrackView({ token }: { token: string }) {
                     Fronteira
                   </dt>
                   <dd className="mt-1 text-sm text-slate-900 dark:text-slate-100">
-                    {shipment.border ? borderLabel[shipment.border] : "—"}
+                    {borderNames(shipment.borders) ?? "—"}
                   </dd>
                 </div>
                 <div>

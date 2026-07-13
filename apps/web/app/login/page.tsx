@@ -6,6 +6,12 @@ import {
   systemIdentity,
 } from "@/src/shared/navigation/navigation";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Entrar",
+};
+
 export default function LoginPage() {
   return (
     <div className="relative grid min-h-screen place-items-center px-4 py-10">

@@ -38,7 +38,7 @@ describe('TripsService', () => {
     loadedDate: null,
     currentStatus: TripStatus.WAITING_APPOINTMENT,
     currentPosition: null,
-    border: null,
+    borders: [],
     tonnage: null,
     cargo: {
       id: 'cargo-id',

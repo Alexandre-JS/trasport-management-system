@@ -10,7 +10,7 @@ import { StatusBadge } from "@/src/shared/components/status-badge";
 import { useMyShipment } from "@/hooks/use-portal";
 import { formatDate, formatDateTime } from "@/utils/format";
 import {
-  borderLabel,
+  borderNames,
   tripEventTypeLabel,
   tripStatusBadgeTone,
   tripStatusMeta,
@@ -83,7 +83,7 @@ export function PortalShipmentDetail({ id }: { id: string }) {
           <Fact label="Mercadoria" value={shipment.cargo.description ?? "—"} />
           <Fact
             label="Fronteira"
-            value={shipment.border ? borderLabel[shipment.border] : "—"}
+            value={borderNames(shipment.borders) ?? "—"}
           />
           <Fact
             label="Tonelagem"

@@ -1,4 +1,4 @@
-import { Border, CargoStatus, TripStatus } from '@prisma/client';
+import { CargoStatus, TripStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 export type CargoEntity = {
@@ -26,7 +26,15 @@ export type CargoEntity = {
     arrivalDate: Date | null;
     loadedDate: Date | null;
     currentPosition: string | null;
-    border: Border | null;
+    borders: {
+      sequence: number;
+      arrivedAt: Date | null;
+      clearedAt: Date | null;
+      border: {
+        id: string;
+        name: string;
+      };
+    }[];
     driver: {
       id: string;
       fullName: string;

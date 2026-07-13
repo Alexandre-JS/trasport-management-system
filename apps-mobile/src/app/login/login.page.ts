@@ -10,6 +10,7 @@ import {
   IonLabel,
   IonSpinner,
 } from '@ionic/angular/standalone';
+import { APP_VERSION } from '../../environments/version';
 import { AuthService } from '../shared/auth.service';
 
 @Component({
@@ -35,6 +36,7 @@ export class LoginPage {
   password = '';
   errorMessage = '';
   isSubmitting = false;
+  readonly appVersion = APP_VERSION;
 
   login() {
     this.errorMessage = '';

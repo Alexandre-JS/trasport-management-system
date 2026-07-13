@@ -106,6 +106,9 @@ export class TrucksRepository {
   private buildWhere(query: ListTrucksQueryDto): Prisma.TruckWhereInput {
     return {
       deletedAt: null,
+      ...(query.withoutTrailer
+        ? { trailers: { none: { deletedAt: null } } }
+        : {}),
       ...(query.search
         ? {
             OR: [

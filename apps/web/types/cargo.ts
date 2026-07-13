@@ -1,5 +1,5 @@
 import type { SortOrder } from "@/types/api";
-import type { Border, TripStatus } from "@/types/trip";
+import type { TripBorderRef, TripStatus } from "@/types/trip";
 
 export type CargoStatus =
   | "CREATED"
@@ -36,7 +36,7 @@ export type Cargo = {
     arrivalDate: string | null;
     loadedDate: string | null;
     currentPosition: string | null;
-    border: Border | null;
+    borders: TripBorderRef[];
     driver: {
       id: string;
       fullName: string;

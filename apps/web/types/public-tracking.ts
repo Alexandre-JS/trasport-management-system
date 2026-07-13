@@ -1,4 +1,4 @@
-import type { Border, TripEventType, TripStatus } from "@/types/trip";
+import type { TripBorderRef, TripEventType, TripStatus } from "@/types/trip";
 
 export type PublicTrackEvent = {
   id: string;
@@ -11,7 +11,7 @@ export type PublicTrackEvent = {
 export type PublicShipment = {
   currentStatus: TripStatus;
   currentPosition: string | null;
-  border: Border | null;
+  borders: TripBorderRef[];
   arrivalEstimate: string | null;
   cargo: {
     code: string;

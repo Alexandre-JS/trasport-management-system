@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   CircleUserRound,
   Gauge,
+  Landmark,
   MapPin,
   Package,
   Route,
@@ -14,6 +15,7 @@ import type {
   NavigationGroup,
   NavigationItem,
 } from "@/src/shared/types/navigation";
+import { APP_VERSION } from "@/version";
 
 export const navigationGroups: NavigationGroup[] = [
   {
@@ -59,8 +61,14 @@ export const navigationGroups: NavigationGroup[] = [
       {
         href: "/frota",
         label: "Frota",
-        description: "Camiões, reboques e disponibilidade",
+        description: "Horses, trailers e disponibilidade",
         icon: Truck,
+      },
+      {
+        href: "/fronteiras",
+        label: "Fronteiras",
+        description: "Postos fronteiriços das rotas",
+        icon: Landmark,
       },
     ],
   },
@@ -149,5 +157,5 @@ export const companyIdentity = {
 export const systemIdentity = {
   name: "SGRTC",
   fullName: "Smart Goods Road Transport Control",
-  version: "0.1.0",
+  version: APP_VERSION,
 };

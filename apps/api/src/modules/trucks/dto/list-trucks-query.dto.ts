@@ -2,6 +2,7 @@ import { TruckStatus } from '@prisma/client';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -36,6 +37,15 @@ export class ListTrucksQueryDto {
   @IsOptional()
   @IsEnum(TruckStatus)
   status?: TruckStatus;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Only trucks without an active trailer',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  withoutTrailer?: boolean;
 
   @ApiPropertyOptional({
     enum: ['createdAt', 'plateNumber', 'brand', 'model', 'status'],

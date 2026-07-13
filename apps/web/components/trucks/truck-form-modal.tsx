@@ -98,11 +98,11 @@ export function TruckFormModal({ open, truck, onClose }: TruckFormModalProps) {
     try {
       if (isEdit && truck) {
         await updateTruck.mutateAsync({ id: truck.id, payload });
-        toast({ title: "Camião atualizado", type: "success" });
+        toast({ title: "Horse atualizado", type: "success" });
         onClose();
       } else {
         await createTruck.mutateAsync(payload);
-        toast({ title: "Camião criado", type: "success" });
+        toast({ title: "Horse criado", type: "success" });
 
         if (continueAfter) {
           reset(emptyValues);
@@ -123,7 +123,7 @@ export function TruckFormModal({ open, truck, onClose }: TruckFormModalProps) {
     <Modal
       open={open}
       size="lg"
-      title={isEdit ? "Editar camião" : "Novo camião"}
+      title={isEdit ? "Editar horse" : "Novo horse"}
       description="Os campos marcados são obrigatórios."
       onClose={onClose}
     >

@@ -24,6 +24,7 @@ const statusOptions = [
 const schema = z.object({
   fullName: z.string().min(1, "Nome é obrigatório"),
   licenseNumber: z.string().min(1, "Carta de condução é obrigatória"),
+  passportNumber: z.string().max(30, "Máximo 30 caracteres").optional(),
   phone: z.string().optional(),
   email: z.union([z.literal(""), z.string().email("Email inválido")]),
   status: z.string(),
@@ -34,6 +35,7 @@ type FormValues = z.infer<typeof schema>;
 const emptyValues: FormValues = {
   fullName: "",
   licenseNumber: "",
+  passportNumber: "",
   phone: "",
   email: "",
   status: "AVAILABLE",
@@ -43,6 +45,7 @@ function toFormValues(driver: Driver): FormValues {
   return {
     fullName: driver.fullName,
     licenseNumber: driver.licenseNumber,
+    passportNumber: driver.passportNumber ?? "",
     phone: driver.phone ?? "",
     email: driver.email ?? "",
     status: driver.status,
@@ -53,6 +56,7 @@ function toPayload(values: FormValues): DriverInput {
   return {
     fullName: values.fullName.trim(),
     licenseNumber: values.licenseNumber.trim(),
+    passportNumber: emptyToUndefined(values.passportNumber?.trim()),
     phone: emptyToUndefined(values.phone),
     email: emptyToUndefined(values.email),
     status: values.status as DriverStatus,
@@ -146,6 +150,12 @@ export function DriverFormModal({
             label="Carta de condução *"
             error={errors.licenseNumber?.message}
             {...register("licenseNumber")}
+          />
+          <Input
+            id="passportNumber"
+            label="Passaporte"
+            error={errors.passportNumber?.message}
+            {...register("passportNumber")}
           />
           <Input id="phone" label="Telefone" {...register("phone")} />
           <Input

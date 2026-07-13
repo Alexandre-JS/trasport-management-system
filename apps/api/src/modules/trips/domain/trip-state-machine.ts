@@ -10,6 +10,12 @@ import { TripStatus, TripEventType } from '@prisma/client';
  *   WAITING_APPOINTMENT -> APPOINTMENT_DONE -> LOADED -> DISPATCHED_ORIGIN
  *   -> AT_BORDER -> BORDER_CLEARED -> ARRIVED -> DISCHARGED
  * CANCELLED is terminal and reachable from any non-terminal state.
+ *
+ * A route may cross several borders (or none), so two extra edges exist:
+ *   BORDER_CLEARED -> AT_BORDER      (next border post of the route)
+ *   DISPATCHED_ORIGIN -> ARRIVED     (route with no border crossing)
+ * Whether the trip actually has pending/no borders is contextual and is
+ * enforced by the repository at transition time, not here.
  */
 const SEQUENCE: readonly TripStatus[] = [
   TripStatus.WAITING_APPOINTMENT,
@@ -25,6 +31,12 @@ const SEQUENCE: readonly TripStatus[] = [
 const TERMINAL_STATUSES: readonly TripStatus[] = [
   TripStatus.DISCHARGED,
   TripStatus.CANCELLED,
+];
+
+/** Multi-border cycle and no-border shortcut (see header comment). */
+const EXTRA_TRANSITIONS: ReadonlyArray<readonly [TripStatus, TripStatus]> = [
+  [TripStatus.BORDER_CLEARED, TripStatus.AT_BORDER],
+  [TripStatus.DISPATCHED_ORIGIN, TripStatus.ARRIVED],
 ];
 
 /**
@@ -80,6 +92,9 @@ export class TripStateMachine {
     }
     // Cancellation is reachable from any non-terminal state.
     if (to === TripStatus.CANCELLED) {
+      return true;
+    }
+    if (EXTRA_TRANSITIONS.some(([f, t]) => f === from && t === to)) {
       return true;
     }
     const fromIndex = SEQUENCE.indexOf(from);

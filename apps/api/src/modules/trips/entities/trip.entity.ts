@@ -1,4 +1,20 @@
-import { Border, Prisma, TripEventType, TripStatus } from '@prisma/client';
+import { Prisma, TripEventType, TripStatus } from '@prisma/client';
+
+/** One border crossing of a trip's route, in sequence order. */
+export type TripBorderEntity = {
+  id: string;
+  sequence: number;
+  arrivedAt: Date | null;
+  clearedAt: Date | null;
+  border: {
+    id: string;
+    name: string;
+    countryA: string;
+    countryB: string;
+    lat: Prisma.Decimal | null;
+    lng: Prisma.Decimal | null;
+  };
+};
 
 export type TripEntity = {
   id: string;
@@ -12,7 +28,7 @@ export type TripEntity = {
   loadedDate: Date | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
-  border: Border | null;
+  borders: TripBorderEntity[];
   tonnage: Prisma.Decimal | null;
   cargo: {
     id: string;

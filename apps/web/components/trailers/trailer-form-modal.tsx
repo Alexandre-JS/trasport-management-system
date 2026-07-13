@@ -90,7 +90,20 @@ export function TrailerFormModal({
 }: TrailerFormModalProps) {
   const isEdit = trailer !== null;
   const { toast } = useToast();
-  const trucks = useTrucks({ limit: 100 });
+  const trucks = useTrucks({ limit: 100, withoutTrailer: true });
+
+  // O filtro exclui o horse já associado a este trailer; em edição
+  // ele tem de continuar na lista para a associação atual ser visível.
+  const truckOptions = [
+    { label: "Sem horse associado", value: "" },
+    ...(trailer?.truck
+      ? [{ label: trailer.truck.plateNumber, value: trailer.truck.id }]
+      : []),
+    ...(trucks.data?.data ?? []).map((truck) => ({
+      label: truck.plateNumber,
+      value: truck.id,
+    })),
+  ];
   const createTrailer = useCreateTrailer();
   const updateTrailer = useUpdateTrailer();
 
@@ -118,11 +131,11 @@ export function TrailerFormModal({
     try {
       if (isEdit && trailer) {
         await updateTrailer.mutateAsync({ id: trailer.id, payload });
-        toast({ title: "Reboque atualizado", type: "success" });
+        toast({ title: "Trailer atualizado", type: "success" });
         onClose();
       } else {
         await createTrailer.mutateAsync(payload);
-        toast({ title: "Reboque criado", type: "success" });
+        toast({ title: "Trailer criado", type: "success" });
 
         if (continueAfter) {
           reset(emptyValues);
@@ -143,7 +156,7 @@ export function TrailerFormModal({
     <Modal
       open={open}
       size="lg"
-      title={isEdit ? "Editar reboque" : "Novo reboque"}
+      title={isEdit ? "Editar trailer" : "Novo trailer"}
       description="Os campos marcados são obrigatórios."
       onClose={onClose}
     >
@@ -157,17 +170,11 @@ export function TrailerFormModal({
               htmlFor="truckId"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Camião associado
+              Horse associado
             </label>
             <Select
               id="truckId"
-              options={[
-                { label: "Sem camião associado", value: "" },
-                ...(trucks.data?.data ?? []).map((truck) => ({
-                  label: truck.plateNumber,
-                  value: truck.id,
-                })),
-              ]}
+              options={truckOptions}
               {...register("truckId")}
             />
           </div>

@@ -1,9 +1,5 @@
 import type { BadgeTone } from "@/components/ui/badge";
-import type {
-  Border,
-  TripEventType,
-  TripStatus,
-} from "@/types/trip";
+import type { TripEventType, TripStatus } from "@/types/trip";
 
 export const tripStatusMeta: Record<
   TripStatus,
@@ -78,10 +74,26 @@ export const tripStatusBadgeTone: Record<
   CANCELLED: "danger",
 };
 
-export const borderLabel: Record<Border, string> = {
-  CHIRUNDU: "Chirundu",
-  CHANIDA: "Chanida",
+type BorderCrossing = {
+  arrivedAt: string | null;
+  clearedAt: string | null;
+  border: { name: string };
 };
+
+/** "Machipanda › Chirundu" — the route's crossings in order, or null if none. */
+export function borderNames(borders: BorderCrossing[]): string | null {
+  if (borders.length === 0) {
+    return null;
+  }
+  return borders.map((crossing) => crossing.border.name).join(" › ");
+}
+
+/** The crossing the trip still has to clear (first uncleared), if any. */
+export function activeBorder<T extends BorderCrossing>(
+  borders: T[],
+): T | null {
+  return borders.find((crossing) => !crossing.clearedAt) ?? null;
+}
 
 export const tripEventTypeLabel: Record<TripEventType, string> = {
   DISPATCHED_ORIGIN: "Despacho (origem)",

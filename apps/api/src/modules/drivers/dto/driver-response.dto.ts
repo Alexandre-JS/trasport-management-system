@@ -15,6 +15,9 @@ export class DriverResponseDto {
   licenseNumber!: string;
 
   @ApiProperty({ required: false, nullable: true })
+  passportNumber!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
   phone!: string | null;
 
   @ApiProperty({ required: false, nullable: true })

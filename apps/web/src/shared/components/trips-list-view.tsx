@@ -15,7 +15,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useTrips } from "@/hooks/use-trips";
 import type { ListTripsParams, Trip, TripStatus } from "@/types/trip";
 import {
-  borderLabel,
+  borderNames,
   tripStatusBadgeTone,
   tripStatusMeta,
   tripStatusOptions,
@@ -26,8 +26,8 @@ type StatusFilter = TripStatus | "all";
 const columns = [
   { id: "code", header: "Nº" },
   { id: "route", header: "Rota" },
-  { id: "truck", header: "Camião" },
-  { id: "trailer", header: "Reboque" },
+  { id: "truck", header: "Horse" },
+  { id: "trailer", header: "Trailer" },
   { id: "driver", header: "Motorista" },
   { id: "border", header: "Fronteira" },
   { id: "tonnage", header: "Tonelagem" },
@@ -143,7 +143,7 @@ export function TripsListView() {
                       {trip.driver.fullName}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {trip.border ? borderLabel[trip.border] : "—"}
+                      {borderNames(trip.borders) ?? "—"}
                     </td>
                     <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
                       {trip.tonnage ? `${trip.tonnage} t` : "—"}

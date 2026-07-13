@@ -4,7 +4,10 @@
 
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:3000/api/v1',
+  // Para testar num dispositivo fisico na mesma rede Wi-Fi, o telefone nao
+  // alcanca "localhost" (seria o proprio telefone) — use o IP LAN da maquina
+  // que corre a API. Confirme o IP com: ipconfig getifaddr en0
+  apiBaseUrl: 'http://192.168.12.243:3000/api/v1',
 };
 
 /*

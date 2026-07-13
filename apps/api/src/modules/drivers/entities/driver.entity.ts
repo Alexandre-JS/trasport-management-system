@@ -5,6 +5,7 @@ export type DriverEntity = {
   userId: string | null;
   fullName: string;
   licenseNumber: string;
+  passportNumber: string | null;
   phone: string | null;
   email: string | null;
   status: DriverStatus;

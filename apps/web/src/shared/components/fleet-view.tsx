@@ -15,14 +15,14 @@ type FleetViewProps = {
 const tabs = [
   {
     id: "camioes",
-    label: "Camiões",
-    description: "Cavalos mecânicos, capacidade e estado",
+    label: "Horses",
+    description: "Horses, capacidade e estado",
     icon: Truck,
   },
   {
     id: "reboques",
-    label: "Reboques",
-    description: "Semirreboques, atrelados e disponibilidade",
+    label: "Trailers",
+    description: "Trailers e disponibilidade",
     icon: Boxes,
   },
 ] satisfies Array<{
@@ -43,7 +43,7 @@ export function FleetView({ initialTab }: FleetViewProps) {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Frota"
-        description="Gestão centralizada dos veículos, reboques e disponibilidade operacional."
+        description="Gestão centralizada dos veículos, trailers e disponibilidade operacional."
       />
 
       <div className="grid gap-2 sm:grid-cols-2" role="tablist">

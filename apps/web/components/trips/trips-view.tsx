@@ -129,7 +129,7 @@ export function TripsView() {
       { header: "Código", value: (row) => shortCode(row.id) },
       { header: "Carga", value: (row) => row.cargo.code },
       { header: "Motorista", value: (row) => row.driver.fullName },
-      { header: "Camião", value: (row) => row.truck.plateNumber },
+      { header: "Horse", value: (row) => row.truck.plateNumber },
       { header: "Origem", value: (row) => row.cargo.origin },
       { header: "Destino", value: (row) => row.cargo.destination },
       { header: "Estado", value: (row) => tripStatusMeta[row.currentStatus].label },
@@ -212,7 +212,7 @@ export function TripsView() {
     },
     {
       id: "truck",
-      header: "Camião",
+      header: "Horse",
       cell: (trip) => (
         <span className="font-mono text-xs text-slate-600 dark:text-slate-300">
           {trip.truck.plateNumber}
@@ -419,7 +419,7 @@ export function TripsView() {
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <DetailRow label="Carga" value={detailsTrip.cargo.code} />
             <DetailRow label="Motorista" value={detailsTrip.driver.fullName} />
-            <DetailRow label="Camião" value={detailsTrip.truck.plateNumber} />
+            <DetailRow label="Horse" value={detailsTrip.truck.plateNumber} />
             <DetailRow
               label="Estado"
               value={tripStatusMeta[detailsTrip.currentStatus].label}

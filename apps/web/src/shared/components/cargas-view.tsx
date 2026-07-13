@@ -39,7 +39,7 @@ import {
   cargoStatusOptions,
 } from "@/utils/cargo-status";
 import {
-  borderLabel,
+  activeBorder,
   isTerminalTripStatus,
   tripStatusBadgeTone,
   tripStatusMeta,
@@ -122,7 +122,7 @@ export function CargasView() {
         tone: tripStatusBadgeTone[trip.currentStatus],
         detail:
           trip.currentPosition ??
-          (trip.border ? borderLabel[trip.border] : null) ??
+          (activeBorder(trip.borders)?.border.name ?? null) ??
           (trip.currentStatus === "WAITING_APPOINTMENT"
             ? "No porto · aguarda marcação"
             : null) ??
@@ -136,7 +136,7 @@ export function CargasView() {
       return {
         label: "Ainda não despachada",
         tone: "neutral" as const,
-        detail: "Sem motorista e camião atribuídos",
+        detail: "Sem motorista e horse atribuídos",
       };
     }
 
@@ -263,7 +263,7 @@ export function CargasView() {
                           </span>
                           {trip.trailer ? (
                             <span className="text-xs text-slate-500 dark:text-slate-400">
-                              Reboque {trip.trailer.plateNumber}
+                              Trailer {trip.trailer.plateNumber}
                             </span>
                           ) : null}
                         </div>
@@ -446,18 +446,18 @@ export function CargasView() {
                           value={trip.driver.fullName}
                         />
                         <DetailRow
-                          label="Camião"
+                          label="Horse"
                           value={trip.truck.plateNumber}
                         />
                         <DetailRow
-                          label="Reboque"
+                          label="Trailer"
                           value={trip.trailer?.plateNumber}
                         />
                         <DetailRow
                           label="Posição atual"
                           value={
                             trip.currentPosition ??
-                            (trip.border ? borderLabel[trip.border] : null)
+                            (activeBorder(trip.borders)?.border.name ?? null)
                           }
                         />
                         <DetailRow

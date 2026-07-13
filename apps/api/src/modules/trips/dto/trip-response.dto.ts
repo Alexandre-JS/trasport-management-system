@@ -1,5 +1,52 @@
-import { Border, TripEventType, TripStatus } from '@prisma/client';
+import { TripEventType, TripStatus } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+class TripBorderBorderDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty()
+  countryA!: string;
+
+  @ApiProperty()
+  countryB!: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Decimal serialised as string',
+  })
+  lat!: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Decimal serialised as string',
+  })
+  lng!: string | null;
+}
+
+class TripBorderDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({ description: 'Position of this crossing in the route (1-based)' })
+  sequence!: number;
+
+  @ApiProperty({ required: false, nullable: true })
+  arrivedAt!: Date | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  clearedAt!: Date | null;
+
+  @ApiProperty({ type: TripBorderBorderDto })
+  border!: TripBorderBorderDto;
+}
 
 class TripCargoDto {
   @ApiProperty()
@@ -105,8 +152,12 @@ export class TripResponseDto {
   @ApiProperty({ required: false, nullable: true })
   currentPosition!: string | null;
 
-  @ApiProperty({ enum: Border, required: false, nullable: true })
-  border!: Border | null;
+  @ApiProperty({
+    type: TripBorderDto,
+    isArray: true,
+    description: 'Border crossings of the route, in sequence order',
+  })
+  borders!: TripBorderDto[];
 
   @ApiProperty({
     type: String,

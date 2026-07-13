@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import appConfig from './config/app.config';
+import { AppController } from './app.controller';
 import { AuthCoreModule } from './core/auth/auth-core.module';
 import { DatabaseModule } from './core/database/database.module';
 import { EventsModule } from './core/events/events.module';
@@ -12,6 +13,7 @@ import { NotificationsCoreModule } from './core/notifications/notifications-core
 import { SharedModule } from './core/shared/shared.module';
 import { TrackingCoreModule } from './core/tracking/tracking-core.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BordersModule } from './modules/borders/borders.module';
 import { CargoModule } from './modules/cargo/cargo.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -54,6 +56,7 @@ import { UsersModule } from './modules/users/users.module';
     DriversModule,
     TrucksModule,
     TrailersModule,
+    BordersModule,
     CargoModule,
     TripsModule,
     TrackingModule,
@@ -65,6 +68,7 @@ import { UsersModule } from './modules/users/users.module';
     PortalModule,
     PublicTrackingModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,

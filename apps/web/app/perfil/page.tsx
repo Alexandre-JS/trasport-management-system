@@ -1,6 +1,12 @@
 import { ProfileView } from "@/src/shared/components/profile-view";
 import { ProtectedLayout } from "@/src/shared/layout/protected-layout";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Perfil",
+};
+
 export default function PerfilPage() {
   return (
     <ProtectedLayout>

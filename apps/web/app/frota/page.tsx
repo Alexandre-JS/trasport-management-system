@@ -4,6 +4,12 @@ import {
 } from "@/src/shared/components/fleet-view";
 import { ProtectedLayout } from "@/src/shared/layout/protected-layout";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Frota",
+};
+
 type FleetPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };

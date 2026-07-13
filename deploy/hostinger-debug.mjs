@@ -82,19 +82,21 @@ for (const cmd of cmds) {
     console.log(`não consegui criar o cron: ${JSON.stringify(created).slice(0, 300)}`);
     continue;
   }
+  // o cron só dispara no próximo minuto — esperar antes de ler o output
+  await new Promise((r) => setTimeout(r, 70000));
   let output = '';
-  const deadline = Date.now() + 3 * 60 * 1000;
+  const deadline = Date.now() + 2 * 60 * 1000;
   while (Date.now() < deadline) {
-    await new Promise((r) => setTimeout(r, 15000));
     try {
       const out = await api('GET', `/api/hosting/v1/accounts/${username}/cron-jobs/${uid}/output`);
-      output = typeof out === 'string' ? out : JSON.stringify(out, null, 2);
-      if (output && output !== '""' && output !== '{}' && output !== 'null') break;
+      output = typeof out === 'object' && out !== null ? (out.output ?? out.data?.output ?? '') : String(out);
+      if (output) break;
     } catch {
       /* ainda não correu */
     }
+    await new Promise((r) => setTimeout(r, 15000));
   }
-  console.log(output || '(sem output em 3 min)');
+  console.log(output || '(sem output — o comando pode ter falhado ou não produz stdout)');
   try {
     await api('DELETE', `/api/hosting/v1/accounts/${username}/cron-jobs/${uid}`);
   } catch (err) {

@@ -5,6 +5,8 @@ export type NavigationItem = {
   label: string;
   description: string;
   icon: LucideIcon;
+  /** Perfis que veem este item; omitido = todos os perfis do painel. */
+  roles?: string[];
 };
 
 export type NavigationGroup = {

@@ -102,6 +102,7 @@ export const navigationGroups: NavigationGroup[] = [
         label: "Gestão de Usuários",
         description: "Contas de acesso e perfis de permissões",
         icon: UserCog,
+        roles: ["ADMIN"],
       },
     ],
   },
@@ -110,6 +111,26 @@ export const navigationGroups: NavigationGroup[] = [
 export const navigationItems: NavigationItem[] = navigationGroups.flatMap(
   (group) => group.items,
 );
+
+/** Grupos visíveis para um perfil (itens sem `roles` aparecem a todos). */
+export function getNavigationGroupsForRole(
+  role: string | null,
+): NavigationGroup[] {
+  return navigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => !item.roles || (role !== null && item.roles.includes(role)),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+export function getNavigationItemsForRole(
+  role: string | null,
+): NavigationItem[] {
+  return getNavigationGroupsForRole(role).flatMap((group) => group.items);
+}
 
 export function isActivePath(pathname: string, href: string) {
   if (href === "/") {

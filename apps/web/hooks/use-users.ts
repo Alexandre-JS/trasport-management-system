@@ -9,13 +9,19 @@ import {
 import {
   changeUserRole,
   createUser,
+  deleteUser,
   getUser,
   listRoles,
   listUsers,
   resetUserPassword,
   setUserActive,
+  updateUser,
 } from "@/services/users-service";
-import type { CreateUserPayload, ListUsersParams } from "@/types/user";
+import type {
+  CreateUserPayload,
+  ListUsersParams,
+  UpdateUserPayload,
+} from "@/types/user";
 
 const USERS_KEY = "users";
 const ROLES_KEY = "roles";
@@ -61,6 +67,29 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: (payload: CreateUserPayload) => createUser(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
+      updateUser(id, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteUser(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
     },

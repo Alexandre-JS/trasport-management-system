@@ -1,8 +1,10 @@
 "use client";
 
-import { KeyRound, Plus, Power, RefreshCw, ShieldCheck } from "lucide-react";
+import { Eye, Pencil, Plus, Power, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ActionMenu, type ActionItem } from "@/components/ui/action-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { UserDetailsModal } from "@/components/users/user-details-modal";
 import { UserFormModal } from "@/components/users/user-form-modal";
 import { UserPasswordModal } from "@/components/users/user-password-modal";
 import { UserRoleModal } from "@/components/users/user-role-modal";
@@ -12,7 +14,7 @@ import { type Column, DataTable } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchBar } from "@/components/ui/search-bar";
 import { Select } from "@/components/ui/select";
-import { useSetUserActive, useUsers } from "@/hooks/use-users";
+import { useDeleteUser, useSetUserActive, useUsers } from "@/hooks/use-users";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
@@ -48,8 +50,11 @@ export function UsersPanel() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [formOpen, setFormOpen] = useState(false);
+  const [formUser, setFormUser] = useState<User | null>(null);
+  const [detailsUser, setDetailsUser] = useState<User | null>(null);
   const [roleUser, setRoleUser] = useState<User | null>(null);
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const search = useDebouncedValue(searchInput, 350);
 
@@ -69,6 +74,7 @@ export function UsersPanel() {
   const { data, isLoading, isError, error, isFetching, refetch } =
     useUsers(params);
   const setUserActive = useSetUserActive();
+  const deleteUser = useDeleteUser();
 
   const rows = data?.data ?? [];
   const meta = data?.meta;
@@ -159,17 +165,19 @@ export function UsersPanel() {
     },
   ];
 
+  // Ações rápidas na tabela; as restantes (mudar perfil, repor senha,
+  // apagar) vivem no modal de detalhes.
   function buildActions(user: User): ActionItem[] {
     return [
       {
-        label: "Mudar perfil",
-        icon: ShieldCheck,
-        onSelect: () => setRoleUser(user),
+        label: "Ver",
+        icon: Eye,
+        onSelect: () => setDetailsUser(user),
       },
       {
-        label: "Repor senha",
-        icon: KeyRound,
-        onSelect: () => setPasswordUser(user),
+        label: "Editar",
+        icon: Pencil,
+        onSelect: () => openEdit(user),
       },
       {
         label: user.isActive ? "Desativar" : "Ativar",
@@ -177,6 +185,33 @@ export function UsersPanel() {
         onSelect: () => handleToggleActive(user),
       },
     ];
+  }
+
+  function openEdit(user: User) {
+    setDetailsUser(null);
+    setFormUser(user);
+    setFormOpen(true);
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    deleteUser.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        toast({ title: "Usuário apagado", type: "success" });
+        setDeleteTarget(null);
+      },
+      onError: (mutationError) => {
+        toast({
+          title: "Não foi possível apagar",
+          description: extractErrorMessage(mutationError),
+          type: "error",
+        });
+        setDeleteTarget(null);
+      },
+    });
   }
 
   return (
@@ -224,9 +259,12 @@ export function UsersPanel() {
           <Button
             size="sm"
             icon={<Plus className="size-4" />}
-            onClick={() => setFormOpen(true)}
+            onClick={() => {
+              setFormUser(null);
+              setFormOpen(true);
+            }}
           >
-            Novo utilizador
+            Novo usuário
           </Button>
         </div>
       </div>
@@ -268,11 +306,50 @@ export function UsersPanel() {
         renderActions={(user) => <ActionMenu items={buildActions(user)} />}
       />
 
-      <UserFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      <UserDetailsModal
+        user={detailsUser}
+        onClose={() => setDetailsUser(null)}
+        onEdit={openEdit}
+        onChangeRole={(user) => {
+          setDetailsUser(null);
+          setRoleUser(user);
+        }}
+        onResetPassword={(user) => {
+          setDetailsUser(null);
+          setPasswordUser(user);
+        }}
+        onToggleActive={(user) => {
+          setDetailsUser(null);
+          handleToggleActive(user);
+        }}
+        onDelete={(user) => {
+          setDetailsUser(null);
+          setDeleteTarget(user);
+        }}
+      />
+      <UserFormModal
+        open={formOpen}
+        user={formUser}
+        onClose={() => setFormOpen(false)}
+      />
       <UserRoleModal user={roleUser} onClose={() => setRoleUser(null)} />
       <UserPasswordModal
         user={passwordUser}
         onClose={() => setPasswordUser(null)}
+      />
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Apagar usuário"
+        description={
+          deleteTarget
+            ? `Tem a certeza que pretende apagar “${deleteTarget.firstName} ${deleteTarget.lastName}” (${deleteTarget.email})? A conta deixa de poder iniciar sessão.`
+            : undefined
+        }
+        confirmLabel="Apagar"
+        tone="danger"
+        loading={deleteUser.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
       />
     </div>
   );

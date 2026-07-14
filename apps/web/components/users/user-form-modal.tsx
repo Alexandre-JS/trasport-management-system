@@ -8,22 +8,25 @@ import { FormActions } from "@/components/ui/form-actions";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
-import { useCreateUser, useRoles } from "@/hooks/use-users";
+import { useCreateUser, useRoles, useUpdateUser } from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
+import type { User } from "@/types/user";
 import { emptyToUndefined } from "@/utils/form";
 import { roleLabelMap } from "@/utils/role-permissions";
 
-const schema = z.object({
+// Na edição a senha não é alterada aqui (ação "Repor senha" nos detalhes)
+// e o perfil muda pela ação dedicada "Mudar perfil".
+const baseSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Apelido é obrigatório"),
   email: z.string().email("Email inválido"),
   phone: z.string().optional(),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
-  roleId: z.string().min(1, "Perfil é obrigatório"),
+  password: z.string(),
+  roleId: z.string(),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof baseSchema>;
 
 const emptyValues: FormValues = {
   firstName: "",
@@ -34,15 +37,46 @@ const emptyValues: FormValues = {
   roleId: "",
 };
 
+function toFormValues(user: User): FormValues {
+  return {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phone: user.phone ?? "",
+    password: "",
+    roleId: user.roleId,
+  };
+}
+
 type UserFormModalProps = {
   open: boolean;
+  user: User | null;
   onClose: () => void;
 };
 
-export function UserFormModal({ open, onClose }: UserFormModalProps) {
+export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
+  const isEdit = user !== null;
   const { toast } = useToast();
   const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
   const { data: roles } = useRoles();
+
+  const schema = baseSchema.superRefine((values, ctx) => {
+    if (!isEdit && values.password.length < 8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: "Mínimo 8 caracteres",
+      });
+    }
+    if (!isEdit && !values.roleId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["roleId"],
+        message: "Perfil é obrigatório",
+      });
+    }
+  });
 
   const {
     register,
@@ -56,9 +90,9 @@ export function UserFormModal({ open, onClose }: UserFormModalProps) {
 
   useEffect(() => {
     if (open) {
-      reset(emptyValues);
+      reset(user ? toFormValues(user) : emptyValues);
     }
-  }, [open, reset]);
+  }, [open, user, reset]);
 
   const roleOptions = [
     { label: "Selecionar perfil...", value: "" },
@@ -68,8 +102,25 @@ export function UserFormModal({ open, onClose }: UserFormModalProps) {
     })),
   ];
 
+  const loading = createUser.isPending || updateUser.isPending;
+
   async function onSubmit(values: FormValues, continueAfter: boolean) {
     try {
+      if (isEdit && user) {
+        await updateUser.mutateAsync({
+          id: user.id,
+          payload: {
+            firstName: values.firstName.trim(),
+            lastName: values.lastName.trim(),
+            email: values.email.trim(),
+            phone: emptyToUndefined(values.phone?.trim()),
+          },
+        });
+        toast({ title: "Usuário atualizado", type: "success" });
+        onClose();
+        return;
+      }
+
       await createUser.mutateAsync({
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim(),
@@ -78,7 +129,7 @@ export function UserFormModal({ open, onClose }: UserFormModalProps) {
         password: values.password,
         roleId: values.roleId,
       });
-      toast({ title: "Utilizador criado", type: "success" });
+      toast({ title: "Usuário criado", type: "success" });
 
       if (continueAfter) {
         reset(emptyValues);
@@ -87,7 +138,7 @@ export function UserFormModal({ open, onClose }: UserFormModalProps) {
       }
     } catch (error) {
       toast({
-        title: "Não foi possível criar o utilizador",
+        title: "Não foi possível guardar",
         description: extractErrorMessage(error),
         type: "error",
       });
@@ -98,8 +149,12 @@ export function UserFormModal({ open, onClose }: UserFormModalProps) {
     <Modal
       open={open}
       size="lg"
-      title="Novo utilizador"
-      description="A senha definida aqui é provisória — o utilizador deve alterá-la no primeiro acesso."
+      title={isEdit ? "Editar usuário" : "Novo usuário"}
+      description={
+        isEdit
+          ? "O perfil e a senha mudam pelas ações dedicadas nos detalhes."
+          : "A senha definida aqui é provisória — o usuário deve alterá-la no primeiro acesso."
+      }
       onClose={onClose}
     >
       <form
@@ -127,36 +182,44 @@ export function UserFormModal({ open, onClose }: UserFormModalProps) {
             {...register("email")}
           />
           <Input id="phone" label="Telefone" {...register("phone")} />
-          <Input
-            id="password"
-            label="Senha provisória *"
-            type="password"
-            autoComplete="new-password"
-            error={errors.password?.message}
-            {...register("password")}
-          />
-          <div>
-            <label
-              htmlFor="roleId"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Perfil *
-            </label>
-            <Select id="roleId" options={roleOptions} {...register("roleId")} />
-            {errors.roleId ? (
-              <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
-                {errors.roleId.message}
-              </p>
-            ) : null}
-          </div>
+          {isEdit ? null : (
+            <>
+              <Input
+                id="password"
+                label="Senha provisória *"
+                type="password"
+                autoComplete="new-password"
+                error={errors.password?.message}
+                {...register("password")}
+              />
+              <div>
+                <label
+                  htmlFor="roleId"
+                  className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Perfil *
+                </label>
+                <Select
+                  id="roleId"
+                  options={roleOptions}
+                  {...register("roleId")}
+                />
+                {errors.roleId ? (
+                  <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                    {errors.roleId.message}
+                  </p>
+                ) : null}
+              </div>
+            </>
+          )}
         </div>
 
         <FormActions
           onCancel={onClose}
-          onReset={() => reset(emptyValues)}
+          onReset={() => reset(user ? toFormValues(user) : emptyValues)}
           onSaveAndContinue={handleSubmit((values) => onSubmit(values, true))}
-          loading={createUser.isPending}
-          showContinue
+          loading={loading}
+          showContinue={!isEdit}
         />
       </form>
     </Modal>

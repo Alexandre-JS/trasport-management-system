@@ -23,9 +23,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const exceptionResponse = isHttpException
       ? exception.getResponse()
       : 'Internal server error';
+    // Achatar o formato do Nest ({ message, error, statusCode }) para que os
+    // clientes recebam sempre `message` como string ou lista — sem aninhamento.
     const message =
-      typeof exceptionResponse === 'string'
-        ? exceptionResponse
+      typeof exceptionResponse === 'object' &&
+      exceptionResponse !== null &&
+      'message' in exceptionResponse
+        ? (exceptionResponse as { message: string | string[] }).message
         : exceptionResponse;
 
     this.logger.error(

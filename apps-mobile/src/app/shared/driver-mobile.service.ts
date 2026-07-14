@@ -8,6 +8,7 @@ import {
   IncidentPayload,
   PickupPayload,
   TrackingPointPayload,
+  TripRouteResponse,
 } from './api.types';
 import { AuthService } from './auth.service';
 
@@ -65,6 +66,13 @@ export class DriverMobileService {
     return this.http.post(
       `${this.baseUrl}/trips/${tripId}/tracking-points`,
       payload,
+      { headers: this.auth.authHeaders() },
+    );
+  }
+
+  getTripRoute(tripId: string) {
+    return this.http.get<TripRouteResponse>(
+      `${this.baseUrl}/trips/${tripId}/route`,
       { headers: this.auth.authHeaders() },
     );
   }

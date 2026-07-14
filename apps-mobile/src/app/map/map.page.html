@@ -1,0 +1,35 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon slot="icon-only" name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Mapa da viagem</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="recenter()">
+        <ion-icon slot="icon-only" name="locate-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="map-wrapper">
+    <div id="driver-map"></div>
+
+    <div class="map-status" *ngIf="statusMessage && !errorMessage">
+      <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+      <span>{{ statusMessage }}</span>
+    </div>
+
+    <div class="map-error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <div class="trip-badge" *ngIf="trip">
+      <ion-icon name="navigate-outline"></ion-icon>
+      <span>{{ trip.cargo.origin }} → {{ trip.cargo.destination }}</span>
+    </div>
+  </div>
+</ion-content>

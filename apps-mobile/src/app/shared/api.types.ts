@@ -111,3 +111,17 @@ export interface TrackingPointPayload {
   accuracy?: number;
   recordedAt?: string;
 }
+
+export interface RoutePoint {
+  latitude: number;
+  longitude: number;
+  speed: number | null;
+  heading: number | null;
+  recordedAt: string;
+}
+
+export interface TripRouteResponse {
+  tripId: string;
+  count: number;
+  points: RoutePoint[];
+}

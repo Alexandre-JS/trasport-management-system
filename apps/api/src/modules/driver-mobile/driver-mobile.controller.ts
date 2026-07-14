@@ -98,6 +98,15 @@ export class DriverMobileController {
     return this.driverMobileService.reportIncident(user, tripId, dto);
   }
 
+  @Get('trips/:tripId/route')
+  @ApiOperation({ summary: 'Map-ready ordered route of the driver own trip' })
+  getTripRoute(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tripId') tripId: string,
+  ) {
+    return this.driverMobileService.getTripRoute(user, tripId);
+  }
+
   @Post('trips/:tripId/tracking-points')
   @ApiOperation({ summary: 'Send GPS point for current driver trip' })
   recordTrackingPoint(

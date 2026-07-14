@@ -28,12 +28,15 @@ import {
   cloudDoneOutline,
   locationOutline,
   logOutOutline,
+  mapOutline,
   navigateOutline,
   playOutline,
   refreshOutline,
 } from 'ionicons/icons';
 import { DriverTrip } from '../shared/api.types';
 import { AuthService } from '../shared/auth.service';
+import { GeolocationService } from '../shared/geolocation.service';
+import type { Position } from '@capacitor/geolocation';
 import { DriverMobileService } from '../shared/driver-mobile.service';
 import { apiErrorMessage } from '../shared/api-error';
 
@@ -74,9 +77,10 @@ export class HomePage implements OnInit, OnDestroy {
 
   private readonly auth = inject(AuthService);
   private readonly driverMobile = inject(DriverMobileService);
+  private readonly geo = inject(GeolocationService);
   private readonly router = inject(Router);
   private lastAutoGpsAt = 0;
-  private trackingWatchId: number | null = null;
+  private trackingWatchId: string | null = null;
 
   currentTrip: DriverTrip | null = null;
   errorMessage = '';
@@ -137,6 +141,7 @@ export class HomePage implements OnInit, OnDestroy {
       cloudDoneOutline,
       locationOutline,
       logOutOutline,
+      mapOutline,
       navigateOutline,
       playOutline,
       refreshOutline,
@@ -339,78 +344,100 @@ export class HomePage implements OnInit, OnDestroy {
     );
   }
 
-  sendGps() {
-    if (!this.currentTrip || !navigator.geolocation) {
-      this.errorMessage = 'GPS indisponivel neste dispositivo.';
+  async sendGps() {
+    if (!this.currentTrip) {
+      this.errorMessage = 'Sem viagem ativa para enviar localização.';
       return;
     }
 
     this.isSubmitting = true;
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.driverMobile
-          .sendTrackingPoint(this.currentTrip!.id, {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            speed: position.coords.speed ?? undefined,
-            heading: position.coords.heading ?? undefined,
-            accuracy: position.coords.accuracy ?? undefined,
-            recordedAt: new Date().toISOString(),
-          })
-          .subscribe({
-            next: () => this.afterSubmit('Localizacao enviada para a central.'),
-            error: () => this.afterError('Nao foi possivel enviar a localizacao.'),
-          });
-      },
-      () => this.afterError('Permissao de GPS negada ou indisponivel.'),
-      { enableHighAccuracy: true, timeout: 12000 },
-    );
+
+    const granted = await this.geo.ensurePermission();
+    if (!granted) {
+      this.afterError(
+        'Permissão de localização negada. Ative-a nas definições do telemóvel.',
+      );
+      return;
+    }
+
+    try {
+      const position = await this.geo.getCurrentPosition();
+      this.driverMobile
+        .sendTrackingPoint(this.currentTrip.id, this.toPayload(position))
+        .subscribe({
+          next: () => this.afterSubmit('Localização enviada para a central.'),
+          error: (error: unknown) =>
+            this.afterError(
+              apiErrorMessage(error, 'Não foi possível enviar a localização.'),
+            ),
+        });
+    } catch {
+      this.afterError('Não foi possível obter o GPS. Verifique se está ligado.');
+    }
+  }
+
+  private toPayload(position: Position) {
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      speed: position.coords.speed ?? undefined,
+      heading: position.coords.heading ?? undefined,
+      accuracy: position.coords.accuracy ?? undefined,
+      recordedAt: new Date().toISOString(),
+    };
+  }
+
+  openMap() {
+    void this.router.navigateByUrl('/map');
   }
 
   logout() {
-    this.stopAutoTracking();
+    void this.stopAutoTracking();
     this.auth.logout();
     void this.router.navigateByUrl('/login', { replaceUrl: true });
   }
 
-  private startAutoTracking() {
+  private async startAutoTracking() {
     if (!this.currentTrip || this.trackingWatchId !== null) {
       return;
     }
 
-    if (!navigator.geolocation) {
+    const granted = await this.geo.ensurePermission();
+    if (!granted) {
       this.isAutoTracking = false;
-      this.trackingStatus = 'GPS indisponivel neste dispositivo.';
+      this.trackingStatus = 'Ative a localização para a central ver o camião.';
       return;
     }
 
-    this.isAutoTracking = true;
-    this.trackingStatus = 'GPS em tempo real ligado.';
-    this.trackingWatchId = navigator.geolocation.watchPosition(
-      (position) => this.sendAutoGps(position),
-      () => {
-        this.isAutoTracking = false;
-        this.trackingStatus = 'Permita o GPS para a central ver o camiao.';
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-        timeout: 15000,
-      },
-    );
+    this.trackingStatus = 'GPS em tempo real a iniciar...';
+    try {
+      this.trackingWatchId = await this.geo.watchPosition(
+        (position) => this.sendAutoGps(position),
+        () => {
+          this.isAutoTracking = false;
+          this.trackingStatus = 'GPS interrompido. Verifique se está ligado.';
+        },
+      );
+      this.isAutoTracking = true;
+      this.trackingStatus = 'GPS em tempo real ligado.';
+    } catch {
+      this.isAutoTracking = false;
+      this.trackingStatus = 'Não foi possível ativar o GPS.';
+    }
   }
 
-  private stopAutoTracking() {
+  private async stopAutoTracking() {
     if (this.trackingWatchId === null) {
       return;
     }
 
-    navigator.geolocation.clearWatch(this.trackingWatchId);
+    const id = this.trackingWatchId;
     this.trackingWatchId = null;
     this.isAutoTracking = false;
+    await this.geo.clearWatch(id);
   }
 
-  private sendAutoGps(position: GeolocationPosition) {
+  private sendAutoGps(position: Position) {
     if (!this.currentTrip) {
       return;
     }
@@ -422,14 +449,7 @@ export class HomePage implements OnInit, OnDestroy {
 
     this.lastAutoGpsAt = now;
     this.driverMobile
-      .sendTrackingPoint(this.currentTrip.id, {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        speed: position.coords.speed ?? undefined,
-        heading: position.coords.heading ?? undefined,
-        accuracy: position.coords.accuracy ?? undefined,
-        recordedAt: new Date().toISOString(),
-      })
+      .sendTrackingPoint(this.currentTrip.id, this.toPayload(position))
       .subscribe({
         next: () => {
           this.isAutoTracking = true;
@@ -459,37 +479,26 @@ export class HomePage implements OnInit, OnDestroy {
     });
   }
 
-  private sendGpsAfterOperation(tripId: string) {
-    if (!navigator.geolocation) {
-      this.statusMessage = 'Operacao feita. GPS indisponivel.';
+  private async sendGpsAfterOperation(tripId: string) {
+    const granted = await this.geo.ensurePermission();
+    if (!granted) {
+      this.statusMessage = 'Operação feita. Ative o GPS quando puder.';
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.driverMobile
-          .sendTrackingPoint(tripId, {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            speed: position.coords.speed ?? undefined,
-            heading: position.coords.heading ?? undefined,
-            accuracy: position.coords.accuracy ?? undefined,
-            recordedAt: new Date().toISOString(),
-          })
-          .subscribe({
-            next: () => {
-              this.statusMessage = 'Operacao feita. Localizacao enviada.';
-            },
-            error: () => {
-              this.statusMessage = 'Operacao feita. GPS nao foi enviado.';
-            },
-          });
-      },
-      () => {
-        this.statusMessage = 'Operacao feita. Ligue o GPS quando puder.';
-      },
-      { enableHighAccuracy: true, timeout: 12000 },
-    );
+    try {
+      const position = await this.geo.getCurrentPosition();
+      this.driverMobile.sendTrackingPoint(tripId, this.toPayload(position)).subscribe({
+        next: () => {
+          this.statusMessage = 'Operação feita. Localização enviada.';
+        },
+        error: () => {
+          this.statusMessage = 'Operação feita. GPS não foi enviado.';
+        },
+      });
+    } catch {
+      this.statusMessage = 'Operação feita. Ligue o GPS quando puder.';
+    }
   }
 
   private afterSubmit(message: string) {

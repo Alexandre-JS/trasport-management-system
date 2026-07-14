@@ -289,6 +289,12 @@ export class DriverMobileService {
     return this.trackingService.recordPoint(tripId, dto);
   }
 
+  /** Rota ordenada da própria viagem, para o motorista ver no mapa da app. */
+  async getTripRoute(user: AuthenticatedUser, tripId: string) {
+    await this.ensureDriverTrip(user.id, tripId);
+    return this.trackingService.getRoute(tripId);
+  }
+
   private async requireDriver(userId: string) {
     const driver = await this.prisma.driver.findFirst({
       where: {

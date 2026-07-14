@@ -8,6 +8,9 @@
       />
     </ion-title>
     <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Mapa" (click)="openMap()">
+        <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
+      </ion-button>
       <ion-button fill="clear" aria-label="Atualizar" (click)="loadCurrentTrip()">
         <ion-icon name="refresh-outline" aria-hidden="true"></ion-icon>
       </ion-button>
@@ -35,10 +38,11 @@
       <p>Ola, motorista</p>
       <h1>{{ statusLabel }}</h1>
       <span>Carga {{ currentTrip.cargo.code }}</span>
-      <div class="tracking-pill" [class.is-on]="isAutoTracking">
+      <button type="button" class="tracking-pill" [class.is-on]="isAutoTracking" (click)="openMap()">
         <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
         <strong>{{ trackingStatus }}</strong>
-      </div>
+        <ion-icon name="map-outline" aria-hidden="true" class="pill-map"></ion-icon>
+      </button>
     </section>
 
     <ion-card class="destination-card">

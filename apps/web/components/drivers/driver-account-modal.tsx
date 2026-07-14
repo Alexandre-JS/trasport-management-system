@@ -10,6 +10,7 @@ import { useCreateUser, useRoles, useUsers } from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { Driver } from "@/types/driver";
+import { passwordSchema } from "@/utils/validation";
 
 type DriverAccountModalProps = {
   driver: Driver | null;
@@ -76,8 +77,9 @@ export function DriverAccountModal({ driver, onClose }: DriverAccountModalProps)
           setFormError("Email inválido");
           return;
         }
-        if (password.length < 8) {
-          setFormError("A senha precisa de pelo menos 8 caracteres");
+        const result = passwordSchema.safeParse(password);
+        if (!result.success) {
+          setFormError(result.error.issues[0]?.message ?? "Senha inválida");
           return;
         }
         if (!driverRoleId) {

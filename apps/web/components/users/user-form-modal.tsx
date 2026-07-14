@@ -13,6 +13,7 @@ import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { User } from "@/types/user";
 import { emptyToUndefined } from "@/utils/form";
+import { optionalPhoneSchema, passwordSchema } from "@/utils/validation";
 import { roleLabelMap } from "@/utils/role-permissions";
 
 // Na edição a senha não é alterada aqui (ação "Repor senha" nos detalhes)
@@ -21,7 +22,7 @@ const baseSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Apelido é obrigatório"),
   email: z.string().email("Email inválido"),
-  phone: z.string().optional(),
+  phone: optionalPhoneSchema,
   password: z.string(),
   roleId: z.string(),
 });
@@ -62,12 +63,15 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
   const { data: roles } = useRoles();
 
   const schema = baseSchema.superRefine((values, ctx) => {
-    if (!isEdit && values.password.length < 8) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["password"],
-        message: "Mínimo 8 caracteres",
-      });
+    if (!isEdit) {
+      const result = passwordSchema.safeParse(values.password);
+      if (!result.success) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["password"],
+          message: result.error.issues[0]?.message ?? "Senha inválida",
+        });
+      }
     }
     if (!isEdit && !values.roleId) {
       ctx.addIssue({
@@ -181,7 +185,12 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
             error={errors.email?.message}
             {...register("email")}
           />
-          <Input id="phone" label="Telefone" {...register("phone")} />
+          <Input
+            id="phone"
+            label="Telefone"
+            error={errors.phone?.message}
+            {...register("phone")}
+          />
           {isEdit ? null : (
             <>
               <Input

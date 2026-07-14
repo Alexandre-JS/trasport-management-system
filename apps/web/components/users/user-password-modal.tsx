@@ -8,6 +8,7 @@ import { useResetUserPassword } from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { User } from "@/types/user";
+import { passwordSchema } from "@/utils/validation";
 
 type UserPasswordModalProps = {
   user: User | null;
@@ -30,8 +31,9 @@ export function UserPasswordModal({ user, onClose }: UserPasswordModalProps) {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setError("Mínimo 8 caracteres");
+    const result = passwordSchema.safeParse(newPassword);
+    if (!result.success) {
+      setError(result.error.issues[0]?.message ?? "Senha inválida");
       return;
     }
 

@@ -21,7 +21,8 @@ async function bootstrap() {
   const isProduction = configService.get<string>('app.env') === 'production';
 
   app.useLogger(logger);
-  app.setGlobalPrefix(prefix);
+  // A raiz fica fora do prefixo: serve a página de status (AppRootController).
+  app.setGlobalPrefix(prefix, { exclude: ['/'] });
   app.enableCors({
     origin: configService.get<string[]>('app.corsOrigin'),
     credentials: true,

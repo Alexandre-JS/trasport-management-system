@@ -1,10 +1,21 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @ApiProperty({ example: 'admin@sgrtc.local' })
+  @ApiPropertyOptional({
+    example: 'admin@sgrtc.local',
+    description:
+      'Email, número de telefone ou nº da carta de condução (motoristas)',
+  })
+  @IsOptional()
+  @IsString()
+  identifier?: string;
+
+  /** @deprecated Compatibilidade com clientes antigos — usar `identifier`. */
+  @ApiPropertyOptional({ example: 'admin@sgrtc.local' })
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
 
   @ApiProperty({ example: 'Admin@12345', minLength: 8 })
   @IsString()

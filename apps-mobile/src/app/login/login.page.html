@@ -13,12 +13,13 @@
 
     <form (ngSubmit)="login()">
       <ion-item>
-        <ion-label position="stacked">Email</ion-label>
+        <ion-label position="stacked">Carta de condução, telefone ou email</ion-label>
         <ion-input
-          name="email"
-          type="email"
-          autocomplete="email"
-          [(ngModel)]="email"
+          name="identifier"
+          type="text"
+          autocomplete="username"
+          placeholder="Ex.: MZ-DRV-0001"
+          [(ngModel)]="identifier"
           required
         ></ion-input>
       </ion-item>

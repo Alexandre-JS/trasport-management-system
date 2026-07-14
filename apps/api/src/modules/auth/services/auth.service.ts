@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -29,7 +30,15 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.authRepository.findActiveUserByEmail(dto.email);
+    const identifier = (dto.identifier ?? dto.email)?.trim();
+
+    if (!identifier) {
+      throw new BadRequestException(
+        'Informe o email, telefone ou nº da carta de condução',
+      );
+    }
+
+    const user = await this.resolveUserByIdentifier(identifier);
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid credentials');
@@ -44,6 +53,38 @@ export class AuthService {
     await this.authRepository.updateLastLogin(user.id);
 
     return this.buildAuthResponse(user);
+  }
+
+  /**
+   * Aceita email, telefone (com ou sem indicativo) ou nº da carta de
+   * condução do motorista como identificador de login.
+   */
+  private async resolveUserByIdentifier(identifier: string) {
+    if (identifier.includes('@')) {
+      return this.authRepository.findActiveUserByEmail(identifier);
+    }
+
+    const digits = identifier.replace(/\D/g, '');
+    const looksLikePhone =
+      digits.length >= 7 && /^[+\d][\d\s\-().]*$/.test(identifier);
+
+    if (looksLikePhone) {
+      const matches =
+        await this.authRepository.findActiveUsersByPhoneDigits(digits);
+
+      if (matches.length > 1) {
+        throw new UnauthorizedException(
+          'Este telefone está associado a mais de uma conta. Entre com o email.',
+        );
+      }
+
+      if (matches.length === 1) {
+        return matches[0];
+      }
+      // sem conta com este telefone: pode ser uma carta de condução numérica
+    }
+
+    return this.authRepository.findActiveUserByLicenseNumber(identifier);
   }
 
   async refresh(dto: RefreshTokenDto) {

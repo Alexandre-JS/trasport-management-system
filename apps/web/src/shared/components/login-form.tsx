@@ -12,7 +12,7 @@ import { extractErrorMessage } from "@/src/shared/services/api-client";
 import { useToast } from "@/providers/toast-provider";
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email obrigatório").email("Email inválido"),
+  identifier: z.string().min(1, "Informe o email ou telefone"),
   password: z.string().min(8, "A password deve ter pelo menos 8 caracteres"),
   rememberMe: z.boolean(),
 });
@@ -33,7 +33,7 @@ export function LoginForm() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
       rememberMe: true,
     },
@@ -80,24 +80,24 @@ export function LoginForm() {
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Email
+            Email ou telefone
           </span>
           <span className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-950">
             <Mail className="size-4 text-slate-400" aria-hidden />
             <input
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="username"
               // Password managers rewrite autocomplete/attributes before React
               // hydrates, causing a benign SSR/client mismatch — suppress it.
               suppressHydrationWarning
               className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
-              placeholder="Seu Email"
-              {...register("email")}
+              placeholder="Email ou nº de telefone"
+              {...register("identifier")}
             />
           </span>
-          {errors.email ? (
+          {errors.identifier ? (
             <span className="text-xs text-rose-600 dark:text-rose-400">
-              {errors.email.message}
+              {errors.identifier.message}
             </span>
           ) : null}
         </label>

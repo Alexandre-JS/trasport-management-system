@@ -9,6 +9,17 @@ import {
 
 const prisma = new PrismaClient();
 
+// Guarda anti-acidente: dados de seed/demo nunca entram em produção por
+// engano. Para semear de propósito (ex.: primeira instalação), correr com
+// FORCE_SEED=1.
+if (process.env.NODE_ENV === 'production' && process.env.FORCE_SEED !== '1') {
+  console.error(
+    'Seed bloqueado: NODE_ENV=production. Se for mesmo intencional, corre com FORCE_SEED=1.',
+  );
+  process.exit(1);
+}
+
+
 // Fixed ids so the demo seed is idempotent (re-running updates, never duplicates).
 const CLIENT_ID = 'c1c1c1c1-0000-4000-8000-000000000001';
 const id = (prefix: string, n: number) =>

@@ -7,8 +7,9 @@ import { usePathname } from "next/navigation";
 import {
   companyIdentity,
   isActivePath,
-  navigationGroups,
+  getNavigationGroupsForRole,
 } from "@/src/shared/navigation/navigation";
+import { useAuth } from "@/src/shared/hooks/use-auth";
 import { cn } from "@/src/shared/utils/cn";
 
 type SidebarProps = {
@@ -17,6 +18,8 @@ type SidebarProps = {
 };
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const { role } = useAuth();
+  const visibleGroups = getNavigationGroupsForRole(role);
   const pathname = usePathname();
 
   return (
@@ -64,7 +67,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         className="flex-1 overflow-y-auto px-3 py-5"
       >
         <div className="flex flex-col gap-5">
-          {navigationGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <div key={group.id} className="flex flex-col gap-1">
               {!collapsed ? (
                 <p className="px-3 pb-1 text-[11px] font-semibold uppercase text-slate-400 dark:text-slate-500">

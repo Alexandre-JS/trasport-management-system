@@ -3,26 +3,29 @@
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { navigationItems } from "@/src/shared/navigation/navigation";
+import { getNavigationItemsForRole } from "@/src/shared/navigation/navigation";
+import { useAuth } from "@/src/shared/hooks/use-auth";
 
 export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { role } = useAuth();
 
   const results = useMemo(() => {
+    const items = getNavigationItemsForRole(role);
     const term = query.trim().toLowerCase();
 
     if (!term) {
-      return navigationItems;
+      return items;
     }
 
-    return navigationItems.filter(
+    return items.filter(
       (item) =>
         item.label.toLowerCase().includes(term) ||
         item.description.toLowerCase().includes(term),
     );
-  }, [query]);
+  }, [query, role]);
 
   function navigate(href: string) {
     setOpen(false);

@@ -3,6 +3,17 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+// Guarda anti-acidente: dados de seed/demo nunca entram em produção por
+// engano. Para semear de propósito (ex.: primeira instalação), correr com
+// FORCE_SEED=1.
+if (process.env.NODE_ENV === 'production' && process.env.FORCE_SEED !== '1') {
+  console.error(
+    'Seed bloqueado: NODE_ENV=production. Se for mesmo intencional, corre com FORCE_SEED=1.',
+  );
+  process.exit(1);
+}
+
+
 async function main() {
   const [adminRole, dispatcherRole, driverRole, clientRole] =
     await Promise.all([

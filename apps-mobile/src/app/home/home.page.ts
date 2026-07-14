@@ -26,6 +26,7 @@ import {
   cameraOutline,
   checkmarkCircleOutline,
   cloudDoneOutline,
+  cloudOfflineOutline,
   locationOutline,
   logOutOutline,
   mapOutline,
@@ -38,6 +39,8 @@ import { AuthService } from '../shared/auth.service';
 import { GeolocationService } from '../shared/geolocation.service';
 import type { Position } from '@capacitor/geolocation';
 import { DriverMobileService } from '../shared/driver-mobile.service';
+import { SyncService } from '../shared/sync.service';
+import { Preferences } from '@capacitor/preferences';
 import { apiErrorMessage } from '../shared/api-error';
 
 interface DriverAction {
@@ -74,10 +77,13 @@ interface DriverAction {
 })
 export class HomePage implements OnInit, OnDestroy {
   private static readonly AUTO_GPS_MIN_INTERVAL_MS = 15000;
+  private static readonly TRIP_CACHE_KEY = 'lumac_mobile_current_trip';
 
   private readonly auth = inject(AuthService);
   private readonly driverMobile = inject(DriverMobileService);
   private readonly geo = inject(GeolocationService);
+  private readonly sync = inject(SyncService);
+  readonly pendingSync = this.sync.pending;
   private readonly router = inject(Router);
   private lastAutoGpsAt = 0;
   private trackingWatchId: string | null = null;
@@ -139,6 +145,7 @@ export class HomePage implements OnInit, OnDestroy {
       cameraOutline,
       checkmarkCircleOutline,
       cloudDoneOutline,
+      cloudOfflineOutline,
       locationOutline,
       logOutOutline,
       mapOutline,
@@ -256,18 +263,48 @@ export class HomePage implements OnInit, OnDestroy {
     return this.secondaryActions.filter((action) => action.action !== 'delivery');
   }
 
+  private async showCachedTrip() {
+    if (this.currentTrip) {
+      return;
+    }
+    try {
+      const { value } = await Preferences.get({
+        key: HomePage.TRIP_CACHE_KEY,
+      });
+      if (value && !this.currentTrip) {
+        this.currentTrip = JSON.parse(value) as DriverTrip;
+        this.isLoading = false;
+      }
+    } catch {
+      /* sem cache */
+    }
+  }
+
   loadCurrentTrip() {
     this.isLoading = true;
     this.errorMessage = '';
+
+    // Arranque rápido: mostra já a última viagem guardada enquanto a rede
+    // responde (ou fica-se por ela se estiver offline).
+    void this.showCachedTrip();
+
     this.driverMobile.getCurrentTrip().subscribe({
       next: (trip) => {
         this.currentTrip = trip;
         this.isLoading = false;
+        void Preferences.set({
+          key: HomePage.TRIP_CACHE_KEY,
+          value: JSON.stringify(trip),
+        });
         this.startAutoTracking();
       },
       error: (error: unknown) => {
-        this.currentTrip = null;
         this.isLoading = false;
+        if (this.currentTrip) {
+          // Offline mas com viagem em cache — continua operacional.
+          this.startAutoTracking();
+          return;
+        }
         this.stopAutoTracking();
         this.errorMessage = apiErrorMessage(
           error,
@@ -362,15 +399,16 @@ export class HomePage implements OnInit, OnDestroy {
 
     try {
       const position = await this.geo.getCurrentPosition();
-      this.driverMobile
-        .sendTrackingPoint(this.currentTrip.id, this.toPayload(position))
-        .subscribe({
-          next: () => this.afterSubmit('Localização enviada para a central.'),
-          error: (error: unknown) =>
-            this.afterError(
-              apiErrorMessage(error, 'Não foi possível enviar a localização.'),
-            ),
-        });
+      const result = await this.sync.send(
+        `/driver-mobile/trips/${this.currentTrip.id}/tracking-points`,
+        this.toPayload(position),
+        'gps',
+      );
+      this.afterSubmit(
+        result === 'sent'
+          ? 'Localização enviada para a central.'
+          : 'Sem rede — localização guardada e enviada quando houver ligação.',
+      );
     } catch {
       this.afterError('Não foi possível obter o GPS. Verifique se está ligado.');
     }
@@ -437,7 +475,7 @@ export class HomePage implements OnInit, OnDestroy {
     await this.geo.clearWatch(id);
   }
 
-  private sendAutoGps(position: Position) {
+  private async sendAutoGps(position: Position) {
     if (!this.currentTrip) {
       return;
     }
@@ -448,20 +486,20 @@ export class HomePage implements OnInit, OnDestroy {
     }
 
     this.lastAutoGpsAt = now;
-    this.driverMobile
-      .sendTrackingPoint(this.currentTrip.id, this.toPayload(position))
-      .subscribe({
-        next: () => {
-          this.isAutoTracking = true;
-          this.trackingStatus = 'GPS enviado para a central.';
-        },
-        error: (error: unknown) => {
-          this.trackingStatus = apiErrorMessage(
-            error,
-            'GPS ligado, mas o envio falhou agora. Volta a tentar sozinho.',
-          );
-        },
-      });
+    this.isAutoTracking = true;
+    try {
+      const result = await this.sync.send(
+        `/driver-mobile/trips/${this.currentTrip.id}/tracking-points`,
+        this.toPayload(position),
+        'gps',
+      );
+      this.trackingStatus =
+        result === 'sent'
+          ? 'GPS enviado para a central.'
+          : 'Sem rede — a guardar o GPS para enviar depois.';
+    } catch {
+      this.trackingStatus = 'GPS ligado. A central atualiza quando houver rede.';
+    }
   }
 
   private submit(request: () => Observable<unknown>, afterSuccess?: () => void) {
@@ -488,14 +526,12 @@ export class HomePage implements OnInit, OnDestroy {
 
     try {
       const position = await this.geo.getCurrentPosition();
-      this.driverMobile.sendTrackingPoint(tripId, this.toPayload(position)).subscribe({
-        next: () => {
-          this.statusMessage = 'Operação feita. Localização enviada.';
-        },
-        error: () => {
-          this.statusMessage = 'Operação feita. GPS não foi enviado.';
-        },
-      });
+      await this.sync.send(
+        `/driver-mobile/trips/${tripId}/tracking-points`,
+        this.toPayload(position),
+        'gps',
+      );
+      this.statusMessage = 'Operação feita. Localização registada.';
     } catch {
       this.statusMessage = 'Operação feita. Ligue o GPS quando puder.';
     }

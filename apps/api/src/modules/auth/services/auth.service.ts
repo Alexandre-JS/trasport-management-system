@@ -234,7 +234,7 @@ export class AuthService {
     const expiresIn =
       tokenType === 'access'
         ? this.configService.get<string>('jwt.accessExpiresIn', '15m')
-        : this.configService.get<string>('jwt.refreshExpiresIn', '7d');
+        : this.configService.get<string>('jwt.refreshExpiresIn', '30d');
 
     return this.jwtService.signAsync(payload, {
       secret,

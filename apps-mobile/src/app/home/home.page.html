@@ -43,6 +43,10 @@
         <strong>{{ trackingStatus }}</strong>
         <ion-icon name="map-outline" aria-hidden="true" class="pill-map"></ion-icon>
       </button>
+      <div class="sync-pill" *ngIf="pendingSync() > 0">
+        <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
+        <span>{{ pendingSync() }} por enviar — será sincronizado com a rede</span>
+      </div>
     </section>
 
     <ion-card class="destination-card">

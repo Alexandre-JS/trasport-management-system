@@ -53,7 +53,7 @@ export default () => {
         isProduction,
       ),
       accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
-      refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+      refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '30d',
     },
   };
 };

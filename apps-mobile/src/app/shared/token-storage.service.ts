@@ -1,18 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Capacitor, registerPlugin } from '@capacitor/core';
-
-/**
- * Minimal shape of the official `@capacitor/preferences` plugin. On native
- * platforms this bridges to the Keychain (iOS) / SharedPreferences (Android),
- * which — unlike `localStorage` — is not reachable from injected/XSS JavaScript.
- */
-interface PreferencesPlugin {
-  get(options: { key: string }): Promise<{ value: string | null }>;
-  set(options: { key: string; value: string }): Promise<void>;
-  remove(options: { key: string }): Promise<void>;
-}
-
-const Preferences = registerPlugin<PreferencesPlugin>('Preferences');
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
 const ACCESS_TOKEN_KEY = 'lumac_mobile_access_token';
 const REFRESH_TOKEN_KEY = 'lumac_mobile_refresh_token';

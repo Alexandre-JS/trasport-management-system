@@ -11,6 +11,7 @@ import {
   IonSpinner,
 } from '@ionic/angular/standalone';
 import { APP_VERSION } from '../../environments/version';
+import { apiErrorMessage } from '../shared/api-error';
 import { AuthService } from '../shared/auth.service';
 
 @Component({
@@ -47,9 +48,12 @@ export class LoginPage {
         this.isSubmitting = false;
         void this.router.navigateByUrl('/home', { replaceUrl: true });
       },
-      error: () => {
+      error: (error: unknown) => {
         this.isSubmitting = false;
-        this.errorMessage = 'Credenciais invalidas ou sem acesso mobile.';
+        this.errorMessage = apiErrorMessage(
+          error,
+          'Credenciais inválidas ou conta sem acesso mobile.',
+        );
       },
     });
   }

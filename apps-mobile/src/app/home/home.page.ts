@@ -35,6 +35,7 @@ import {
 import { DriverTrip } from '../shared/api.types';
 import { AuthService } from '../shared/auth.service';
 import { DriverMobileService } from '../shared/driver-mobile.service';
+import { apiErrorMessage } from '../shared/api-error';
 
 interface DriverAction {
   label: string;
@@ -259,11 +260,14 @@ export class HomePage implements OnInit, OnDestroy {
         this.isLoading = false;
         this.startAutoTracking();
       },
-      error: () => {
+      error: (error: unknown) => {
         this.currentTrip = null;
         this.isLoading = false;
         this.stopAutoTracking();
-        this.errorMessage = 'Nao foi encontrada viagem ativa para este motorista.';
+        this.errorMessage = apiErrorMessage(
+          error,
+          'Não foi encontrada viagem ativa para este motorista.',
+        );
       },
     });
   }
@@ -431,8 +435,11 @@ export class HomePage implements OnInit, OnDestroy {
           this.isAutoTracking = true;
           this.trackingStatus = 'GPS enviado para a central.';
         },
-        error: () => {
-          this.trackingStatus = 'GPS ligado, mas nao enviou agora.';
+        error: (error: unknown) => {
+          this.trackingStatus = apiErrorMessage(
+            error,
+            'GPS ligado, mas o envio falhou agora. Volta a tentar sozinho.',
+          );
         },
       });
   }
@@ -445,7 +452,10 @@ export class HomePage implements OnInit, OnDestroy {
         afterSuccess?.();
         this.afterSubmit('Operacao enviada com sucesso.');
       },
-      error: () => this.afterError('Nao foi possivel concluir a operacao.'),
+      error: (error: unknown) =>
+        this.afterError(
+          apiErrorMessage(error, 'Não foi possível concluir a operação.'),
+        ),
     });
   }
 

@@ -1,10 +1,13 @@
 "use client";
 
-import { Boxes, Truck } from "lucide-react";
+import { Boxes, PackagePlus, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { FleetWizardModal } from "@/components/fleet/fleet-wizard-modal";
 import { TrailersView } from "@/components/trailers/trailers-view";
 import { TrucksView } from "@/components/trucks/trucks-view";
 import { PageHeader } from "@/src/shared/components/page-header";
+import { Button } from "@/components/ui/button";
 
 export type FleetTab = "camioes" | "reboques";
 
@@ -34,6 +37,7 @@ const tabs = [
 
 export function FleetView({ initialTab }: FleetViewProps) {
   const router = useRouter();
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   function setTab(tab: FleetTab) {
     router.replace(`/frota?tab=${tab}`, { scroll: false });
@@ -44,6 +48,20 @@ export function FleetView({ initialTab }: FleetViewProps) {
       <PageHeader
         title="Frota"
         description="Gestão centralizada dos veículos, trailers e disponibilidade operacional."
+        primaryAction={
+          <Button
+            size="sm"
+            icon={<PackagePlus className="size-4" />}
+            onClick={() => setWizardOpen(true)}
+          >
+            Registar unidade
+          </Button>
+        }
+      />
+
+      <FleetWizardModal
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
       />
 
       <div className="grid gap-2 sm:grid-cols-2" role="tablist">

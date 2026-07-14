@@ -15,10 +15,11 @@ export class AuthService {
     return this.storage.restore();
   }
 
-  login(email: string, password: string): Observable<AuthResponse> {
+  /** identifier: email, telefone ou nº da carta de condução do motorista. */
+  login(identifier: string, password: string): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${environment.apiBaseUrl}/auth/login`, {
-        email,
+        identifier,
         password,
       })
       .pipe(tap((response) => this.storage.save(response)));

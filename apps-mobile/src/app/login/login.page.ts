@@ -33,7 +33,7 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  email = '';
+  identifier = '';
   password = '';
   errorMessage = '';
   isSubmitting = false;
@@ -43,7 +43,7 @@ export class LoginPage {
     this.errorMessage = '';
     this.isSubmitting = true;
 
-    this.auth.login(this.email, this.password).subscribe({
+    this.auth.login(this.identifier.trim(), this.password).subscribe({
       next: () => {
         this.isSubmitting = false;
         void this.router.navigateByUrl('/home', { replaceUrl: true });

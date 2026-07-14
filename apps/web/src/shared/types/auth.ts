@@ -11,13 +11,13 @@ export type AuthUser = {
 };
 
 export type LoginCredentials = {
-  email: string;
+  identifier: string;
   password: string;
   rememberMe: boolean;
 };
 
 export type LoginPayload = {
-  email: string;
+  identifier: string;
   password: string;
 };
 

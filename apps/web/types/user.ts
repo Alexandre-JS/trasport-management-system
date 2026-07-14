@@ -33,6 +33,8 @@ export type CreateUserPayload = {
   phone?: string;
 };
 
+export type UpdateUserPayload = Partial<Omit<CreateUserPayload, "password">>;
+
 export type UserSortBy = "createdAt" | "email" | "firstName" | "lastName";
 
 export type ListUsersParams = {

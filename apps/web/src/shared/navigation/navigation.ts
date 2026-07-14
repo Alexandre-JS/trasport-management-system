@@ -1,6 +1,5 @@
 import {
   AlertTriangle,
-  CircleUserRound,
   Gauge,
   Landmark,
   MapPin,
@@ -96,17 +95,13 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Administração",
     items: [
       // Configurações fica fora do menu principal até retomarmos este módulo.
+      // "Perfil" saiu do menu lateral — continua acessível pelo menu do
+      // avatar (canto superior direito).
       {
         href: "/utilizadores",
-        label: "Utilizadores",
+        label: "Gestão de Usuários",
         description: "Contas de acesso e perfis de permissões",
         icon: UserCog,
-      },
-      {
-        href: "/perfil",
-        label: "Perfil",
-        description: "Conta e preferências pessoais",
-        icon: CircleUserRound,
       },
     ],
   },

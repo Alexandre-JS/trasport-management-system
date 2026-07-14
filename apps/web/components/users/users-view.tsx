@@ -7,8 +7,8 @@ export function UsersView() {
   return (
     <>
       <PageHeader
-        title="Utilizadores"
-        description="Contas de acesso ao sistema e respetivos perfis de permissões."
+        title="Gestão de Usuários"
+        description="Criar, editar e gerir as contas de acesso ao sistema e os seus perfis."
       />
       <UsersPanel />
     </>

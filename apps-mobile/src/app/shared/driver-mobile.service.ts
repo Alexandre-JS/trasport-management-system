@@ -7,6 +7,7 @@ import {
   DriverTripsResponse,
   IncidentPayload,
   PickupPayload,
+  ContainerReturnPayload,
   TrackingPointPayload,
   TripRouteResponse,
 } from './api.types';
@@ -73,6 +74,22 @@ export class DriverMobileService {
   getTripRoute(tripId: string) {
     return this.http.get<TripRouteResponse>(
       `${this.baseUrl}/trips/${tripId}/route`,
+      { headers: this.auth.authHeaders() },
+    );
+  }
+
+  startContainerReturn(tripId: string) {
+    return this.http.post(
+      `${this.baseUrl}/trips/${tripId}/container-return/start`,
+      {},
+      { headers: this.auth.authHeaders() },
+    );
+  }
+
+  confirmContainerReturn(tripId: string, payload: ContainerReturnPayload) {
+    return this.http.post(
+      `${this.baseUrl}/trips/${tripId}/container-return/confirm`,
+      payload,
       { headers: this.auth.authHeaders() },
     );
   }

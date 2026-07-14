@@ -5,6 +5,7 @@ import { Permissions } from '../../core/auth/decorators/permissions.decorator';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../core/auth/guards/permissions.guard';
 import type { AuthenticatedUser } from '../../core/auth/interfaces/authenticated-user.interface';
+import { ConfirmContainerReturnDto } from '../container-returns/dto/confirm-container-return.dto';
 import { ConfirmDeliveryDto } from '../delivery/dto/confirm-delivery.dto';
 import { ConfirmPickupDto } from '../delivery/dto/confirm-pickup.dto';
 import { CreateTrackingPointDto } from '../tracking/dto/create-tracking-point.dto';
@@ -86,6 +87,25 @@ export class DriverMobileController {
     @Body() dto: ConfirmDeliveryDto,
   ) {
     return this.driverMobileService.confirmDelivery(user, tripId, dto);
+  }
+
+  @Post('trips/:tripId/container-return/start')
+  @ApiOperation({ summary: 'Start container return after discharge' })
+  startContainerReturn(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tripId') tripId: string,
+  ) {
+    return this.driverMobileService.startContainerReturn(user, tripId);
+  }
+
+  @Post('trips/:tripId/container-return/confirm')
+  @ApiOperation({ summary: 'Confirm container return with proof (POD)' })
+  confirmContainerReturn(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tripId') tripId: string,
+    @Body() dto: ConfirmContainerReturnDto,
+  ) {
+    return this.driverMobileService.confirmContainerReturn(user, tripId, dto);
   }
 
   @Post('trips/:tripId/incidents')

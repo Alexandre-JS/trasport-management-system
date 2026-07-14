@@ -42,6 +42,8 @@ const statusColor: Record<TripStatus, string> = {
   BORDER_CLEARED: "#d97706",
   ARRIVED: "#059669",
   DISCHARGED: "#059669",
+  CONTAINER_RETURN_PENDING: "#d97706",
+  CONTAINER_RETURNED: "#059669",
   CANCELLED: "#dc2626",
 };
 

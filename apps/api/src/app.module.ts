@@ -16,6 +16,7 @@ import { TrackingCoreModule } from './core/tracking/tracking-core.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BordersModule } from './modules/borders/borders.module';
 import { CargoModule } from './modules/cargo/cargo.module';
+import { ContainerReturnsModule } from './modules/container-returns/container-returns.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
@@ -59,6 +60,7 @@ import { UsersModule } from './modules/users/users.module';
     TrailersModule,
     BordersModule,
     CargoModule,
+    ContainerReturnsModule,
     TripsModule,
     TrackingModule,
     IncidentsModule,

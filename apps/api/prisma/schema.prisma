@@ -48,6 +48,10 @@ enum TripStatus {
   BORDER_CLEARED
   ARRIVED
   DISCHARGED
+  // Só para carga CONTAINER: depois de descarregar, o container vazio tem de
+  // ser devolvido ao dono/depósito antes da viagem fechar.
+  CONTAINER_RETURN_PENDING
+  CONTAINER_RETURNED
   CANCELLED
 }
 
@@ -309,6 +313,7 @@ model Trip {
   incidents       Incident[]
   events          TripEvent[]
   borders         TripBorder[]
+  containerReturn ContainerReturn?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   deletedAt       DateTime?
@@ -320,6 +325,22 @@ model Trip {
   @@index([currentStatus])
   @@index([createdAt])
   @@map("trips")
+}
+
+model ContainerReturn {
+  id           String    @id @default(uuid()) @db.Char(36)
+  tripId       String    @unique @db.Char(36)
+  returnedTo   String?   @db.VarChar(150)
+  receiverName String?   @db.VarChar(150)
+  podDocument  String?   @db.MediumText
+  returnedAt   DateTime?
+  observations String?   @db.Text
+  trip         Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([returnedAt])
+  @@map("container_returns")
 }
 
 model TripEvent {
@@ -367,6 +388,7 @@ model Delivery {
   receiverDocument String?   @db.VarChar(80)
   deliveryPhoto    String?   @db.MediumText
   signature        String?   @db.MediumText
+  podDocument      String?   @db.MediumText
   deliveredAt      DateTime?
   observations     String?   @db.Text
   trip             Trip      @relation(fields: [tripId], references: [id], onDelete: Restrict)

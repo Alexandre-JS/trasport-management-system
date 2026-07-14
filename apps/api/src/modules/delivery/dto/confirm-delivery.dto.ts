@@ -26,6 +26,13 @@ export class ConfirmDeliveryDto {
   @IsString()
   signature?: string;
 
+  @ApiPropertyOptional({
+    description: 'Documento POD que comprova a entrega (base64: foto/PDF)',
+  })
+  @IsOptional()
+  @IsString()
+  podDocument?: string;
+
   @ApiPropertyOptional({ description: 'Observações registadas na entrega' })
   @IsOptional()
   @IsString()

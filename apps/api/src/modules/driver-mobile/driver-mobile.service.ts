@@ -7,6 +7,8 @@ import {
 import { Prisma, TripStatus } from '@prisma/client';
 import type { AuthenticatedUser } from '../../core/auth/interfaces/authenticated-user.interface';
 import { PrismaService } from '../../core/database/prisma.service';
+import { ConfirmContainerReturnDto } from '../container-returns/dto/confirm-container-return.dto';
+import { ContainerReturnService } from '../container-returns/services/container-return.service';
 import { ConfirmDeliveryDto } from '../delivery/dto/confirm-delivery.dto';
 import { ConfirmPickupDto } from '../delivery/dto/confirm-pickup.dto';
 import { DeliveryService } from '../delivery/services/delivery.service';
@@ -52,6 +54,9 @@ const driverTripSelect = {
       id: true,
       code: true,
       description: true,
+      type: true,
+      containerNumber: true,
+      weightTonnes: true,
       origin: true,
       destination: true,
       status: true,
@@ -61,6 +66,14 @@ const driverTripSelect = {
           companyName: true,
         },
       },
+    },
+  },
+  containerReturn: {
+    select: {
+      id: true,
+      returnedTo: true,
+      receiverName: true,
+      returnedAt: true,
     },
   },
   driver: {
@@ -127,6 +140,7 @@ export class DriverMobileService {
     private readonly deliveryService: DeliveryService,
     private readonly incidentsService: IncidentsService,
     private readonly trackingService: TrackingService,
+    private readonly containerReturnService: ContainerReturnService,
   ) {}
 
   async getProfile(user: AuthenticatedUser) {
@@ -163,7 +177,20 @@ export class DriverMobileService {
       where: {
         driverId: driver.id,
         deletedAt: null,
-        currentStatus: { in: ACTIVE_STATUSES },
+        OR: [
+          { currentStatus: { in: ACTIVE_STATUSES } },
+          // Container descarregado mas ainda por devolver: continua a ser a
+          // viagem "atual" do motorista até confirmar a devolução.
+          {
+            currentStatus: {
+              in: [
+                TripStatus.DISCHARGED,
+                TripStatus.CONTAINER_RETURN_PENDING,
+              ],
+            },
+            cargo: { type: 'CONTAINER' },
+          },
+        ],
       },
       select: driverTripSelect,
       orderBy: [{ departureDate: 'desc' }, { createdAt: 'desc' }],
@@ -269,6 +296,20 @@ export class DriverMobileService {
   ) {
     await this.ensureDriverTrip(user.id, tripId);
     return this.deliveryService.confirmDelivery(tripId, dto);
+  }
+
+  async startContainerReturn(user: AuthenticatedUser, tripId: string) {
+    await this.ensureDriverTrip(user.id, tripId);
+    return this.containerReturnService.start(tripId, user.id);
+  }
+
+  async confirmContainerReturn(
+    user: AuthenticatedUser,
+    tripId: string,
+    dto: ConfirmContainerReturnDto,
+  ) {
+    await this.ensureDriverTrip(user.id, tripId);
+    return this.containerReturnService.confirm(tripId, dto, user.id);
   }
 
   async reportIncident(

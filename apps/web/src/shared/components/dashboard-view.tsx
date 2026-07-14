@@ -133,6 +133,16 @@ export function DashboardView() {
     }),
     ARRIVED: useTrips({ page: 1, limit: 1, currentStatus: "ARRIVED" }),
     DISCHARGED: useTrips({ page: 1, limit: 1, currentStatus: "DISCHARGED" }),
+    CONTAINER_RETURN_PENDING: useTrips({
+      page: 1,
+      limit: 1,
+      currentStatus: "CONTAINER_RETURN_PENDING",
+    }),
+    CONTAINER_RETURNED: useTrips({
+      page: 1,
+      limit: 1,
+      currentStatus: "CONTAINER_RETURNED",
+    }),
     CANCELLED: useTrips({ page: 1, limit: 1, currentStatus: "CANCELLED" }),
   } satisfies Record<TripStatus, ReturnType<typeof useTrips>>;
 

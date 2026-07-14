@@ -98,12 +98,18 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
     }
   }, [open, user, reset]);
 
+  // Contas de motorista criam-se em Motoristas → "Dar acesso mobile", que
+  // cria a conta E o registo operacional (com carta de condução) ligados.
+  // Criar aqui um usuário DRIVER deixaria uma conta órfã, invisível na
+  // tabela de Motoristas e sem acesso à app.
   const roleOptions = [
     { label: "Selecionar perfil...", value: "" },
-    ...(roles ?? []).map((role) => ({
-      label: roleLabelMap[role.name] ?? role.name,
-      value: role.id,
-    })),
+    ...(roles ?? [])
+      .filter((role) => role.name !== "DRIVER")
+      .map((role) => ({
+        label: roleLabelMap[role.name] ?? role.name,
+        value: role.id,
+      })),
   ];
 
   const loading = createUser.isPending || updateUser.isPending;
@@ -218,6 +224,11 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
                     {errors.roleId.message}
                   </p>
                 ) : null}
+                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  Contas de <strong>motorista</strong> criam-se na página
+                  Motoristas → ação “Dar acesso mobile”, já ligadas ao registo
+                  do motorista.
+                </p>
               </div>
             </>
           )}

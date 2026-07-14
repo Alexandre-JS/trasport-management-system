@@ -25,10 +25,15 @@ export function UserRoleModal({ user, onClose }: UserRoleModalProps) {
     setRoleId(user?.roleId ?? "");
   }, [user]);
 
-  const roleOptions = (roles ?? []).map((role) => ({
-    label: roleLabelMap[role.name] ?? role.name,
-    value: role.id,
-  }));
+  // Não é possível transformar uma conta em Motorista por aqui — esse
+  // vínculo cria-se em Motoristas → "Dar acesso mobile". A conta atual de
+  // um motorista pode, no entanto, ser promovida a outro perfil.
+  const roleOptions = (roles ?? [])
+    .filter((role) => role.name !== "DRIVER" || role.id === user?.roleId)
+    .map((role) => ({
+      label: roleLabelMap[role.name] ?? role.name,
+      value: role.id,
+    }));
 
   async function handleSave() {
     if (!user || !roleId || roleId === user.roleId) {
@@ -73,8 +78,9 @@ export function UserRoleModal({ user, onClose }: UserRoleModalProps) {
             onChange={(event) => setRoleId(event.target.value)}
           />
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            O perfil define as permissões — por exemplo, só o perfil Motorista
-            dá acesso à app mobile.
+            {user?.role.name === "DRIVER"
+              ? "Atenção: ao mudar o perfil, esta conta perde o acesso à app do motorista."
+              : "O perfil define as permissões. Contas de motorista criam-se na página Motoristas → \u201cDar acesso mobile\u201d."}
           </p>
         </div>
         <div className="flex justify-end gap-2">

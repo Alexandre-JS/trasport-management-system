@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import appConfig from './config/app.config';
 import { AppController } from './app.controller';
+import { AppRootController } from './app-root.controller';
 import { AuthCoreModule } from './core/auth/auth-core.module';
 import { DatabaseModule } from './core/database/database.module';
 import { EventsModule } from './core/events/events.module';
@@ -68,7 +69,7 @@ import { UsersModule } from './modules/users/users.module';
     PortalModule,
     PublicTrackingModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, AppRootController],
   providers: [
     {
       provide: APP_GUARD,

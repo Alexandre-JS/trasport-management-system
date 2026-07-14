@@ -344,6 +344,9 @@ model TrackingPoint {
   updatedAt  DateTime @updatedAt
 
   @@index([tripId])
+  // histórico/última posição filtram por viagem e ordenam por data — o
+  // índice composto evita o filesort na tabela que mais cresce
+  @@index([tripId, recordedAt])
   @@index([recordedAt])
   @@index([createdAt])
   @@map("tracking_points")

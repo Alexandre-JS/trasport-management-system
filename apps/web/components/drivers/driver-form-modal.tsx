@@ -13,6 +13,7 @@ import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { Driver, DriverInput, DriverStatus } from "@/types/driver";
 import { emptyToUndefined } from "@/utils/form";
+import { optionalPhoneSchema } from "@/utils/validation";
 
 const statusOptions = [
   { label: "Disponível", value: "AVAILABLE" },
@@ -25,7 +26,7 @@ const schema = z.object({
   fullName: z.string().min(1, "Nome é obrigatório"),
   licenseNumber: z.string().min(1, "Carta de condução é obrigatória"),
   passportNumber: z.string().max(30, "Máximo 30 caracteres").optional(),
-  phone: z.string().optional(),
+  phone: optionalPhoneSchema,
   email: z.union([z.literal(""), z.string().email("Email inválido")]),
   status: z.string(),
 });

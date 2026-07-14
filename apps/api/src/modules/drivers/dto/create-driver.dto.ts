@@ -1,13 +1,16 @@
 import { DriverStatus } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsEmail,
   IsEnum,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import {
+  IsNormalizedEmail,
+  IsPhone,
+} from '../../../common/validation/validators';
 
 export class CreateDriverDto {
   @ApiPropertyOptional()
@@ -31,12 +34,12 @@ export class CreateDriverDto {
 
   @ApiPropertyOptional({ example: '+258840000002' })
   @IsOptional()
-  @IsString()
+  @IsPhone()
   phone?: string;
 
   @ApiPropertyOptional({ example: 'driver@sgrtc.local' })
   @IsOptional()
-  @IsEmail()
+  @IsNormalizedEmail()
   email?: string;
 
   @ApiPropertyOptional({ enum: DriverStatus, default: DriverStatus.AVAILABLE })

@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
+import {
+  IsNormalizedEmail,
+  IsStrongPassword,
+} from '../../../common/validation/validators';
 
 export class CreateClientAccountDto {
   @ApiProperty()
@@ -15,11 +19,10 @@ export class CreateClientAccountDto {
   lastName!: string;
 
   @ApiProperty({ example: 'maria@cliente.local' })
-  @IsEmail()
+  @IsNormalizedEmail()
   email!: string;
 
   @ApiProperty({ minLength: 8 })
-  @IsString()
-  @MinLength(8)
+  @IsStrongPassword()
   password!: string;
 }

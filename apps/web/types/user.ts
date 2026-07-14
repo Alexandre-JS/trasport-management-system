@@ -18,6 +18,21 @@ export type User = {
   updatedAt: string;
 };
 
+export type Role = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
+export type CreateUserPayload = {
+  roleId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+};
+
 export type UserSortBy = "createdAt" | "email" | "firstName" | "lastName";
 
 export type ListUsersParams = {

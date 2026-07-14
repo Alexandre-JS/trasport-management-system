@@ -16,7 +16,7 @@ export async function createDriver(payload: DriverInput): Promise<Driver> {
 
 export async function updateDriver(
   id: string,
-  payload: DriverInput,
+  payload: Partial<DriverInput>,
 ): Promise<Driver> {
   const { data } = await http.patch<Driver>(`/drivers/${id}`, payload);
 

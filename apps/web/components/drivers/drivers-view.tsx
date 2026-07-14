@@ -8,9 +8,11 @@ import {
   Plus,
   Power,
   RefreshCw,
+  Smartphone,
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { DriverAccountModal } from "@/components/drivers/driver-account-modal";
 import { DriverFormModal } from "@/components/drivers/driver-form-modal";
 import { ActionMenu, type ActionItem } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,7 @@ import {
   useDrivers,
 } from "@/hooks/use-drivers";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useUser } from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { SortOrder } from "@/types/api";
@@ -65,6 +68,8 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
   const [detailsDriver, setDetailsDriver] = useState<Driver | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Driver | null>(null);
   const [formDriver, setFormDriver] = useState<Driver | null>(null);
+  const [accountDriver, setAccountDriver] = useState<Driver | null>(null);
+  const linkedAccount = useUser(detailsDriver?.userId ?? null);
   const [formOpen, setFormOpen] = useState(false);
 
   function openCreate() {
@@ -302,6 +307,14 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       { label: "Editar", icon: Pencil, onSelect: () => openEdit(driver) },
     ];
 
+    if (!driver.userId) {
+      items.push({
+        label: "Dar acesso mobile",
+        icon: Smartphone,
+        onSelect: () => setAccountDriver(driver),
+      });
+    }
+
     if (driver.status !== "AVAILABLE" && driver.status !== "INACTIVE") {
       items.push({
         label: "Marcar disponível",
@@ -515,8 +528,12 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               value={detailsDriver.status === "INACTIVE" ? "Inativo" : "Ativo"}
             />
             <DetailRow
-              label="Conta de utilizador"
-              value={detailsDriver.userId ? "Associada" : "Sem conta"}
+              label="Conta de acesso mobile"
+              value={
+                detailsDriver.userId
+                  ? (linkedAccount.data?.email ?? "Associada")
+                  : "Sem conta"
+              }
             />
             <DetailRow
               label="Data de cadastro"
@@ -528,7 +545,26 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
             />
           </dl>
         ) : null}
+        {detailsDriver && !detailsDriver.userId ? (
+          <div className="mt-4 flex justify-end">
+            <Button
+              size="sm"
+              icon={<Smartphone className="size-4" />}
+              onClick={() => {
+                setAccountDriver(detailsDriver);
+                setDetailsDriver(null);
+              }}
+            >
+              Dar acesso mobile
+            </Button>
+          </div>
+        ) : null}
       </Modal>
+
+      <DriverAccountModal
+        driver={accountDriver}
+        onClose={() => setAccountDriver(null)}
+      />
 
       <DriverFormModal
         open={formOpen}

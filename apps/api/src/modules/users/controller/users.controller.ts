@@ -51,6 +51,12 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
+  @Get('roles')
+  @ApiOperation({ summary: 'List assignable roles' })
+  listRoles() {
+    return this.usersService.listRoles();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get user by id' })
   @ApiOkResponse({ type: UserResponseDto })

@@ -24,6 +24,10 @@ export class UsersService {
     return this.usersRepository.health();
   }
 
+  listRoles() {
+    return this.usersRepository.listRoles();
+  }
+
   async findAll(query: ListUsersQueryDto) {
     const { data, total } = await this.usersRepository.findMany(query);
 

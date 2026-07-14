@@ -34,6 +34,13 @@ export class UsersRepository {
     return { module: 'users', status: 'ready' };
   }
 
+  listRoles() {
+    return this.prisma.role.findMany({
+      select: { id: true, name: true, description: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async findMany(query: ListUsersQueryDto): Promise<{
     data: UserEntity[];
     total: number;

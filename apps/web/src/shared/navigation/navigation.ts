@@ -7,6 +7,7 @@ import {
   Package,
   Route,
   Truck,
+  UserCog,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -95,6 +96,12 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Administração",
     items: [
       // Configurações fica fora do menu principal até retomarmos este módulo.
+      {
+        href: "/utilizadores",
+        label: "Utilizadores",
+        description: "Contas de acesso e perfis de permissões",
+        icon: UserCog,
+      },
       {
         href: "/perfil",
         label: "Perfil",

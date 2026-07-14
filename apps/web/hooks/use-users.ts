@@ -6,16 +6,41 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { listUsers, setUserActive } from "@/services/users-service";
-import type { ListUsersParams } from "@/types/user";
+import {
+  changeUserRole,
+  createUser,
+  getUser,
+  listRoles,
+  listUsers,
+  resetUserPassword,
+  setUserActive,
+} from "@/services/users-service";
+import type { CreateUserPayload, ListUsersParams } from "@/types/user";
 
 const USERS_KEY = "users";
+const ROLES_KEY = "roles";
 
 export function useUsers(params: ListUsersParams) {
   return useQuery({
     queryKey: [USERS_KEY, params],
     queryFn: () => listUsers(params),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useUser(id: string | null) {
+  return useQuery({
+    queryKey: [USERS_KEY, "detail", id],
+    queryFn: () => getUser(id as string),
+    enabled: id !== null,
+  });
+}
+
+export function useRoles() {
+  return useQuery({
+    queryKey: [ROLES_KEY],
+    queryFn: listRoles,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -28,5 +53,35 @@ export function useSetUserActive() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
     },
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateUserPayload) => createUser(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+    },
+  });
+}
+
+export function useChangeUserRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, roleId }: { id: string; roleId: string }) =>
+      changeUserRole(id, roleId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+    },
+  });
+}
+
+export function useResetUserPassword() {
+  return useMutation({
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
+      resetUserPassword(id, newPassword),
   });
 }

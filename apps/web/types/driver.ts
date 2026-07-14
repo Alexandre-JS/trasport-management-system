@@ -29,6 +29,7 @@ export type DriverInput = {
   phone?: string;
   email?: string;
   status?: DriverStatus;
+  userId?: string;
 };
 
 export type ListDriversParams = {

@@ -1,8 +1,11 @@
 "use client";
 
-import { Power, RefreshCw } from "lucide-react";
+import { KeyRound, Plus, Power, RefreshCw, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ActionMenu, type ActionItem } from "@/components/ui/action-menu";
+import { UserFormModal } from "@/components/users/user-form-modal";
+import { UserPasswordModal } from "@/components/users/user-password-modal";
+import { UserRoleModal } from "@/components/users/user-role-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type Column, DataTable } from "@/components/ui/data-table";
@@ -44,6 +47,9 @@ export function UsersPanel() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [formOpen, setFormOpen] = useState(false);
+  const [roleUser, setRoleUser] = useState<User | null>(null);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
 
   const search = useDebouncedValue(searchInput, 350);
 
@@ -156,6 +162,16 @@ export function UsersPanel() {
   function buildActions(user: User): ActionItem[] {
     return [
       {
+        label: "Mudar perfil",
+        icon: ShieldCheck,
+        onSelect: () => setRoleUser(user),
+      },
+      {
+        label: "Repor senha",
+        icon: KeyRound,
+        onSelect: () => setPasswordUser(user),
+      },
+      {
         label: user.isActive ? "Desativar" : "Ativar",
         icon: Power,
         onSelect: () => handleToggleActive(user),
@@ -205,6 +221,13 @@ export function UsersPanel() {
           >
             Atualizar
           </Button>
+          <Button
+            size="sm"
+            icon={<Plus className="size-4" />}
+            onClick={() => setFormOpen(true)}
+          >
+            Novo utilizador
+          </Button>
         </div>
       </div>
 
@@ -243,6 +266,13 @@ export function UsersPanel() {
           ) : null
         }
         renderActions={(user) => <ActionMenu items={buildActions(user)} />}
+      />
+
+      <UserFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      <UserRoleModal user={roleUser} onClose={() => setRoleUser(null)} />
+      <UserPasswordModal
+        user={passwordUser}
+        onClose={() => setPasswordUser(null)}
       />
     </div>
   );

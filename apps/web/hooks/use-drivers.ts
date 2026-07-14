@@ -36,7 +36,7 @@ export function useUpdateDriver() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: DriverInput }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<DriverInput> }) =>
       updateDriver(id, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [DRIVERS_KEY] });

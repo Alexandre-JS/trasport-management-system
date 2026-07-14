@@ -191,7 +191,7 @@ export function CreateTripFromCargoModal({
               Peso
             </p>
             <p className="mt-1 text-slate-900 dark:text-slate-100">
-              {formatWeight(cargo.weightKg)}
+              {formatWeight(cargo.weightTonnes)}
             </p>
           </div>
           <div>

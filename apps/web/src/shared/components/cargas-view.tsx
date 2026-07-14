@@ -238,7 +238,7 @@ export function CargasView() {
                       {cargo.origin} → {cargo.destination}
                     </td>
                     <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
-                      {formatWeight(cargo.weightKg)}
+                      {formatWeight(cargo.weightTonnes)}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                       <StatusBadge tone={stage.tone}>{stage.label}</StatusBadge>
@@ -482,7 +482,7 @@ export function CargasView() {
                     <DetailRow label="Destino" value={detailsCargo.destination} />
                     <DetailRow
                       label="Peso"
-                      value={formatWeight(detailsCargo.weightKg)}
+                      value={formatWeight(detailsCargo.weightTonnes)}
                     />
                     <DetailRow
                       label="Volume"

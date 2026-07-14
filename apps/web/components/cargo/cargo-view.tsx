@@ -136,7 +136,9 @@ export function CargoView() {
       { header: "Cliente", value: (row) => row.client.companyName },
       { header: "Origem", value: (row) => row.origin },
       { header: "Destino", value: (row) => row.destination },
-      { header: "Peso (kg)", value: (row) => row.weightKg ?? "" },
+      { header: "Peso (t)", value: (row) => row.weightTonnes ?? "" },
+      { header: "Tipo", value: (row) => (row.type === "CONTAINER" ? "Container" : "Granel") },
+      { header: "Nº container", value: (row) => row.containerNumber ?? "" },
       { header: "Estado", value: (row) => cargoStatusMeta[row.status].label },
       { header: "Data Recolha", value: (row) => formatDate(row.pickupDate) },
       {
@@ -207,12 +209,12 @@ export function CargoView() {
       cell: (cargo) => cargo.destination,
     },
     {
-      id: "weightKg",
+      id: "weightTonnes",
       header: "Peso",
       sortable: true,
-      sortKey: "weightKg",
+      sortKey: "weightTonnes",
       align: "right",
-      cell: (cargo) => formatWeight(cargo.weightKg),
+      cell: (cargo) => formatWeight(cargo.weightTonnes),
     },
     {
       id: "status",
@@ -406,7 +408,9 @@ export function CargoView() {
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <DetailRow label="Origem" value={detailsCargo.origin} />
             <DetailRow label="Destino" value={detailsCargo.destination} />
-            <DetailRow label="Peso" value={formatWeight(detailsCargo.weightKg)} />
+            <DetailRow label="Peso" value={formatWeight(detailsCargo.weightTonnes)} />
+            <DetailRow label="Tipo" value={detailsCargo.type === "CONTAINER" ? "Container" : "Granel"} />
+            <DetailRow label="Nº container" value={detailsCargo.containerNumber ?? "—"} />
             <DetailRow
               label="Estado"
               value={cargoStatusMeta[detailsCargo.status].label}

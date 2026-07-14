@@ -338,7 +338,7 @@ export function DashboardView() {
                     {cargo.origin} → {cargo.destination}
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {formatWeight(cargo.weightKg)}
+                    {formatWeight(cargo.weightTonnes)}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge tone={cargoStatusBadgeTone[cargo.status]}>

@@ -54,12 +54,12 @@ export class ListCargoQueryDto {
   destination?: string;
 
   @ApiPropertyOptional({
-    enum: ['createdAt', 'code', 'origin', 'destination', 'weightKg', 'status'],
+    enum: ['createdAt', 'code', 'origin', 'destination', 'weightTonnes', 'status'],
   })
   @IsOptional()
-  @IsIn(['createdAt', 'code', 'origin', 'destination', 'weightKg', 'status'])
+  @IsIn(['createdAt', 'code', 'origin', 'destination', 'weightTonnes', 'status'])
   sortBy:
-    'createdAt' | 'code' | 'origin' | 'destination' | 'weightKg' | 'status' =
+    'createdAt' | 'code' | 'origin' | 'destination' | 'weightTonnes' | 'status' =
     'createdAt';
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'] })

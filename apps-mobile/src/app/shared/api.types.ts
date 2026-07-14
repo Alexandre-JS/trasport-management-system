@@ -44,6 +44,9 @@ export interface DriverTrip {
     id: string;
     code: string;
     description: string | null;
+    type: 'CONTAINER' | 'GRANEL';
+    containerNumber: string | null;
+    weightTonnes: number | null;
     origin: string;
     destination: string;
     status: string;

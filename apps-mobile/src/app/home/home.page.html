@@ -54,6 +54,9 @@
         <span class="card-label">Voce vai para</span>
         <strong>{{ currentTrip.cargo.destination }}</strong>
         <small>Saida: {{ currentTrip.cargo.origin }}</small>
+        <small *ngIf="currentTrip.cargo.type === 'CONTAINER'" class="container-line">
+          Container: {{ currentTrip.cargo.containerNumber }}
+        </small>
         <small *ngIf="borderRoute" class="border-route">
           Fronteiras: {{ borderRoute }}
         </small>

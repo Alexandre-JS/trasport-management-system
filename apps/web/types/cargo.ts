@@ -16,7 +16,9 @@ export type Cargo = {
   clientId: string;
   code: string;
   description: string | null;
-  weightKg: number | null;
+  type: "CONTAINER" | "GRANEL";
+  containerNumber: string | null;
+  weightTonnes: number | null;
   volumeM3: number | null;
   origin: string;
   destination: string;
@@ -60,7 +62,7 @@ export type CargoSortBy =
   | "code"
   | "origin"
   | "destination"
-  | "weightKg"
+  | "weightTonnes"
   | "status";
 
 export type ListCargoParams = {
@@ -80,7 +82,9 @@ export type CreateCargoPayload = {
   origin: string;
   destination: string;
   description?: string;
-  weightKg?: number;
+  type?: "CONTAINER" | "GRANEL";
+  containerNumber?: string;
+  weightTonnes?: number;
   volumeM3?: number;
   pickupDate?: string;
   expectedDelivery?: string;

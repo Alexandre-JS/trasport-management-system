@@ -42,10 +42,12 @@ export function shortCode(id: string, prefix = ""): string {
 
 const numberFormatter = new Intl.NumberFormat("pt-PT");
 
-export function formatWeight(kg: number | null | undefined): string {
-  if (kg === null || kg === undefined) {
+export function formatWeight(
+  tonnes: number | null | undefined,
+): string {
+  if (tonnes === null || tonnes === undefined) {
     return "—";
   }
 
-  return `${numberFormatter.format(kg)} kg`;
+  return `${numberFormatter.format(tonnes)} t`;
 }

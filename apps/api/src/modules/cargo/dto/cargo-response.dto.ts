@@ -87,8 +87,14 @@ export class CargoResponseDto {
   @ApiProperty({ required: false, nullable: true })
   description!: string | null;
 
+  @ApiProperty()
+  type!: string;
+
   @ApiProperty({ required: false, nullable: true })
-  weightKg!: number | null;
+  containerNumber!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  weightTonnes!: number | null;
 
   @ApiProperty({ required: false, nullable: true })
   volumeM3!: number | null;

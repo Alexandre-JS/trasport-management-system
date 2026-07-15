@@ -1,10 +1,10 @@
-import { DashboardView } from "@/src/shared/components/dashboard-view";
+import { OperationalBoardView } from "@/src/shared/components/operational-board-view";
 import { ProtectedLayout } from "@/src/shared/layout/protected-layout";
 
-export default function DashboardPage() {
+export default function OperationalBoardPage() {
   return (
     <ProtectedLayout>
-      <DashboardView />
+      <OperationalBoardView />
     </ProtectedLayout>
   );
 }

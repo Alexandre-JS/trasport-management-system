@@ -35,7 +35,9 @@ class TripBorderDto {
   @ApiProperty()
   id!: string;
 
-  @ApiProperty({ description: 'Position of this crossing in the route (1-based)' })
+  @ApiProperty({
+    description: 'Position of this crossing in the route (1-based)',
+  })
   sequence!: number;
 
   @ApiProperty({ required: false, nullable: true })
@@ -51,6 +53,9 @@ class TripBorderDto {
 class TripCargoDto {
   @ApiProperty()
   id!: string;
+
+  @ApiProperty()
+  clientId!: string;
 
   @ApiProperty()
   code!: string;
@@ -146,6 +151,9 @@ export class TripResponseDto {
   @ApiProperty({ required: false, nullable: true })
   loadedDate!: Date | null;
 
+  @ApiProperty({ required: false, nullable: true })
+  dischargeDate!: Date | null;
+
   @ApiProperty({ enum: TripStatus })
   currentStatus!: TripStatus;
 
@@ -166,6 +174,39 @@ export class TripResponseDto {
     description: 'Decimal serialised as string',
   })
   tonnage!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  transporterName!: string | null;
+
+  @ApiProperty()
+  isSubcontracted!: boolean;
+
+  @ApiProperty({ required: false, nullable: true })
+  dispatchedBy!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  remarks!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  horsePlate!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  trailerPlate!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  driverName!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  driverPassport!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  driverLicense!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  driverPhone!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  bookingReference!: string | null;
 
   @ApiProperty({ type: TripCargoDto })
   cargo!: TripCargoDto;

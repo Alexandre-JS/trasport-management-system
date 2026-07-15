@@ -7,7 +7,11 @@ import {
   IsDateString,
   IsEnum,
   IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsString,
   IsUUID,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateTripDto {
@@ -41,6 +45,92 @@ export class CreateTripDto {
   @IsOptional()
   @IsDateString()
   arrivalDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  loadedDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  dischargeDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  currentPosition?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  tonnage?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  transporterName?: string;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  isSubcontracted?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  dispatchedBy?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  remarks?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  horsePlate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  trailerPlate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  driverName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  driverPassport?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  driverLicense?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  driverPhone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  bookingReference?: string;
 
   @ApiPropertyOptional({
     enum: TripStatus,

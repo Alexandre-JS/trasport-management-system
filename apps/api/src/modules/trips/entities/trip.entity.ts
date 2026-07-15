@@ -26,12 +26,25 @@ export type TripEntity = {
   arrivalEstimate: Date | null;
   arrivalDate: Date | null;
   loadedDate: Date | null;
+  dischargeDate: Date | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
   borders: TripBorderEntity[];
   tonnage: Prisma.Decimal | null;
+  transporterName: string | null;
+  isSubcontracted: boolean;
+  dispatchedBy: string | null;
+  remarks: string | null;
+  horsePlate: string | null;
+  trailerPlate: string | null;
+  driverName: string | null;
+  driverPassport: string | null;
+  driverLicense: string | null;
+  driverPhone: string | null;
+  bookingReference: string | null;
   cargo: {
     id: string;
+    clientId: string;
     code: string;
     origin: string;
     destination: string;

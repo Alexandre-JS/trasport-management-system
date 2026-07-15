@@ -24,8 +24,8 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       {
         href: "/",
-        label: "Dashboard",
-        description: "Visão geral da operação",
+        label: "Quadro operacional",
+        description: "Registo de viagens em grelha",
         icon: Gauge,
       },
     ],
@@ -60,8 +60,8 @@ export const navigationGroups: NavigationGroup[] = [
       },
       {
         href: "/frota",
-        label: "Frota",
-        description: "Horses, trailers e disponibilidade",
+        label: "Transportadores e equipamentos",
+        description: "Horses, trailers próprios e externos",
         icon: Truck,
       },
       {
@@ -163,10 +163,7 @@ export function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     return [{ label: item.label, href: item.href }];
   }
 
-  return [
-    { label: group.label },
-    { label: item.label, href: item.href },
-  ];
+  return [{ label: group.label }, { label: item.label, href: item.href }];
 }
 
 export const companyIdentity = {

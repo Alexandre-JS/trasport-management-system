@@ -29,9 +29,21 @@ const tripSelect = {
   arrivalEstimate: true,
   arrivalDate: true,
   loadedDate: true,
+  dischargeDate: true,
   currentStatus: true,
   currentPosition: true,
   tonnage: true,
+  transporterName: true,
+  isSubcontracted: true,
+  dispatchedBy: true,
+  remarks: true,
+  horsePlate: true,
+  trailerPlate: true,
+  driverName: true,
+  driverPassport: true,
+  driverLicense: true,
+  driverPhone: true,
+  bookingReference: true,
   borders: {
     select: {
       id: true,
@@ -54,6 +66,7 @@ const tripSelect = {
   cargo: {
     select: {
       id: true,
+      clientId: true,
       code: true,
       origin: true,
       destination: true,
@@ -844,6 +857,45 @@ export class TripsRepository {
         ? { arrivalEstimate: new Date(data.arrivalEstimate) }
         : {}),
       ...(data.arrivalDate ? { arrivalDate: new Date(data.arrivalDate) } : {}),
+      ...(data.loadedDate ? { loadedDate: new Date(data.loadedDate) } : {}),
+      ...(data.dischargeDate
+        ? { dischargeDate: new Date(data.dischargeDate) }
+        : {}),
+      ...(data.currentPosition !== undefined
+        ? { currentPosition: data.currentPosition || null }
+        : {}),
+      ...(data.tonnage !== undefined ? { tonnage: data.tonnage } : {}),
+      ...(data.transporterName !== undefined
+        ? { transporterName: data.transporterName || null }
+        : {}),
+      ...(data.isSubcontracted !== undefined
+        ? { isSubcontracted: data.isSubcontracted }
+        : {}),
+      ...(data.dispatchedBy !== undefined
+        ? { dispatchedBy: data.dispatchedBy || null }
+        : {}),
+      ...(data.remarks !== undefined ? { remarks: data.remarks || null } : {}),
+      ...(data.horsePlate !== undefined
+        ? { horsePlate: data.horsePlate || null }
+        : {}),
+      ...(data.trailerPlate !== undefined
+        ? { trailerPlate: data.trailerPlate || null }
+        : {}),
+      ...(data.driverName !== undefined
+        ? { driverName: data.driverName || null }
+        : {}),
+      ...(data.driverPassport !== undefined
+        ? { driverPassport: data.driverPassport || null }
+        : {}),
+      ...(data.driverLicense !== undefined
+        ? { driverLicense: data.driverLicense || null }
+        : {}),
+      ...(data.driverPhone !== undefined
+        ? { driverPhone: data.driverPhone || null }
+        : {}),
+      ...(data.bookingReference !== undefined
+        ? { bookingReference: data.bookingReference || null }
+        : {}),
       ...(data.currentStatus ? { currentStatus: data.currentStatus } : {}),
     } as Prisma.TripUpdateInput & Prisma.TripCreateInput;
   }

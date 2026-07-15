@@ -300,9 +300,21 @@ model Trip {
   arrivalEstimate DateTime?
   arrivalDate     DateTime?
   loadedDate      DateTime?
+  dischargeDate   DateTime?
   currentStatus   TripStatus      @default(WAITING_APPOINTMENT)
   currentPosition String?         @db.VarChar(150)
   tonnage         Decimal?        @db.Decimal(12, 3)
+  transporterName String?         @db.VarChar(150)
+  isSubcontracted Boolean         @default(false)
+  dispatchedBy    String?         @db.VarChar(150)
+  remarks         String?         @db.Text
+  horsePlate      String?         @db.VarChar(30)
+  trailerPlate    String?         @db.VarChar(30)
+  driverName      String?         @db.VarChar(150)
+  driverPassport  String?         @db.VarChar(30)
+  driverLicense   String?         @db.VarChar(80)
+  driverPhone     String?         @db.VarChar(30)
+  bookingReference String?        @db.VarChar(80)
   trackingToken   String          @unique @default(uuid()) @db.Char(36)
   cargo           Cargo           @relation(fields: [cargoId], references: [id], onDelete: Restrict)
   truck           Truck           @relation(fields: [truckId], references: [id], onDelete: Restrict)

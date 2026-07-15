@@ -70,13 +70,26 @@ export type Trip = {
   arrivalEstimate: string | null;
   arrivalDate: string | null;
   loadedDate: string | null;
+  dischargeDate: string | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
   borders: TripBorder[];
   /** Decimal serialised as string by the API. */
   tonnage: string | null;
+  transporterName: string | null;
+  isSubcontracted: boolean;
+  dispatchedBy: string | null;
+  remarks: string | null;
+  horsePlate: string | null;
+  trailerPlate: string | null;
+  driverName: string | null;
+  driverPassport: string | null;
+  driverLicense: string | null;
+  driverPhone: string | null;
+  bookingReference: string | null;
   cargo: {
     id: string;
+    clientId: string;
     code: string;
     origin: string;
     destination: string;
@@ -138,7 +151,23 @@ export type CreateTripPayload = {
   currentStatus?: TripStatus;
   /** Ids of the border posts the route crosses, in order. */
   borderIds?: string[];
+  loadedDate?: string;
+  dischargeDate?: string;
+  currentPosition?: string;
+  tonnage?: number;
+  transporterName?: string;
+  isSubcontracted?: boolean;
+  dispatchedBy?: string;
+  remarks?: string;
+  horsePlate?: string;
+  trailerPlate?: string;
+  driverName?: string;
+  driverPassport?: string;
+  driverLicense?: string;
+  driverPhone?: string;
+  bookingReference?: string;
 };
+export type UpdateTripPayload = Partial<CreateTripPayload>;
 export type UpdateTripStatusPayload = { currentStatus: TripStatus };
 export type RecordTripEventPayload = {
   type: TripEventType;

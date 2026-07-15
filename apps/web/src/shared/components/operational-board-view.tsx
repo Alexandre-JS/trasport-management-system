@@ -114,24 +114,35 @@ export function OperationalBoardView() {
     ]);
   }, [clients, tripsQuery.data]);
 
+  const sheetCtx = () => ({
+    clientId: sheetClientId || clients[0]?.id || "",
+    origin: sheetOrigin.trim(),
+    destination: sheetDestination.trim(),
+  });
+
+  // Estilo Excel: assim que a última linha ganha conteúdo, abre-se logo uma
+  // linha vazia por baixo — há sempre uma pronta para a próxima viagem.
+  function withTrailingBlank(list: BoardRow[]): BoardRow[] {
+    const last = list[list.length - 1];
+    return last && hasContent(last)
+      ? [...list, blankRow(sheetCtx())]
+      : list;
+  }
+
   function change(key: string, field: keyof BoardRow, value: string | boolean) {
     setRows((current) =>
-      current.map((row) =>
-        row.key === key ? { ...row, [field]: value, dirty: true } : row,
+      withTrailingBlank(
+        current.map((row) =>
+          row.key === key ? { ...row, [field]: value, dirty: true } : row,
+        ),
       ),
     );
   }
 
-  function addRows(count = 5) {
+  function addRows(count = 1) {
     setRows((current) => [
       ...current,
-      ...Array.from({ length: count }, () =>
-        blankRow({
-          clientId: sheetClientId || clients[0]?.id || "",
-          origin: sheetOrigin.trim(),
-          destination: sheetDestination.trim(),
-        }),
-      ),
+      ...Array.from({ length: count }, () => blankRow(sheetCtx())),
     ]);
   }
 
@@ -141,17 +152,19 @@ export function OperationalBoardView() {
         driver.fullName.toLocaleLowerCase() === value.toLocaleLowerCase(),
     );
     setRows((current) =>
-      current.map((row) =>
-        row.key === key
-          ? {
-              ...row,
-              driver: value,
-              passport: match?.passportNumber ?? row.passport,
-              license: match?.licenseNumber ?? row.license,
-              phone: match?.phone ?? row.phone,
-              dirty: true,
-            }
-          : row,
+      withTrailingBlank(
+        current.map((row) =>
+          row.key === key
+            ? {
+                ...row,
+                driver: value,
+                passport: match?.passportNumber ?? row.passport,
+                license: match?.licenseNumber ?? row.license,
+                phone: match?.phone ?? row.phone,
+                dirty: true,
+              }
+            : row,
+        ),
       ),
     );
   }
@@ -310,12 +323,6 @@ export function OperationalBoardView() {
               onClick={exportBoard}
             >
               Exportar
-            </ActionButton>
-            <ActionButton
-              icon={<Plus className="size-4" />}
-              onClick={() => addRows()}
-            >
-              Adicionar 5 linhas
             </ActionButton>
             <PrimaryButton
               icon={<Save className="size-4" />}
@@ -591,6 +598,17 @@ export function OperationalBoardView() {
           </tbody>
         </table>
       </div>
+
+      {/* Botão flutuante: adiciona 1 linha de cada vez (estilo Excel). */}
+      <button
+        type="button"
+        onClick={() => addRows(1)}
+        title="Adicionar linha"
+        aria-label="Adicionar linha"
+        className="fixed bottom-6 right-6 z-40 flex size-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg transition hover:bg-brand-700 active:scale-95"
+      >
+        <Plus className="size-6" aria-hidden />
+      </button>
     </div>
   );
 }

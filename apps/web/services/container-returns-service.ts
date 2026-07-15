@@ -12,11 +12,30 @@ export type ContainerReturn = {
   updatedAt: string;
 };
 
+export type ConfirmContainerReturnPayload = {
+  returnedTo?: string;
+  receiverName?: string;
+  podDocument?: string;
+  observations?: string;
+};
+
 export async function getContainerReturn(
   tripId: string,
 ): Promise<ContainerReturn | null> {
   const { data } = await http.get<ContainerReturn | null>(
     `/container-returns/${tripId}`,
+  );
+
+  return data;
+}
+
+export async function confirmContainerReturn(
+  tripId: string,
+  payload: ConfirmContainerReturnPayload,
+): Promise<ContainerReturn> {
+  const { data } = await http.post<ContainerReturn>(
+    `/container-returns/${tripId}/confirm`,
+    payload,
   );
 
   return data;

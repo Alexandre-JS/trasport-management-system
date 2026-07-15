@@ -45,6 +45,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.print-document {
+  display: none;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -61,4 +65,73 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgb(148 163 184 / 0.6);
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+    size: A4 portrait;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: #0f172a !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  [data-print-document],
+  [data-print-document] * {
+    visibility: visible;
+  }
+
+  [data-print-document] {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color: #0f172a !important;
+    font-size: 10pt;
+  }
+
+  [data-print-hide],
+  [data-print-hide] * {
+    display: none !important;
+  }
+
+  [data-print-document] section,
+  [data-print-document] table {
+    break-inside: avoid;
+  }
+
+  .print-document-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #1e50ab;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  .print-document-logo { width: 150px; height: auto; }
+  .print-document-header h1 { margin: 0; font-size: 16pt; }
+  .print-document-header p { margin: 3px 0 0; }
+  .print-document-summary { display: grid; grid-template-columns: 1fr 2fr; border: 1px solid #cbd5e1; margin-bottom: 12px; }
+  .print-document-summary div { padding: 7px 9px; border-right: 1px solid #cbd5e1; }
+  .print-document-summary div:last-child { border-right: 0; }
+  .print-document-summary span { display: block; color: #64748b; font-size: 8pt; text-transform: uppercase; }
+  .print-document-summary strong { display: block; margin-top: 2px; }
+  .print-document-section { margin-top: 10px; }
+  .print-document-section h2 { margin: 0; padding: 5px 8px; color: white; background: #1e50ab !important; font-size: 10pt; print-color-adjust: exact; }
+  .print-document-section table { width: 100%; border-collapse: collapse; }
+  .print-document-section th, .print-document-section td { border: 1px solid #cbd5e1; padding: 5px 7px; text-align: left; vertical-align: top; }
+  .print-document-section tbody th { width: 30%; background: #f1f5f9 !important; print-color-adjust: exact; }
+  .print-signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 34px; }
+  .print-signatures span { display: block; border-top: 1px solid #0f172a; }
+  .print-signatures p { margin: 5px 0 0; text-align: center; font-size: 8pt; }
+  .print-document-footer { border-top: 1px solid #cbd5e1; margin-top: 18px; padding-top: 7px; color: #475569; font-size: 8pt; }
+  .print-document-footer p { margin: 2px 0; }
 }

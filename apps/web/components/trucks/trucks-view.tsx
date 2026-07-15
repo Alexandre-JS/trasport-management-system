@@ -2,7 +2,7 @@
 
 import {
   CircleCheck,
-  Download,
+  FileSpreadsheet,
   Eye,
   Pencil,
   Plus,
@@ -350,10 +350,10 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
               <Button
                 variant="outline"
                 size="sm"
-                icon={<Download className="size-4" />}
+                icon={<FileSpreadsheet className="size-4" />}
                 onClick={handleExport}
               >
-                Exportar
+                Exportar para Excel
               </Button>
               <Button
                 size="sm"
@@ -381,10 +381,10 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
           <Button
             variant="outline"
             size="sm"
-            icon={<Download className="size-4" />}
+            icon={<FileSpreadsheet className="size-4" />}
             onClick={handleExport}
           >
-            Exportar
+            Exportar para Excel
           </Button>
           <Button size="sm" icon={<Plus className="size-4" />} onClick={openCreate}>
             Novo Horse
@@ -482,12 +482,13 @@ export function TrucksView({ showHeader = true }: TrucksViewProps = {}) {
 
       <Modal
         open={detailsTruck !== null}
+        size="lg"
         title={detailsTruck?.plateNumber ?? "Horse"}
         description={detailsTruck ? shortCode(detailsTruck.id) : undefined}
         onClose={() => setDetailsTruck(null)}
       >
         {detailsTruck ? (
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow label="Marca" value={detailsTruck.brand} />
             <DetailRow label="Modelo" value={detailsTruck.model} />
             <DetailRow
@@ -542,11 +543,11 @@ function DetailRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+    <div className="grid border-b border-slate-100 last:border-b-0 sm:grid-cols-[minmax(9rem,38%)_1fr] dark:border-slate-800">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-800 dark:text-slate-200">
         {value && value.length > 0 ? value : "—"}
       </dd>
     </div>

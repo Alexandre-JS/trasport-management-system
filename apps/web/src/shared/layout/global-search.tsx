@@ -2,15 +2,29 @@
 
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getNavigationItemsForRole } from "@/src/shared/navigation/navigation";
 import { useAuth } from "@/src/shared/hooks/use-auth";
 
 export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { role } = useAuth();
+
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        inputRef.current?.focus();
+        setOpen(true);
+      }
+    }
+
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, []);
 
   const results = useMemo(() => {
     const items = getNavigationItemsForRole(role);
@@ -38,6 +52,7 @@ export function GlobalSearch() {
       <div className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-950/40">
         <Search className="size-4 shrink-0 text-slate-400" aria-hidden />
         <input
+          ref={inputRef}
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -52,8 +67,8 @@ export function GlobalSearch() {
               navigate(results[0].href);
             }
           }}
-          placeholder="Pesquisar páginas..."
-          aria-label="Pesquisa global"
+          placeholder="Pesquisar módulos ou registos… (Ctrl K)"
+          aria-label="Pesquisar módulos ou registos"
           className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
         />
       </div>
@@ -83,6 +98,30 @@ export function GlobalSearch() {
               </button>
             );
           })}
+          {query.trim() ? (
+            <div className="mt-1 border-t border-slate-100 pt-1 dark:border-slate-800">
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() =>
+                  navigate(`/cargas?q=${encodeURIComponent(query.trim())}`)
+                }
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Pesquisar “{query.trim()}” em cargas
+              </button>
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() =>
+                  navigate(`/viagens?q=${encodeURIComponent(query.trim())}`)
+                }
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Pesquisar “{query.trim()}” em viagens
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

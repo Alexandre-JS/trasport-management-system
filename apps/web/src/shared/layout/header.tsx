@@ -15,7 +15,7 @@ type HeaderProps = {
 export function Header({ onOpenMenu }: HeaderProps) {
   return (
     <header className="z-20 shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
-      <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 md:flex-nowrap md:py-0 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <span className="lg:hidden">
             <IconButton
@@ -35,6 +35,9 @@ export function Header({ onOpenMenu }: HeaderProps) {
           <Notifications />
           <ThemeToggle />
           <UserMenu />
+        </div>
+        <div className="w-full md:hidden">
+          <GlobalSearch />
         </div>
       </div>
     </header>

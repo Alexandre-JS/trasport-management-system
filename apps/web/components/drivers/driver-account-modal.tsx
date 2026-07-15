@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
+import { AccessDeliveryPanel, type AccessDelivery } from "@/src/shared/components/access-delivery-panel";
 import { useUpdateDriver } from "@/hooks/use-drivers";
 import { useCreateUser, useRoles, useUsers } from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
@@ -35,17 +36,21 @@ export function DriverAccountModal({ driver, onClose }: DriverAccountModalProps)
   const [password, setPassword] = useState("");
   const [existingUserId, setExistingUserId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [createdAccess, setCreatedAccess] = useState<AccessDelivery | null>(null);
 
   // contas com perfil DRIVER para o modo "associar existente"
   const driverUsers = useUsers({ role: "DRIVER", limit: 100, isActive: true });
 
   useEffect(() => {
     if (driver) {
+      // Resetar o formulário é intencional quando o motorista selecionado muda.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode("create");
       setEmail(driver.email ?? "");
       setPassword("");
       setExistingUserId("");
       setFormError(null);
+      setCreatedAccess(null);
     }
   }, [driver]);
 
@@ -107,6 +112,17 @@ export function DriverAccountModal({ driver, onClose }: DriverAccountModalProps)
           description: `O motorista já pode entrar na app mobile com ${user.email}. Comunique-lhe a senha provisória.`,
           type: "success",
         });
+        setCreatedAccess({
+          recipientName: driver.fullName,
+          email: user.email,
+          password,
+          destinationUrl:
+            process.env.NEXT_PUBLIC_DRIVER_APP_URL?.trim() ||
+            "https://play.google.com/store/apps",
+          destinationLabel: "App do motorista (Play Store)",
+          documentTitle: "Dados de acesso do motorista",
+        });
+        return;
       } else {
         if (!existingUserId) {
           setFormError("Escolha a conta a associar");
@@ -143,6 +159,7 @@ export function DriverAccountModal({ driver, onClose }: DriverAccountModalProps)
       onClose={onClose}
     >
       <div className="flex flex-col gap-4">
+        {createdAccess ? <AccessDeliveryPanel access={createdAccess} /> : null}
         <div className="flex gap-2">
           <Button
             variant={mode === "create" ? "primary" : "outline"}

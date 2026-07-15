@@ -79,6 +79,16 @@ export function CreateTripFromCargoModal({
     },
     { enabled: open && cargo !== null },
   );
+  const driverHistory = useTrips(
+    {
+      page: 1,
+      limit: 1,
+      driverId: driverId || undefined,
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    },
+    { enabled: open && driverId.length > 0 },
+  );
   const createTrip = useCreateTrip();
 
   const activeTrip = useMemo<Trip | null>(() => {
@@ -89,17 +99,37 @@ export function CreateTripFromCargoModal({
     );
   }, [existingTrips.data?.data]);
 
+  const selectedDriver = (drivers.data?.data ?? []).find(
+    (driver) => driver.id === driverId,
+  );
+  const previousDriverTrip =
+    driverHistory.data?.data.find((trip) => trip.driver.id === driverId) ?? null;
+  const suggestedTruckId = (trucks.data?.data ?? []).some(
+    (truck) => truck.id === previousDriverTrip?.truck.id,
+  )
+    ? (previousDriverTrip?.truck.id ?? "")
+    : "";
+  const effectiveTruckId = truckId || suggestedTruckId;
+  const suggestedTrailerId =
+    previousDriverTrip?.truck.id === effectiveTruckId &&
+    (trailers.data?.data ?? []).some(
+      (trailer) => trailer.id === previousDriverTrip.trailer?.id,
+    )
+      ? (previousDriverTrip.trailer?.id ?? "")
+      : "";
+  const effectiveTrailerId = trailerId || suggestedTrailerId;
+
   const compatibleTrailers = useMemo(() => {
     const allTrailers = trailers.data?.data ?? [];
 
-    if (!truckId) {
+    if (!effectiveTruckId) {
       return allTrailers;
     }
 
     return allTrailers.filter(
-      (trailer) => !trailer.truck || trailer.truck.id === truckId,
+      (trailer) => !trailer.truck || trailer.truck.id === effectiveTruckId,
     );
-  }, [trailers.data?.data, truckId]);
+  }, [trailers.data?.data, effectiveTruckId]);
 
   const allBorders = borders.data?.data ?? [];
   const borderNameById = new Map(allBorders.map((b) => [b.id, b.name]));
@@ -113,7 +143,11 @@ export function CreateTripFromCargoModal({
 
   const selectedCargo = cargo;
   const canSubmit =
-    driverId && truckId && trailerId && !activeTrip && !createTrip.isPending;
+    driverId &&
+    effectiveTruckId &&
+    effectiveTrailerId &&
+    !activeTrip &&
+    !createTrip.isPending;
 
   function close() {
     setDriverId("");
@@ -134,8 +168,8 @@ export function CreateTripFromCargoModal({
       {
         cargoId: selectedCargo.id,
         driverId,
-        truckId,
-        trailerId,
+        truckId: effectiveTruckId,
+        trailerId: effectiveTrailerId,
         borderIds: borderIds.length > 0 ? borderIds : undefined,
         departureDate: toIsoDateTime(departureDate),
         arrivalEstimate: toIsoDateTime(arrivalEstimate),
@@ -213,10 +247,14 @@ export function CreateTripFromCargoModal({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
-            <span className={labelClass}>Motorista</span>
+            <span className={labelClass}>Motorista (Driver Name)</span>
             <select
               value={driverId}
-              onChange={(event) => setDriverId(event.target.value)}
+              onChange={(event) => {
+                setDriverId(event.target.value);
+                setTruckId("");
+                setTrailerId("");
+              }}
               className={inputClass}
             >
               <option value="">Selecionar motorista…</option>
@@ -231,7 +269,7 @@ export function CreateTripFromCargoModal({
           <label className="flex flex-col gap-1.5">
             <span className={labelClass}>Horse</span>
             <select
-              value={truckId}
+              value={effectiveTruckId}
               onChange={(event) => {
                 setTruckId(event.target.value);
                 setTrailerId("");
@@ -251,7 +289,7 @@ export function CreateTripFromCargoModal({
           <label className="flex flex-col gap-1.5">
             <span className={labelClass}>Trailer</span>
             <select
-              value={trailerId}
+              value={effectiveTrailerId}
               onChange={(event) => setTrailerId(event.target.value)}
               className={inputClass}
             >
@@ -265,9 +303,35 @@ export function CreateTripFromCargoModal({
             </select>
           </label>
 
+          {selectedDriver ? (
+            <div className="overflow-hidden rounded-md border border-slate-200 sm:col-span-2 dark:border-slate-700">
+              <div className="grid border-b border-slate-200 bg-slate-50 text-xs dark:border-slate-700 dark:bg-slate-800 sm:grid-cols-3">
+                <DriverInfo
+                  label="Passaporte (Passport Number)"
+                  value={selectedDriver.passportNumber ?? "—"}
+                />
+                <DriverInfo
+                  label="Carta (Driving License)"
+                  value={selectedDriver.licenseNumber}
+                />
+                <DriverInfo
+                  label="Telefone (Phone Number)"
+                  value={selectedDriver.phone ?? "—"}
+                />
+              </div>
+              <p className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
+                {driverHistory.isFetching
+                  ? "A procurar o último Horse e Trailer deste motorista…"
+                  : suggestedTruckId || suggestedTrailerId
+                    ? "Horse e Trailer preenchidos a partir da última viagem deste motorista. Confirme antes de criar."
+                    : "Não foi encontrada uma combinação anterior disponível. Selecione Horse e Trailer."}
+              </p>
+            </div>
+          ) : null}
+
           <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelClass}>
-              Fronteiras da rota (por ordem de travessia)
+              Border da rota (por ordem de travessia)
             </span>
             <select
               value=""
@@ -279,7 +343,7 @@ export function CreateTripFromCargoModal({
               }}
               className={inputClass}
             >
-              <option value="">Adicionar fronteira…</option>
+              <option value="">Adicionar border…</option>
               {availableBorders.map((border) => (
                 <option key={border.id} value={border.id}>
                   {border.name} · {border.countryA} — {border.countryB}
@@ -315,7 +379,7 @@ export function CreateTripFromCargoModal({
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className={labelClass}>Saída prevista</span>
+            <span className={labelClass}>Data de despacho (Dispatch Date)</span>
             <input
               type="datetime-local"
               value={departureDate}
@@ -324,8 +388,8 @@ export function CreateTripFromCargoModal({
             />
           </label>
 
-          <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className={labelClass}>Chegada estimada</span>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelClass}>Chegada estimada (Arrive Date)</span>
             <input
               type="datetime-local"
               value={arrivalEstimate}
@@ -336,5 +400,16 @@ export function CreateTripFromCargoModal({
         </div>
       </div>
     </Modal>
+  );
+}
+
+function DriverInfo({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-b border-slate-200 px-3 py-2.5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0 dark:border-slate-700">
+      <p className="font-medium text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+        {value}
+      </p>
+    </div>
   );
 }

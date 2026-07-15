@@ -3,8 +3,11 @@
 import { ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/src/shared/components/card";
+import { ClientSupportCard } from "@/src/shared/components/client-support-card";
 import { ErrorState } from "@/src/shared/components/error-state";
 import { PageLoader } from "@/src/shared/components/page-loader";
+import { PrintButton } from "@/src/shared/components/print-button";
+import { PrintShipmentDocument } from "@/src/shared/components/print-shipment-document";
 import { ShareLinkButton } from "@/src/shared/components/share-link-button";
 import { StatusBadge } from "@/src/shared/components/status-badge";
 import { useMyShipment } from "@/hooks/use-portal";
@@ -18,11 +21,11 @@ import {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <div className="grid border-b border-slate-200 last:border-b-0 sm:grid-cols-[minmax(10rem,34%)_1fr] dark:border-slate-700">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-100">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-900 dark:text-slate-100">
         {value}
       </dd>
     </div>
@@ -50,6 +53,7 @@ export function PortalShipmentDetail({ id }: { id: string }) {
         <div className="min-w-0">
           <Link
             href="/portal"
+            data-print-hide
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
           >
             <ArrowLeft className="size-4" aria-hidden />
@@ -73,16 +77,50 @@ export function PortalShipmentDetail({ id }: { id: string }) {
             </p>
           ) : null}
         </div>
-        {shipment.trackingToken ? (
-          <ShareLinkButton token={shipment.trackingToken} />
-        ) : null}
+        <div className="flex flex-wrap gap-2" data-print-hide>
+          <PrintButton label="Imprimir ficha" />
+          {shipment.trackingToken ? (
+            <ShareLinkButton token={shipment.trackingToken} />
+          ) : null}
+        </div>
       </div>
 
+      <ClientSupportCard />
+      <PrintShipmentDocument
+        title="Acompanhamento da carga"
+        reference={shipment.cargo.code}
+        status={tripStatusMeta[shipment.currentStatus].label}
+        route={`${shipment.cargo.origin} → ${shipment.cargo.destination}`}
+        sections={[
+          {
+            title: "Informação da carga",
+            rows: [
+              { label: "Mercadoria", value: shipment.cargo.description ?? "—" },
+              { label: "Tonelagem", value: shipment.tonnage ? `${shipment.tonnage} t` : "—" },
+              { label: "Posição informada", value: shipment.currentPosition ?? "—" },
+              { label: "Border (Fronteira)", value: borderNames(shipment.borders) ?? "—" },
+              { label: "Data de carga", value: formatDate(shipment.loadedDate) },
+              { label: "Data de saída", value: formatDate(shipment.departureDate) },
+              { label: "Chegada prevista", value: formatDate(shipment.arrivalEstimate) },
+            ],
+          },
+        ]}
+        events={events.map((event) => ({
+          date: formatDateTime(event.occurredAt),
+          description: event.toStatus ? tripStatusMeta[event.toStatus].label : tripEventTypeLabel[event.type],
+          note: event.note ?? undefined,
+        }))}
+        informational
+      />
+
       <Card className="p-5">
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+        <h2 className="mb-3 text-base font-semibold text-slate-950 dark:text-white">
+          Informação da carga
+        </h2>
+        <dl className="overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
           <Fact label="Mercadoria" value={shipment.cargo.description ?? "—"} />
           <Fact
-            label="Fronteira"
+            label="Border (Fronteira)"
             value={borderNames(shipment.borders) ?? "—"}
           />
           <Fact
@@ -90,13 +128,15 @@ export function PortalShipmentDetail({ id }: { id: string }) {
             value={shipment.tonnage ? `${shipment.tonnage} t` : "—"}
           />
           <Fact label="Data de carga" value={formatDate(shipment.loadedDate)} />
-          <Fact label="Saída" value={formatDate(shipment.departureDate)} />
+          <Fact label="Data de saída" value={formatDate(shipment.departureDate)} />
           <Fact
             label="Chegada prevista"
             value={formatDate(shipment.arrivalEstimate)}
           />
         </dl>
       </Card>
+
+      {/* TODO: Reativar o mapa quando a API fornecer coordenadas GPS reais. */}
 
       <Card className="p-5">
         <h2 className="text-base font-semibold text-slate-950 dark:text-white">
@@ -135,6 +175,7 @@ export function PortalShipmentDetail({ id }: { id: string }) {
           </ol>
         )}
       </Card>
+
     </div>
   );
 }

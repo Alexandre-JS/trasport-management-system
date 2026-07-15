@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AccessDeliveryPanel, type AccessDelivery } from "@/src/shared/components/access-delivery-panel";
 import { PrimaryButton } from "@/src/shared/components/action-button";
 import { Card } from "@/src/shared/components/card";
 import { PageHeader } from "@/src/shared/components/page-header";
@@ -46,6 +47,7 @@ export function ClientAccountsView({
 }: ClientAccountsViewProps = {}) {
   const { toast } = useToast();
   const [form, setForm] = useState(EMPTY);
+  const [createdAccess, setCreatedAccess] = useState<AccessDelivery | null>(null);
   const clients = useClients({ limit: 100, isActive: true });
   const createAccount = useCreateClientAccount();
 
@@ -71,6 +73,14 @@ export function ClientAccountsView({
       },
       {
         onSuccess: () => {
+          setCreatedAccess({
+            recipientName: `${form.firstName.trim()} ${form.lastName.trim()}`,
+            email: form.email.trim(),
+            password: form.password,
+            destinationUrl: `${window.location.origin}/login`,
+            destinationLabel: "Portal do cliente",
+            documentTitle: "Dados de acesso ao portal",
+          });
           toast({ title: "Conta de cliente criada", type: "success" });
           setForm(EMPTY);
         },
@@ -171,6 +181,11 @@ export function ClientAccountsView({
           </div>
         </div>
       </Card>
+      {createdAccess ? (
+        <div className="max-w-3xl">
+          <AccessDeliveryPanel access={createdAccess} />
+        </div>
+      ) : null}
     </div>
   );
 }

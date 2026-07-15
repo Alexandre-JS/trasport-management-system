@@ -1,8 +1,15 @@
 "use client";
 
-import { ArrowLeft, History } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  MapPin,
+  Route,
+  Truck,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ActionButton,
   PrimaryButton,
@@ -12,6 +19,8 @@ import { Card } from "@/src/shared/components/card";
 import { ConfirmDialog } from "@/src/shared/components/confirm-dialog";
 import { ErrorState } from "@/src/shared/components/error-state";
 import { PageLoader } from "@/src/shared/components/page-loader";
+import { PrintButton } from "@/src/shared/components/print-button";
+import { PrintShipmentDocument } from "@/src/shared/components/print-shipment-document";
 import { Section } from "@/src/shared/components/section";
 import { ShareLinkButton } from "@/src/shared/components/share-link-button";
 import { StatusBadge } from "@/src/shared/components/status-badge";
@@ -50,15 +59,50 @@ const milestoneTypes: TripEventType[] = [
   "DISCHARGED",
 ];
 
-function Field({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <div className="grid border-b border-slate-100 last:border-b-0 sm:grid-cols-[minmax(10rem,34%)_1fr] dark:border-slate-800">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-100">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-900 dark:text-slate-100">
         {value}
       </dd>
+    </div>
+  );
+}
+
+function TableGroup({ children }: { children: string }) {
+  return (
+    <div className="border-b border-slate-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-700 last:border-b-0 dark:border-slate-700 dark:bg-brand-950/40 dark:text-brand-200">
+      <dt>{children}</dt>
+      <dd className="sr-only">Campos da secção {children}</dd>
+    </div>
+  );
+}
+
+function SummaryItem({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: ReactNode;
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-[2.5rem_1fr] border-b border-r border-slate-200 last:border-r-0 sm:border-b-0 dark:border-slate-700">
+      <span className="grid place-items-center bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-200">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="border-b border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          {label}
+        </p>
+        <p className="truncate bg-white px-3 py-2 text-sm font-semibold text-slate-900 dark:bg-slate-900 dark:text-slate-100" title={value}>
+          {value}
+        </p>
+      </div>
     </div>
   );
 }
@@ -121,6 +165,7 @@ export function TripDetailView({ id }: { id: string }) {
         <div className="min-w-0">
           <Link
             href="/viagens"
+            data-print-hide
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
           >
             <ArrowLeft className="size-4" aria-hidden />
@@ -140,6 +185,7 @@ export function TripDetailView({ id }: { id: string }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <PrintButton label="Imprimir ficha" />
           {trip.trackingToken ? (
             <ShareLinkButton token={trip.trackingToken} />
           ) : null}
@@ -172,24 +218,89 @@ export function TripDetailView({ id }: { id: string }) {
         </div>
       </div>
 
+      <section
+        aria-label="Resumo operacional da viagem"
+        className="grid overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm sm:grid-cols-2 xl:grid-cols-4 dark:border-slate-700 dark:bg-slate-900"
+      >
+        <SummaryItem
+          label="Próxima etapa"
+          value={next ? tripStatusMeta[next].label : "Ciclo concluído"}
+          icon={<Route className="size-4" aria-hidden />}
+        />
+        <SummaryItem
+          label="Posição atual"
+          value={trip.currentPosition ?? "Sem posição registada"}
+          icon={<MapPin className="size-4" aria-hidden />}
+        />
+        <SummaryItem
+          label="Motorista"
+          value={trip.driver.fullName}
+          icon={<UserRound className="size-4" aria-hidden />}
+        />
+        <SummaryItem
+          label="Equipamento"
+          value={`${trip.truck.plateNumber}${trip.trailer ? ` · ${trip.trailer.plateNumber}` : ""}`}
+          icon={<Truck className="size-4" aria-hidden />}
+        />
+      </section>
+
+      {terminal ? (
+        <div className="flex items-center justify-between gap-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm dark:border-emerald-900 dark:bg-emerald-950/30">
+          <div>
+            <p className="font-semibold text-emerald-900 dark:text-emerald-100">
+              Viagem concluída · {tripStatusMeta[trip.currentStatus].label}
+            </p>
+            <p className="mt-0.5 text-emerald-700 dark:text-emerald-300">
+              Não existem mais ações de ciclo de vida. Os dados abaixo ficam disponíveis para consulta.
+            </p>
+          </div>
+          <StatusBadge tone={tripStatusBadgeTone[trip.currentStatus]}>
+            {tripStatusMeta[trip.currentStatus].label}
+          </StatusBadge>
+        </div>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: details + history */}
-        <div className="flex flex-col gap-6 lg:col-span-2">
+        <div
+          className={`flex flex-col gap-6 ${terminal ? "lg:col-span-3" : "lg:col-span-2"}`}
+        >
           <Card className="p-5">
-            <Section title="Detalhes da viagem">
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-                <Field label="Horse" value={trip.truck.plateNumber} />
-                <Field
+            <Section
+              title="Informação da viagem"
+              description="Dados da carga, recursos atribuídos, rota e datas operacionais."
+            >
+              <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                <div className="grid grid-cols-[minmax(10rem,34%)_1fr] border-b border-slate-300 bg-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  <dt className="border-r border-slate-300 px-4 py-2 dark:border-slate-700">
+                    Campo
+                  </dt>
+                  <dd className="px-4 py-2">Valor</dd>
+                </div>
+                <TableGroup>Carga e rota</TableGroup>
+                <DetailRow label="Carga" value={trip.cargo.code} />
+                <DetailRow
+                  label="Rota"
+                  value={`${trip.cargo.origin} → ${trip.cargo.destination}`}
+                />
+                <DetailRow
+                  label="Tonelagem"
+                  value={trip.tonnage ? `${trip.tonnage} t` : "—"}
+                />
+                <TableGroup>Recursos atribuídos</TableGroup>
+                <DetailRow label="Horse" value={trip.truck.plateNumber} />
+                <DetailRow
                   label="Trailer"
                   value={trip.trailer?.plateNumber ?? "—"}
                 />
-                <Field label="Motorista" value={trip.driver.fullName} />
-                <Field
+                <DetailRow label="Motorista" value={trip.driver.fullName} />
+                <DetailRow
                   label="Passaporte"
                   value={trip.driver.passportNumber ?? "—"}
                 />
-                <Field
-                  label="Fronteiras"
+                <TableGroup>Localização e percurso</TableGroup>
+                <DetailRow
+                  label="Borders (Fronteiras)"
                   value={
                     trip.borders.length > 0
                       ? trip.borders
@@ -206,20 +317,17 @@ export function TripDetailView({ id }: { id: string }) {
                       : "—"
                   }
                 />
-                <Field
-                  label="Tonelagem"
-                  value={trip.tonnage ? `${trip.tonnage} t` : "—"}
-                />
-                <Field
+                <DetailRow
                   label="Posição atual"
                   value={trip.currentPosition ?? "—"}
                 />
-                <Field
+                <TableGroup>Datas operacionais</TableGroup>
+                <DetailRow
                   label="Data de carga"
                   value={formatDate(trip.loadedDate)}
                 />
-                <Field label="Saída" value={formatDate(trip.departureDate)} />
-                <Field
+                <DetailRow label="Saída" value={formatDate(trip.departureDate)} />
+                <DetailRow
                   label="Chegada"
                   value={formatDate(trip.arrivalDate)}
                 />
@@ -242,42 +350,66 @@ export function TripDetailView({ id }: { id: string }) {
                   Ainda não há eventos registados.
                 </p>
               ) : (
-                <ol className="flex flex-col gap-4">
-                  {events.map((event) => (
-                    <li key={event.id} className="flex gap-3">
-                      <div className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        <History className="size-4" aria-hidden />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          {tripEventTypeLabel[event.type]}
-                          {event.fromStatus && event.toStatus ? (
-                            <span className="font-normal text-slate-500 dark:text-slate-400">
-                              {" "}
-                              · {tripStatusMeta[event.fromStatus].label} →{" "}
-                              {tripStatusMeta[event.toStatus].label}
-                            </span>
-                          ) : null}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {formatDateTime(event.occurredAt)}
-                          {event.note ? ` · ${event.note}` : ""}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+                <div className="max-h-[28rem] overflow-auto rounded-md border border-slate-300 dark:border-slate-700">
+                  <table className="min-w-full border-separate border-spacing-0 text-sm">
+                    <thead className="sticky top-0 z-10 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      <tr>
+                        <th className="whitespace-nowrap border-b border-r border-slate-300 px-3 py-2 dark:border-slate-700">Data/hora</th>
+                        <th className="whitespace-nowrap border-b border-r border-slate-300 px-3 py-2 dark:border-slate-700">Evento</th>
+                        <th className="whitespace-nowrap border-b border-r border-slate-300 px-3 py-2 dark:border-slate-700">Estado anterior</th>
+                        <th className="whitespace-nowrap border-b border-r border-slate-300 px-3 py-2 dark:border-slate-700">Estado seguinte</th>
+                        <th className="whitespace-nowrap border-b border-slate-300 px-3 py-2 dark:border-slate-700">Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {events.map((event) => (
+                        <tr key={event.id} className="odd:bg-white even:bg-slate-50/70 dark:odd:bg-slate-900 dark:even:bg-slate-900/60">
+                          <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                            {formatDateTime(event.occurredAt)}
+                          </td>
+                          <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 font-medium text-slate-900 dark:border-slate-800 dark:text-slate-100">
+                            {tripEventTypeLabel[event.type]}
+                          </td>
+                          <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                            {event.fromStatus ? tripStatusMeta[event.fromStatus].label : "—"}
+                          </td>
+                          <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                            {event.toStatus ? tripStatusMeta[event.toStatus].label : "—"}
+                          </td>
+                          <td className="min-w-52 border-b border-slate-200 px-3 py-2.5 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                            {event.note ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </Section>
           </Card>
         </div>
 
         {/* Right: lifecycle actions */}
-        <div className="flex flex-col gap-6">
-          {!terminal ? (
-            <>
-              <Card className="flex flex-col gap-4 p-5">
-                <Section title="Atribuições">
+        {!terminal ? (
+          <div className="flex flex-col gap-3 lg:sticky lg:top-4 lg:self-start">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Ações operacionais
+              </h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Abra apenas a ação que pretende executar.
+              </p>
+            </div>
+              <Card className="overflow-hidden p-0">
+                <details className="group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-slate-900 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800/50">
+                    Alterar recursos atribuídos
+                    <ChevronDown className="size-4 text-slate-400 transition-transform group-open:rotate-180" aria-hidden />
+                  </summary>
+                  <div className="border-t border-slate-200 p-5 dark:border-slate-800">
+                    <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                      Use apenas quando for necessário substituir recursos desta viagem.
+                    </p>
                   <div className="flex flex-col gap-4">
                     <AssignRow
                       label="Motorista"
@@ -360,14 +492,20 @@ export function TripDetailView({ id }: { id: string }) {
                       }
                     />
                   </div>
-                </Section>
+                  </div>
+                </details>
               </Card>
 
-              <Card className="p-5">
-                <Section
-                  title="Registar milestone"
-                  description="Dispara a transição de estado correspondente."
-                >
+              <Card className="overflow-hidden p-0">
+                <details className="group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-slate-900 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800/50">
+                    Registar marco operacional
+                    <ChevronDown className="size-4 text-slate-400 transition-transform group-open:rotate-180" aria-hidden />
+                  </summary>
+                  <div className="border-t border-slate-200 p-5 dark:border-slate-800">
+                    <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                      Registe uma ocorrência que altera a etapa atual da viagem.
+                    </p>
                   <div className="flex flex-col gap-3">
                     <label className="flex flex-col gap-1 text-sm">
                       <span className="text-slate-600 dark:text-slate-300">
@@ -440,21 +578,11 @@ export function TripDetailView({ id }: { id: string }) {
                       Registar
                     </PrimaryButton>
                   </div>
-                </Section>
+                  </div>
+                </details>
               </Card>
-            </>
-          ) : (
-            <Card className="p-5">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Esta viagem está{" "}
-                <span className="font-medium text-slate-900 dark:text-slate-100">
-                  {tripStatusMeta[trip.currentStatus].label.toLowerCase()}
-                </span>
-                . Não há mais ações de ciclo de vida disponíveis.
-              </p>
-            </Card>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
 
       <ConfirmDialog
@@ -471,6 +599,41 @@ export function TripDetailView({ id }: { id: string }) {
             onError: fail("cancelar a viagem"),
           });
         }}
+      />
+      <PrintShipmentDocument
+        title="Ficha operacional da viagem"
+        reference={trip.cargo.code}
+        status={tripStatusMeta[trip.currentStatus].label}
+        route={`${trip.cargo.origin} → ${trip.cargo.destination}`}
+        sections={[
+          {
+            title: "Carga e equipamento",
+            rows: [
+              { label: "Carga", value: trip.cargo.code },
+              { label: "Tonelagem", value: trip.tonnage ? `${trip.tonnage} t` : "—" },
+              { label: "Horse", value: trip.truck.plateNumber },
+              { label: "Trailer", value: trip.trailer?.plateNumber ?? "—" },
+              { label: "Motorista", value: trip.driver.fullName },
+              { label: "Passaporte", value: trip.driver.passportNumber ?? "—" },
+            ],
+          },
+          {
+            title: "Operação",
+            rows: [
+              { label: "Posição atual", value: trip.currentPosition ?? "—" },
+              { label: "Data de carga", value: formatDate(trip.loadedDate) },
+              { label: "Data de saída", value: formatDate(trip.departureDate) },
+              { label: "Data de chegada", value: formatDate(trip.arrivalDate) },
+              { label: "Borders (Fronteiras)", value: trip.borders.map((item) => item.border.name).join(" › ") || "—" },
+            ],
+          },
+        ]}
+        events={events.map((event) => ({
+          date: formatDateTime(event.occurredAt),
+          description: event.toStatus ? tripStatusMeta[event.toStatus].label : tripEventTypeLabel[event.type],
+          note: event.note ?? undefined,
+        }))}
+        signatures={["Responsável de operações", "Motorista", "Recebedor / Cliente"]}
       />
     </div>
   );

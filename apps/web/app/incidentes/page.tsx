@@ -7,10 +7,31 @@ export const metadata: Metadata = {
   title: "Incidentes",
 };
 
-export default function IncidentesPage() {
+type IncidentesPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function IncidentesPage({
+  searchParams,
+}: IncidentesPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const resolved = first(params.resolved);
+
   return (
     <ProtectedLayout>
-      <IncidentsView />
+      <IncidentsView
+        initialState={
+          resolved === "false"
+            ? "open"
+            : resolved === "true"
+              ? "resolved"
+              : "all"
+        }
+      />
     </ProtectedLayout>
   );
 }

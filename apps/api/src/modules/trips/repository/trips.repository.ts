@@ -980,6 +980,78 @@ export class TripsRepository {
       ...(query.trailerId ? { trailerId: query.trailerId } : {}),
       ...(query.driverId ? { driverId: query.driverId } : {}),
       ...(query.currentStatus ? { currentStatus: query.currentStatus } : {}),
+      // Filtros de "folha" (cliente + rota + dia de registo).
+      ...(query.clientId || query.origin || query.destination
+        ? {
+            cargo: {
+              ...(query.clientId ? { clientId: query.clientId } : {}),
+              ...(query.origin ? { origin: query.origin } : {}),
+              ...(query.destination ? { destination: query.destination } : {}),
+            },
+          }
+        : {}),
+      ...(query.day
+        ? {
+            createdAt: {
+              gte: new Date(`${query.day}T00:00:00.000Z`),
+              lt: new Date(`${query.day}T23:59:59.999Z`),
+            },
+          }
+        : {}),
     };
+  }
+
+  /**
+   * "Folhas" de atividades: viagens agrupadas por cliente + rota + dia de
+   * registo, com contagem total e quantas já foram entregues. É a lista que
+   * a página de acompanhamento mostra (cada folha é uma tabela operacional).
+   */
+  async listActivities(): Promise<
+    Array<{
+      clientId: string;
+      clientName: string;
+      origin: string;
+      destination: string;
+      day: string;
+      total: number;
+      delivered: number;
+    }>
+  > {
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        clientId: string;
+        clientName: string;
+        origin: string;
+        destination: string;
+        day: string;
+        total: bigint;
+        delivered: bigint;
+      }>
+    >`
+      SELECT
+        c.clientId AS clientId,
+        cl.companyName AS clientName,
+        c.origin AS origin,
+        c.destination AS destination,
+        DATE_FORMAT(t.createdAt, '%Y-%m-%d') AS day,
+        COUNT(*) AS total,
+        SUM(t.currentStatus IN ('DISCHARGED', 'CONTAINER_RETURNED')) AS delivered
+      FROM trips t
+      JOIN cargos c ON c.id = t.cargoId
+      JOIN clients cl ON cl.id = c.clientId
+      WHERE t.deletedAt IS NULL
+      GROUP BY c.clientId, cl.companyName, c.origin, c.destination, DATE_FORMAT(t.createdAt, '%Y-%m-%d')
+      ORDER BY day DESC, cl.companyName ASC
+    `;
+
+    return rows.map((row) => ({
+      clientId: row.clientId,
+      clientName: row.clientName,
+      origin: row.origin,
+      destination: row.destination,
+      day: row.day,
+      total: Number(row.total),
+      delivered: Number(row.delivered),
+    }));
   }
 }

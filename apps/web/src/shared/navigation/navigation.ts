@@ -1,4 +1,5 @@
 import {
+  ClipboardList,
   AlertTriangle,
   Gauge,
   Landmark,
@@ -42,6 +43,12 @@ export const navigationGroups: NavigationGroup[] = [
     id: "monitorizacao",
     label: "Monitorização",
     items: [
+      {
+        href: "/viagens",
+        label: "Atividades",
+        description: "Folhas por cliente/rota e acompanhamento das cargas",
+        icon: ClipboardList,
+      },
       {
         href: "/rastreamento",
         label: "Rastreamento",

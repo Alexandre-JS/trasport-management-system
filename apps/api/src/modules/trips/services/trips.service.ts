@@ -23,6 +23,10 @@ export class TripsService {
     return this.tripsRepository.health();
   }
 
+  listActivities() {
+    return this.tripsRepository.listActivities();
+  }
+
   async findAll(query: ListTripsQueryDto) {
     const { data, total } = await this.tripsRepository.findMany(query);
 

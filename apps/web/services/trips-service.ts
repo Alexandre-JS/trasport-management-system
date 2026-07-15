@@ -11,6 +11,7 @@ import type {
   Trip,
   UpdateTripStatusPayload,
   UpdateTripPayload,
+  ActivitySheet,
 } from "@/types/trip";
 import { cleanParams } from "@/utils/query-params";
 
@@ -112,6 +113,12 @@ export async function recordTripEvent(
   payload: RecordTripEventPayload,
 ): Promise<Trip> {
   const { data } = await http.post<Trip>(`/trips/${id}/events`, payload);
+
+  return data;
+}
+
+export async function listActivities(): Promise<ActivitySheet[]> {
+  const { data } = await http.get<ActivitySheet[]>("/trips/activities");
 
   return data;
 }

@@ -58,6 +58,27 @@ export class ListTripsQueryDto {
   @IsEnum(TripStatus)
   currentStatus?: TripStatus;
 
+  // Filtros para abrir uma "folha" de atividades (cliente + rota + dia).
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  clientId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  origin?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  destination?: string;
+
+  @ApiPropertyOptional({ description: 'Dia de registo (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  day?: string;
+
   @ApiPropertyOptional({
     enum: [
       'createdAt',

@@ -49,6 +49,14 @@ export class TripsController {
     return this.tripsService.health();
   }
 
+  @Get('activities')
+  @ApiOperation({
+    summary: 'List activity sheets: trips grouped by client + route + day',
+  })
+  listActivities() {
+    return this.tripsService.listActivities();
+  }
+
   @Get()
   @ApiOperation({ summary: 'List trips with search, filters and pagination' })
   @ApiOkResponse({ type: TripResponseDto, isArray: true })

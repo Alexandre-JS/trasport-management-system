@@ -132,8 +132,22 @@ export type ListTripsParams = {
   trailerId?: string;
   driverId?: string;
   currentStatus?: TripStatus;
+  clientId?: string;
+  origin?: string;
+  destination?: string;
+  day?: string;
   sortBy?: TripSortBy;
   sortOrder?: SortOrder;
+};
+
+export type ActivitySheet = {
+  clientId: string;
+  clientName: string;
+  origin: string;
+  destination: string;
+  day: string;
+  total: number;
+  delivered: number;
 };
 
 export type AssignDriverPayload = { driverId: string };

@@ -66,6 +66,12 @@ export function OperationalBoardView() {
   const [rows, setRows] = useState<BoardRow[]>([]);
   const [saving, setSaving] = useState(false);
   const initialized = useRef(false);
+  // Contexto da folha (como o título do Excel: cliente / rota). Aplica-se às
+  // linhas novas; a origem é Beira por defeito (a operação parte de Beira).
+  const [sheetClientId, setSheetClientId] = useState("");
+  const [sheetOrigin, setSheetOrigin] = useState("Beira");
+  const [sheetDestination, setSheetDestination] = useState("");
+  // Cliente efetivo da folha: o escolhido, ou o primeiro por defeito.
 
   const clients = useMemo(
     () => clientsQuery.data?.data ?? [],
@@ -95,7 +101,13 @@ export function OperationalBoardView() {
     // A grelha mantém linhas vazias prontas para digitação, como uma folha Excel.
     setRows([
       ...persisted,
-      ...Array.from({ length: EMPTY_ROWS }, () => blankRow(clients[0]?.id)),
+      ...Array.from({ length: EMPTY_ROWS }, () =>
+        blankRow({
+          clientId: clients[0]?.id ?? "",
+          origin: "Beira",
+          destination: "",
+        }),
+      ),
     ]);
   }, [clients, tripsQuery.data]);
 
@@ -110,7 +122,13 @@ export function OperationalBoardView() {
   function addRows(count = 5) {
     setRows((current) => [
       ...current,
-      ...Array.from({ length: count }, () => blankRow(clients[0]?.id)),
+      ...Array.from({ length: count }, () =>
+        blankRow({
+          clientId: sheetClientId || clients[0]?.id || "",
+          origin: sheetOrigin.trim(),
+          destination: sheetDestination.trim(),
+        }),
+      ),
     ]);
   }
 
@@ -219,7 +237,8 @@ export function OperationalBoardView() {
       truckId: existingTruck?.id,
       trailerId: existingTrailer?.id,
       driverId: existingDriver?.id,
-      ...operationalPayload(row),
+      // Sem recurso próprio ligado = transporte externo/subcontratado.
+      ...operationalPayload(row, !existingTruck && !existingDriver),
     });
   }
 
@@ -232,22 +251,27 @@ export function OperationalBoardView() {
   const dirtyCount = rows.filter((row) => row.dirty && hasContent(row)).length;
 
   function exportBoard() {
-    const visible = rows.filter(hasContent);
+    const borderName = (id: string) =>
+      borders.find((item) => item.id === id)?.name ?? "";
+    const visible = rows
+      .filter(hasContent)
+      .map((row, index) => ({ ...row, nu: index + 1 }));
     exportToCsv("quadro-operacional.csv", visible, [
-      { header: "Booking", value: (row) => row.booking },
-      { header: "Transportador", value: (row) => row.transporter },
+      { header: "Nu.", value: (row) => String(row.nu) },
+      { header: "Transporter", value: (row) => row.transporter },
       { header: "Horse", value: (row) => row.horse },
       { header: "Trailer", value: (row) => row.trailer },
-      { header: "Motorista", value: (row) => row.driver },
-      { header: "Passaporte", value: (row) => row.passport },
-      { header: "Carta", value: (row) => row.license },
-      { header: "Telefone", value: (row) => row.phone },
-      { header: "Tonelagem", value: (row) => row.tonnage },
-      { header: "Despachado por", value: (row) => row.dispatchedBy },
-      { header: "Saída", value: (row) => row.departureDate },
-      { header: "Chegada", value: (row) => row.arrivalDate },
-      { header: "Descarga", value: (row) => row.dischargeDate },
-      { header: "Posição atual", value: (row) => row.currentPosition },
+      { header: "Driver Name", value: (row) => row.driver },
+      { header: "Passport Number", value: (row) => row.passport },
+      { header: "Driving License", value: (row) => row.license },
+      { header: "Phone Number", value: (row) => row.phone },
+      { header: "Border", value: (row) => borderName(row.borderId) },
+      { header: "Ton - Beira", value: (row) => row.tonnage },
+      { header: "Dispatched From Beira", value: (row) => row.dispatchedBy },
+      { header: "GMS Dispatch Date", value: (row) => row.departureDate },
+      { header: "Arrive Date", value: (row) => row.arrivalDate },
+      { header: "Discharge Date", value: (row) => row.dischargeDate },
+      { header: "Current Position", value: (row) => row.currentPosition },
       { header: "Remark", value: (row) => row.remarks },
     ]);
   }
@@ -282,9 +306,51 @@ export function OperationalBoardView() {
           </div>
         }
       />
-      <div className="flex items-center gap-2 rounded-md border border-brand-100 bg-brand-50 px-3 py-2 text-sm text-brand-800 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-200">
-        <Sheet className="size-4" aria-hidden /> Uma linha corresponde a uma
-        viagem. As células azuis foram alteradas e aguardam gravação.
+      {/* Contexto da folha, como o título do Excel (cliente / rota). */}
+      <div className="flex flex-wrap items-end gap-3 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            Cliente
+          </span>
+          <select
+            value={sheetClientId || clients[0]?.id || ""}
+            onChange={(event) => setSheetClientId(event.target.value)}
+            className="h-9 min-w-44 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          >
+            <option value="">Selecionar cliente…</option>
+            {clients.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.companyName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            Origem
+          </span>
+          <input
+            value={sheetOrigin}
+            onChange={(event) => setSheetOrigin(event.target.value)}
+            className="h-9 w-32 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          />
+        </label>
+        <span className="pb-2 text-slate-400">→</span>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            Destino
+          </span>
+          <input
+            value={sheetDestination}
+            onChange={(event) => setSheetDestination(event.target.value)}
+            placeholder="Ex.: Lusaka"
+            className="h-9 w-40 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          />
+        </label>
+        <p className="flex items-center gap-1.5 pb-2 text-xs text-slate-500 dark:text-slate-400">
+          <Sheet className="size-3.5" aria-hidden /> Aplica-se às linhas novas.
+          Células azuis = alteradas por gravar.
+        </p>
       </div>
       <datalist id="board-horses">
         {trucks.map((item) => (
@@ -305,10 +371,21 @@ export function OperationalBoardView() {
         <table className="min-w-[2700px] border-separate border-spacing-0 text-xs">
           <thead className="sticky top-0 z-30 bg-slate-100 text-left font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <tr>
+              {GROUPS.map((group, index) => (
+                <th
+                  key={`${group.label}-${index}`}
+                  colSpan={group.span}
+                  className="border-b border-r border-slate-300 bg-slate-200 px-2 py-1.5 text-center text-[11px] dark:border-slate-700 dark:bg-slate-700"
+                >
+                  {group.label}
+                </th>
+              ))}
+            </tr>
+            <tr>
               {HEADERS.map((header, index) => (
                 <th
-                  key={header}
-                  className={`whitespace-nowrap border-b border-r border-slate-300 px-2 py-2 dark:border-slate-700 ${index < 2 ? `sticky z-40 bg-slate-100 dark:bg-slate-800 ${index === 0 ? "left-0 w-12" : "left-12"}` : ""}`}
+                  key={`${header}-${index}`}
+                  className={`whitespace-nowrap border-b border-r border-slate-300 px-2 py-2 dark:border-slate-700 ${index === 0 ? "sticky left-0 z-40 w-12 bg-slate-100 dark:bg-slate-800" : ""}`}
                 >
                   {header}
                 </th>
@@ -331,45 +408,10 @@ export function OperationalBoardView() {
                 >
                   {index + 1}
                 </Cell>
-                <Cell sticky="left-12 min-w-36">
-                  <Input
-                    value={row.booking}
-                    onChange={(v) => change(row.key, "booking", v)}
-                    placeholder="Automático"
-                  />
-                </Cell>
-                <Cell>
-                  <Select
-                    value={row.clientId}
-                    onChange={(v) => change(row.key, "clientId", v)}
-                    options={clients.map((item) => [item.id, item.companyName])}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.origin}
-                    onChange={(v) => change(row.key, "origin", v)}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.destination}
-                    onChange={(v) => change(row.key, "destination", v)}
-                  />
-                </Cell>
                 <Cell>
                   <Input
                     value={row.transporter}
                     onChange={(v) => change(row.key, "transporter", v)}
-                  />
-                </Cell>
-                <Cell className="text-center">
-                  <input
-                    type="checkbox"
-                    checked={row.subcontracted}
-                    onChange={(e) =>
-                      change(row.key, "subcontracted", e.target.checked)
-                    }
                   />
                 </Cell>
                 <Cell>
@@ -487,35 +529,40 @@ export function OperationalBoardView() {
   );
 }
 
+// Colunas exatamente como a folha do cliente (PDF LUMAC), na mesma ordem.
 const HEADERS = [
-  "#",
-  "Booking",
-  "Cliente",
-  "Origem",
-  "Destino",
-  "Transportador",
-  "Subcontr.",
+  "Nu.",
+  "Transporter",
   "Horse",
   "Trailer",
-  "Motorista",
-  "Passaporte",
-  "Carta",
-  "Telefone",
+  "Driver Name",
+  "Passport Number",
+  "Driving License",
+  "Phone Number",
   "Border",
-  "Ton.",
-  "Despachado por",
-  "Saída",
-  "Chegada",
-  "Descarga",
-  "Posição atual",
+  "Ton - Beira",
+  "Dispatched From Beira",
+  "GMS Dispatch Date",
+  "Arrive Date",
+  "Discharge Date",
+  "Current Position",
   "Remark",
-  "Estado",
+  "",
 ];
 
-function operationalPayload(row: BoardRow) {
+// Cabeçalhos-grupo do PDF (BOOKING / TRACKING / REMARK) com o nº de colunas
+// que cada um cobre (incluindo a coluna Nu. dentro de BOOKING).
+const GROUPS: { label: string; span: number }[] = [
+  { label: "BOOKING", span: 11 },
+  { label: "TRACKING", span: 4 },
+  { label: "REMARK", span: 1 },
+  { label: "", span: 1 },
+];
+
+function operationalPayload(row: BoardRow, subcontracted?: boolean) {
   return {
     transporterName: row.transporter.trim() || undefined,
-    isSubcontracted: row.subcontracted,
+    isSubcontracted: subcontracted ?? row.subcontracted,
     horsePlate: row.horse.trim() || undefined,
     trailerPlate: row.trailer.trim() || undefined,
     driverName: row.driver.trim() || undefined,
@@ -563,13 +610,17 @@ function toBoardRow(trip: Trip): BoardRow {
   };
 }
 
-function blankRow(clientId = ""): BoardRow {
+function blankRow(ctx: {
+  clientId: string;
+  origin: string;
+  destination: string;
+}): BoardRow {
   return {
     key: crypto.randomUUID(),
-    clientId,
+    clientId: ctx.clientId,
     booking: "",
-    origin: "",
-    destination: "",
+    origin: ctx.origin,
+    destination: ctx.destination,
     transporter: "LUMAC",
     subcontracted: false,
     horse: "",
@@ -590,23 +641,24 @@ function blankRow(clientId = ""): BoardRow {
   };
 }
 function hasContent(row: BoardRow) {
+  // Origem/destino vêm do contexto da folha; uma linha só "tem conteúdo"
+  // quando o operador digita dados próprios da viagem.
   return Boolean(
-    row.tripId || row.origin || row.destination || row.horse || row.driver,
+    row.tripId ||
+      row.horse.trim() ||
+      row.driver.trim() ||
+      row.trailer.trim() ||
+      row.tonnage.trim() ||
+      row.currentPosition.trim(),
   );
 }
 function validateRow(row: BoardRow) {
-  if (
-    !row.clientId ||
-    !row.origin.trim() ||
-    !row.destination.trim() ||
-    !row.horse.trim() ||
-    !row.trailer.trim() ||
-    !row.driver.trim() ||
-    !row.license.trim()
-  )
-    throw new Error(
-      "preencha cliente, rota, Horse, trailer, motorista e carta",
-    );
+  if (!row.clientId || !row.origin.trim() || !row.destination.trim()) {
+    throw new Error("defina o cliente e a rota no topo da folha");
+  }
+  if (!row.horse.trim() || !row.driver.trim()) {
+    throw new Error("preencha pelo menos o Horse e o motorista");
+  }
 }
 function normalize(value: string) {
   return value.replace(/\s+/g, "").toUpperCase();

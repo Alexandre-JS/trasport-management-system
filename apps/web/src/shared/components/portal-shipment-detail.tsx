@@ -95,13 +95,18 @@ export function PortalShipmentDetail({ id }: { id: string }) {
           {
             title: "Informação da carga",
             rows: [
+              { label: "Booking", value: shipment.bookingReference ?? shipment.cargo.code },
+              { label: "Transportador", value: shipment.transporterName ?? "—" },
+              { label: "Horse", value: shipment.horsePlate ?? shipment.truck?.plateNumber ?? "—" },
+              { label: "Trailer", value: shipment.trailerPlate ?? shipment.trailer?.plateNumber ?? "—" },
+              { label: "Motorista", value: shipment.driverName ?? shipment.driver?.fullName ?? "—" },
               { label: "Mercadoria", value: shipment.cargo.description ?? "—" },
               { label: "Tonelagem", value: shipment.tonnage ? `${shipment.tonnage} t` : "—" },
-              { label: "Posição informada", value: shipment.currentPosition ?? "—" },
+              { label: "Posição atual", value: shipment.currentPosition ?? "—" },
               { label: "Border (Fronteira)", value: borderNames(shipment.borders) ?? "—" },
-              { label: "Data de carga", value: formatDate(shipment.loadedDate) },
-              { label: "Data de saída", value: formatDate(shipment.departureDate) },
+              { label: "Data de saída (Beira)", value: formatDate(shipment.departureDate) },
               { label: "Chegada prevista", value: formatDate(shipment.arrivalEstimate) },
+              { label: "Data de descarga", value: formatDate(shipment.dischargeDate) },
             ],
           },
         ]}

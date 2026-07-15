@@ -20,14 +20,21 @@ export type PortalShipment = {
   departureDate: string | null;
   arrivalEstimate: string | null;
   arrivalDate: string | null;
+  dischargeDate: string | null;
+  bookingReference: string | null;
+  transporterName: string | null;
+  horsePlate: string | null;
+  trailerPlate: string | null;
+  driverName: string | null;
   cargo: {
     code: string;
     description: string | null;
     origin: string;
     destination: string;
   };
-  truck: { plateNumber: string };
-  driver: { fullName: string };
+  truck: { plateNumber: string } | null;
+  trailer: { plateNumber: string } | null;
+  driver: { fullName: string } | null;
   createdAt: string;
 };
 

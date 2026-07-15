@@ -3,8 +3,6 @@ import {
   Gauge,
   Landmark,
   MapPin,
-  Package,
-  Route,
   Truck,
   UserCog,
   Users,
@@ -27,24 +25,6 @@ export const navigationGroups: NavigationGroup[] = [
         label: "Quadro operacional",
         description: "Registo de viagens em grelha",
         icon: Gauge,
-      },
-    ],
-  },
-  {
-    id: "operacoes",
-    label: "Operações",
-    items: [
-      {
-        href: "/cargas",
-        label: "Cargas",
-        description: "Pedidos, volumes e estado operacional",
-        icon: Package,
-      },
-      {
-        href: "/viagens",
-        label: "Viagens",
-        description: "Planeamento e acompanhamento",
-        icon: Route,
       },
     ],
   },

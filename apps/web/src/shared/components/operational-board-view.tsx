@@ -9,7 +9,7 @@ import {
 } from "@/src/shared/components/action-button";
 import { PageHeader } from "@/src/shared/components/page-header";
 import { useBorders } from "@/hooks/use-borders";
-import { useClients } from "@/hooks/use-clients";
+import { useClients, useCreateClient } from "@/hooks/use-clients";
 import { useDrivers } from "@/hooks/use-drivers";
 import { useTrailers } from "@/hooks/use-trailers";
 import { useTrips } from "@/hooks/use-trips";
@@ -71,6 +71,9 @@ export function OperationalBoardView() {
   const [sheetClientId, setSheetClientId] = useState("");
   const [sheetOrigin, setSheetOrigin] = useState("Beira");
   const [sheetDestination, setSheetDestination] = useState("");
+  const [newClientName, setNewClientName] = useState("");
+  const [addingClient, setAddingClient] = useState(false);
+  const createClientMutation = useCreateClient();
   // Cliente efetivo da folha: o escolhido, ou o primeiro por defeito.
 
   const clients = useMemo(
@@ -250,6 +253,25 @@ export function OperationalBoardView() {
 
   const dirtyCount = rows.filter((row) => row.dirty && hasContent(row)).length;
 
+  async function addClient() {
+    const name = newClientName.trim();
+    if (!name) return;
+    try {
+      const client = await createClientMutation.mutateAsync({ companyName: name });
+      await queryClient.invalidateQueries({ queryKey: ["clients"] });
+      setSheetClientId(client.id);
+      setNewClientName("");
+      setAddingClient(false);
+      toast({ title: "Cliente criado", type: "success" });
+    } catch (error) {
+      toast({
+        title: "Não foi possível criar o cliente",
+        description: error instanceof Error ? error.message : "erro",
+        type: "error",
+      });
+    }
+  }
+
   function exportBoard() {
     const borderName = (id: string) =>
       borders.find((item) => item.id === id)?.name ?? "";
@@ -308,23 +330,67 @@ export function OperationalBoardView() {
       />
       {/* Contexto da folha, como o título do Excel (cliente / rota). */}
       <div className="flex flex-wrap items-end gap-3 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-        <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
             Cliente
           </span>
-          <select
-            value={sheetClientId || clients[0]?.id || ""}
-            onChange={(event) => setSheetClientId(event.target.value)}
-            className="h-9 min-w-44 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
-          >
-            <option value="">Selecionar cliente…</option>
-            {clients.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.companyName}
-              </option>
-            ))}
-          </select>
-        </label>
+          {addingClient ? (
+            <div className="flex items-center gap-1">
+              <input
+                autoFocus
+                value={newClientName}
+                onChange={(event) => setNewClientName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void addClient();
+                  if (event.key === "Escape") setAddingClient(false);
+                }}
+                placeholder="Nome da empresa"
+                className="h-9 min-w-44 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+              />
+              <button
+                type="button"
+                onClick={() => void addClient()}
+                disabled={createClientMutation.isPending}
+                className="h-9 rounded-md bg-brand-600 px-3 text-sm font-medium text-white disabled:opacity-60"
+              >
+                Criar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddingClient(false);
+                  setNewClientName("");
+                }}
+                className="h-9 px-2 text-sm text-slate-500"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <select
+                value={sheetClientId || clients[0]?.id || ""}
+                onChange={(event) => setSheetClientId(event.target.value)}
+                className="h-9 min-w-44 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+              >
+                <option value="">Selecionar cliente…</option>
+                {clients.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.companyName}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setAddingClient(true)}
+                title="Novo cliente"
+                className="h-9 rounded-md border border-slate-300 px-2 text-sm font-medium text-brand-700 hover:bg-brand-50 dark:border-slate-600 dark:text-brand-300"
+              >
+                ＋
+              </button>
+            </div>
+          )}
+        </div>
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
             Origem

@@ -3,9 +3,7 @@ import {
   Gauge,
   Landmark,
   MapPin,
-  Truck,
   UserCog,
-  Users,
   Warehouse,
 } from "lucide-react";
 import type {
@@ -32,18 +30,6 @@ export const navigationGroups: NavigationGroup[] = [
     id: "cadastros",
     label: "Cadastros",
     items: [
-      {
-        href: "/contas-cliente",
-        label: "Contas e clientes",
-        description: "Clientes, acessos ao portal e motoristas",
-        icon: Users,
-      },
-      {
-        href: "/frota",
-        label: "Transportadores e equipamentos",
-        description: "Horses, trailers próprios e externos",
-        icon: Truck,
-      },
       {
         href: "/fronteiras",
         label: "Fronteiras",

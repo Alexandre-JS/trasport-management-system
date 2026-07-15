@@ -63,9 +63,9 @@ export type TripEvent = {
 export type Trip = {
   id: string;
   cargoId: string;
-  truckId: string;
+  truckId: string | null;
   trailerId: string | null;
-  driverId: string;
+  driverId: string | null;
   departureDate: string | null;
   arrivalEstimate: string | null;
   arrivalDate: string | null;
@@ -99,11 +99,11 @@ export type Trip = {
     fullName: string;
     licenseNumber: string;
     passportNumber: string | null;
-  };
+  } | null;
   truck: {
     id: string;
     plateNumber: string;
-  };
+  } | null;
   trailer: {
     id: string;
     plateNumber: string;
@@ -142,9 +142,9 @@ export type AssignTrailerPayload = { trailerId: string };
 export type AssignCargoPayload = { cargoId: string };
 export type CreateTripPayload = {
   cargoId: string;
-  truckId: string;
-  trailerId: string;
-  driverId: string;
+  truckId?: string;
+  trailerId?: string;
+  driverId?: string;
   departureDate?: string;
   arrivalEstimate?: string;
   arrivalDate?: string;

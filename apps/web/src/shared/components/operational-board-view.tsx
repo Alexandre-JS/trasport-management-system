@@ -16,10 +16,7 @@ import { useTrips } from "@/hooks/use-trips";
 import { useTrucks } from "@/hooks/use-trucks";
 import { useToast } from "@/providers/toast-provider";
 import { createCargo, updateCargo } from "@/services/cargo-service";
-import { createDriver } from "@/services/drivers-service";
-import { createTrailer } from "@/services/trailers-service";
 import { createTrip, updateTrip } from "@/services/trips-service";
-import { createTruck } from "@/services/trucks-service";
 import type { Trip } from "@/types/trip";
 import { exportToCsv } from "@/utils/export-csv";
 
@@ -196,6 +193,9 @@ export function OperationalBoardView() {
   }
 
   async function createFromRow(row: BoardRow) {
+    // Recursos EXTERNOS (subcontratados) não geram cadastro: os dados vivem
+    // nos campos snapshot da viagem. Só se LIGA a um registo próprio quando a
+    // matrícula/carta já existe na frota — sem nunca criar registos novos.
     const existingTruck = trucks.find(
       (item) => normalize(item.plateNumber) === normalize(row.horse),
     );
@@ -205,37 +205,20 @@ export function OperationalBoardView() {
     const existingDriver = drivers.find(
       (item) => normalize(item.licenseNumber) === normalize(row.license),
     );
-    const [cargo, truck, trailer, driver] = await Promise.all([
-      createCargo({
-        clientId: row.clientId,
-        origin: row.origin.trim(),
-        destination: row.destination.trim(),
-        description: row.booking.trim() || undefined,
-        weightTonnes: numberOrUndefined(row.tonnage),
-      }),
-      existingTruck
-        ? Promise.resolve(existingTruck)
-        : createTruck({ plateNumber: row.horse.trim() }),
-      existingTrailer
-        ? Promise.resolve(existingTrailer)
-        : createTrailer({
-            plateNumber: row.trailer.trim(),
-            tonnage: numberOrUndefined(row.tonnage),
-          }),
-      existingDriver
-        ? Promise.resolve(existingDriver)
-        : createDriver({
-            fullName: row.driver.trim(),
-            licenseNumber: row.license.trim(),
-            passportNumber: row.passport.trim() || undefined,
-            phone: row.phone.trim() || undefined,
-          }),
-    ]);
+
+    const cargo = await createCargo({
+      clientId: row.clientId,
+      origin: row.origin.trim(),
+      destination: row.destination.trim(),
+      description: row.booking.trim() || undefined,
+      weightTonnes: numberOrUndefined(row.tonnage),
+    });
+
     return createTrip({
       cargoId: cargo.id,
-      truckId: truck.id,
-      trailerId: trailer.id,
-      driverId: driver.id,
+      truckId: existingTruck?.id,
+      trailerId: existingTrailer?.id,
+      driverId: existingDriver?.id,
       ...operationalPayload(row),
     });
   }
@@ -562,11 +545,11 @@ function toBoardRow(trip: Trip): BoardRow {
     destination: trip.cargo.destination,
     transporter: trip.transporterName ?? "",
     subcontracted: trip.isSubcontracted,
-    horse: trip.horsePlate ?? trip.truck.plateNumber,
+    horse: trip.horsePlate ?? trip.truck?.plateNumber ?? "",
     trailer: trip.trailerPlate ?? trip.trailer?.plateNumber ?? "",
-    driver: trip.driverName ?? trip.driver.fullName,
-    passport: trip.driverPassport ?? trip.driver.passportNumber ?? "",
-    license: trip.driverLicense ?? trip.driver.licenseNumber,
+    driver: trip.driverName ?? trip.driver?.fullName ?? "",
+    passport: trip.driverPassport ?? trip.driver?.passportNumber ?? "",
+    license: trip.driverLicense ?? trip.driver?.licenseNumber ?? "",
     phone: trip.driverPhone ?? "",
     borderId: trip.borders[0]?.border.id ?? "",
     tonnage: trip.tonnage ?? "",

@@ -49,9 +49,17 @@ export class TripsService {
 
   async create(dto: CreateTripDto) {
     await this.ensureCargoExists(dto.cargoId);
-    await this.ensureTruckExists(dto.truckId);
-    await this.ensureTrailerExists(dto.trailerId);
-    await this.ensureDriverExists(dto.driverId);
+    // Recursos próprios são opcionais (viagem subcontratada): só validar os
+    // que foram indicados.
+    if (dto.truckId) {
+      await this.ensureTruckExists(dto.truckId);
+    }
+    if (dto.trailerId) {
+      await this.ensureTrailerExists(dto.trailerId);
+    }
+    if (dto.driverId) {
+      await this.ensureDriverExists(dto.driverId);
+    }
 
     const trip = await this.tripsRepository.create(dto);
 

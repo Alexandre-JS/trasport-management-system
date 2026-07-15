@@ -19,9 +19,9 @@ export type TripBorderEntity = {
 export type TripEntity = {
   id: string;
   cargoId: string;
-  truckId: string;
+  truckId: string | null;
   trailerId: string | null;
-  driverId: string;
+  driverId: string | null;
   departureDate: Date | null;
   arrivalEstimate: Date | null;
   arrivalDate: Date | null;
@@ -54,11 +54,11 @@ export type TripEntity = {
     fullName: string;
     licenseNumber: string;
     passportNumber: string | null;
-  };
+  } | null;
   truck: {
     id: string;
     plateNumber: string;
-  };
+  } | null;
   trailer: {
     id: string;
     plateNumber: string;

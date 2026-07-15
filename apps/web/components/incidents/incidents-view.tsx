@@ -202,7 +202,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
 
     exportToCsv("incidentes.csv", rows, [
       { header: "Tipo", value: (row) => incidentTypeMeta[row.type].label },
-      { header: "Motorista", value: (row) => row.trip.driver.fullName },
+      { header: "Motorista", value: (row) => row.trip.driver?.fullName ?? "—" },
       { header: "Viagem", value: (row) => row.trip.cargo.code },
       {
         header: "Local",
@@ -261,7 +261,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
     {
       id: "driver",
       header: "Motorista",
-      cell: (incident) => incident.trip.driver.fullName,
+      cell: (incident) => incident.trip.driver?.fullName ?? "—",
     },
     {
       id: "trip",
@@ -466,7 +466,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
           <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow
               label="Motorista"
-              value={detailsIncident.trip.driver.fullName}
+              value={detailsIncident.trip.driver?.fullName ?? "—"}
             />
             <DetailRow label="Viagem" value={detailsIncident.trip.cargo.code} />
             <DetailRow

@@ -115,9 +115,9 @@ export function TripsListView({
       { header: "Carga", value: (trip) => trip.cargo.code },
       { header: "Origem", value: (trip) => trip.cargo.origin },
       { header: "Destino", value: (trip) => trip.cargo.destination },
-      { header: "Horse", value: (trip) => trip.truck.plateNumber },
+      { header: "Horse", value: (trip) => trip.horsePlate ?? trip.truck?.plateNumber ?? "—" },
       { header: "Trailer", value: (trip) => trip.trailer?.plateNumber },
-      { header: "Motorista", value: (trip) => trip.driver.fullName },
+      { header: "Motorista", value: (trip) => trip.driverName ?? trip.driver?.fullName ?? "—" },
       { header: "Border", value: (trip) => borderNames(trip.borders) },
       { header: "Tonelagem", value: (trip) => trip.tonnage },
       { header: "Posição atual", value: (trip) => trip.currentPosition },
@@ -228,14 +228,14 @@ export function TripsListView({
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                       <span className="block font-medium text-slate-800 dark:text-slate-200">
-                        {trip.truck.plateNumber}
+                        {trip.horsePlate ?? trip.truck?.plateNumber ?? "—"}
                       </span>
                       <span className="mt-0.5 block text-xs text-slate-400 dark:text-slate-500">
                         {trip.trailer?.plateNumber ?? "Sem trailer"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {trip.driver.fullName}
+                      {trip.driverName ?? trip.driver?.fullName ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                       {borderNames(trip.borders) ?? "—"}

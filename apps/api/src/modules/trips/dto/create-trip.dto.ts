@@ -19,17 +19,23 @@ export class CreateTripDto {
   @IsUUID()
   cargoId!: string;
 
-  @ApiProperty()
+  // Recursos próprios (registados) são opcionais: numa viagem subcontratada
+  // o Horse/trailer/motorista são externos e vivem só nos campos snapshot
+  // (horsePlate, trailerPlate, driverName, ...).
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
-  truckId!: string;
+  truckId?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
-  trailerId!: string;
+  trailerId?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
-  driverId!: string;
+  driverId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

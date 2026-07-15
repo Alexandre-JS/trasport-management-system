@@ -293,9 +293,9 @@ model Cargo {
 model Trip {
   id              String          @id @default(uuid()) @db.Char(36)
   cargoId         String          @db.Char(36)
-  truckId         String          @db.Char(36)
+  truckId         String?         @db.Char(36)
   trailerId       String?         @db.Char(36)
-  driverId        String          @db.Char(36)
+  driverId        String?         @db.Char(36)
   departureDate   DateTime?
   arrivalEstimate DateTime?
   arrivalDate     DateTime?
@@ -317,9 +317,9 @@ model Trip {
   bookingReference String?        @db.VarChar(80)
   trackingToken   String          @unique @default(uuid()) @db.Char(36)
   cargo           Cargo           @relation(fields: [cargoId], references: [id], onDelete: Restrict)
-  truck           Truck           @relation(fields: [truckId], references: [id], onDelete: Restrict)
+  truck           Truck?          @relation(fields: [truckId], references: [id], onDelete: Restrict)
   trailer         Trailer?        @relation(fields: [trailerId], references: [id], onDelete: Restrict)
-  driver          Driver          @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  driver          Driver?         @relation(fields: [driverId], references: [id], onDelete: Restrict)
   trackingPoints  TrackingPoint[]
   deliveries      Delivery[]
   incidents       Incident[]

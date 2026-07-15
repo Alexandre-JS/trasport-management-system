@@ -74,43 +74,81 @@ function ActivitiesList({ onOpen }: { onOpen: (s: ActivitySheet) => void }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sheets.map((s) => {
-            const key = `${s.clientId}-${s.origin}-${s.destination}-${s.day}`;
-            const pct = s.total ? Math.round((s.delivered / s.total) * 100) : 0;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => onOpen(s)}
-                className="group flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-brand-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-slate-900 dark:text-white">
-                    {s.clientName}
-                  </span>
-                  <ChevronRight className="size-4 shrink-0 text-slate-400 group-hover:text-brand-600" />
-                </div>
-                <span className="text-sm text-slate-600 dark:text-slate-300">
-                  {s.origin} → {s.destination}
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {formatDate(s.day)}
-                </span>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {s.delivered}/{s.total} entregues
-                  </span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                    <div
-                      className="h-full rounded-full bg-emerald-500"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+        <div className="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-separate border-spacing-0 text-sm">
+              <thead className="bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <tr>
+                  {[
+                    "Cliente",
+                    "Rota",
+                    "Data",
+                    "Cargas",
+                    "Entregues",
+                    "Progresso",
+                    "",
+                  ].map((header) => (
+                    <th
+                      key={header || "action"}
+                      className="whitespace-nowrap border-b border-r border-slate-300 px-3 py-2.5 last:border-r-0 dark:border-slate-700"
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sheets.map((s) => {
+                  const key = `${s.clientId}-${s.origin}-${s.destination}-${s.day}`;
+                  const pct = s.total
+                    ? Math.round((s.delivered / s.total) * 100)
+                    : 0;
+                  return (
+                    <tr
+                      key={key}
+                      onClick={() => onOpen(s)}
+                      className="cursor-pointer odd:bg-white even:bg-slate-50/60 hover:bg-brand-50/70 dark:odd:bg-slate-900 dark:even:bg-slate-900/60 dark:hover:bg-brand-950/30"
+                    >
+                      <td className="border-b border-r border-slate-200 px-3 py-3 font-semibold text-slate-900 dark:border-slate-800 dark:text-white">
+                        {s.clientName}
+                      </td>
+                      <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                        {s.origin} → {s.destination}
+                      </td>
+                      <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                        {formatDate(s.day)}
+                      </td>
+                      <td className="border-b border-r border-slate-200 px-3 py-3 text-center text-slate-700 dark:border-slate-800 dark:text-slate-200">
+                        {s.total}
+                      </td>
+                      <td className="border-b border-r border-slate-200 px-3 py-3 text-center text-slate-700 dark:border-slate-800 dark:text-slate-200">
+                        {s.delivered}
+                      </td>
+                      <td className="border-b border-r border-slate-200 px-3 py-3 dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                            <div
+                              className="h-full rounded-full bg-emerald-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {pct}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="border-b border-slate-200 px-3 py-3 text-right dark:border-slate-800">
+                        <span className="inline-flex items-center gap-1 font-medium text-brand-600 dark:text-brand-400">
+                          Abrir
+                          <ChevronRight className="size-4" aria-hidden />
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
       {isFetching && !isLoading ? (

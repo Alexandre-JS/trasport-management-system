@@ -206,7 +206,7 @@ async function main() {
       clientId: client.id,
       code: 'SGRTC-0001',
       description: 'Carga de exemplo para validação inicial',
-      weightKg: 1200,
+      weightTonnes: 1.2,
       volumeM3: 8.5,
       origin: 'Maputo',
       destination: 'Beira',

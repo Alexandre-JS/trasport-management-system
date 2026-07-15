@@ -43,6 +43,13 @@ export function FleetView({ initialTab }: FleetViewProps) {
     router.replace(`/frota?tab=${tab}`, { scroll: false });
   }
 
+  function moveTab(currentIndex: number, direction: -1 | 1) {
+    const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+    const nextTab = tabs[nextIndex];
+    setTab(nextTab.id);
+    document.getElementById(`tab-${nextTab.id}`)?.focus();
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -65,7 +72,7 @@ export function FleetView({ initialTab }: FleetViewProps) {
       />
 
       <div className="grid gap-2 sm:grid-cols-2" role="tablist">
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const Icon = tab.icon;
           const active = tab.id === initialTab;
 
@@ -74,10 +81,17 @@ export function FleetView({ initialTab }: FleetViewProps) {
               key={tab.id}
               type="button"
               role="tab"
+              id={`tab-${tab.id}`}
+              aria-controls={`panel-${tab.id}`}
               aria-selected={active}
+              tabIndex={active ? 0 : -1}
               onClick={() => setTab(tab.id)}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowRight") moveTab(index, 1);
+                if (event.key === "ArrowLeft") moveTab(index, -1);
+              }}
               className={[
-                "flex min-h-20 items-start gap-3 rounded-md border p-3 text-left transition",
+                "flex items-start gap-3 rounded-md border p-3 text-left transition",
                 active
                   ? "border-brand-600 bg-brand-600 text-white shadow-sm dark:border-brand-400 dark:bg-brand-500 dark:text-white"
                   : "border-brand-100 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-900 dark:border-brand-950 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-brand-800 dark:hover:bg-brand-950/60 dark:hover:text-brand-100",
@@ -109,7 +123,11 @@ export function FleetView({ initialTab }: FleetViewProps) {
         })}
       </div>
 
-      <section>
+      <section
+        id={`panel-${initialTab}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${initialTab}`}
+      >
         {initialTab === "camioes" ? <TrucksView showHeader={false} /> : null}
         {initialTab === "reboques" ? <TrailersView /> : null}
       </section>

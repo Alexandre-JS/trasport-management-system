@@ -49,7 +49,7 @@ type DemoTrip = {
   driver: { name: string; license: string; passport: string };
   plate: string;
   trailerPlate: string;
-  cargo: { code: string; description: string; weightKg: number };
+  cargo: { code: string; description: string; weightTonnes: number };
   status: TripStatus;
   // Border names (must exist in `borders`, seeded by the main seed), in route order.
   borders: string[];
@@ -63,7 +63,7 @@ const DEMO: DemoTrip[] = [
     driver: { name: 'António Nhaca', license: 'MZ-DRV-1001', passport: 'PA0100001' },
     plate: 'MMT-210-MC',
     trailerPlate: 'TRL-210-MC',
-    cargo: { code: 'LUMAC-2026-0001', description: 'Cobre catódico', weightKg: 30000 },
+    cargo: { code: 'LUMAC-2026-0001', description: 'Cobre catódico', weightTonnes: 30 },
     status: TripStatus.WAITING_APPOINTMENT,
     borders: [],
     tonnage: 30,
@@ -74,7 +74,7 @@ const DEMO: DemoTrip[] = [
     driver: { name: 'Salvador Uane', license: 'MZ-DRV-1002', passport: 'PA0100002' },
     plate: 'BEI-455-MP',
     trailerPlate: 'TRL-455-MP',
-    cargo: { code: 'LUMAC-2026-0002', description: 'Fertilizante granulado', weightKg: 32000 },
+    cargo: { code: 'LUMAC-2026-0002', description: 'Fertilizante granulado', weightTonnes: 32 },
     status: TripStatus.LOADED,
     borders: ['Chirundu'],
     tonnage: 32,
@@ -85,7 +85,7 @@ const DEMO: DemoTrip[] = [
     driver: { name: 'Ernesto Chongo', license: 'MZ-DRV-1003', passport: 'PA0100003' },
     plate: 'TETE-330-MP',
     trailerPlate: 'TRL-330-MP',
-    cargo: { code: 'LUMAC-2026-0003', description: 'Cimento ensacado', weightKg: 28000 },
+    cargo: { code: 'LUMAC-2026-0003', description: 'Cimento ensacado', weightTonnes: 28 },
     status: TripStatus.DISPATCHED_ORIGIN,
     borders: ['Machipanda / Forbes', 'Chirundu'],
     tonnage: 28,
@@ -96,7 +96,7 @@ const DEMO: DemoTrip[] = [
     driver: { name: 'Fernando Come', license: 'MZ-DRV-1004', passport: 'PA0100004' },
     plate: 'CHM-780-MP',
     trailerPlate: 'TRL-780-MP',
-    cargo: { code: 'LUMAC-2026-0004', description: 'Trigo a granel', weightKg: 34000 },
+    cargo: { code: 'LUMAC-2026-0004', description: 'Trigo a granel', weightTonnes: 34 },
     status: TripStatus.AT_BORDER,
     borders: ['Chirundu'],
     tonnage: 34,
@@ -107,7 +107,7 @@ const DEMO: DemoTrip[] = [
     driver: { name: 'Adélio Tembe', license: 'MZ-DRV-1005', passport: 'PA0100005' },
     plate: 'NAC-612-MP',
     trailerPlate: 'TRL-612-MP',
-    cargo: { code: 'LUMAC-2026-0005', description: 'Máquinas industriais', weightKg: 26000 },
+    cargo: { code: 'LUMAC-2026-0005', description: 'Máquinas industriais', weightTonnes: 26 },
     status: TripStatus.BORDER_CLEARED,
     borders: ['Chanida'],
     tonnage: 26,
@@ -118,7 +118,7 @@ const DEMO: DemoTrip[] = [
     driver: { name: 'Rachid Ismael', license: 'MZ-DRV-1006', passport: 'PA0100006' },
     plate: 'SOF-908-MP',
     trailerPlate: 'TRL-908-MP',
-    cargo: { code: 'LUMAC-2026-0006', description: 'Peças automóveis', weightKg: 22000 },
+    cargo: { code: 'LUMAC-2026-0006', description: 'Peças automóveis', weightTonnes: 22 },
     status: TripStatus.ARRIVED,
     borders: ['Chanida'],
     tonnage: 22,
@@ -219,7 +219,7 @@ async function main() {
         clientId: CLIENT_ID,
         code: t.cargo.code,
         description: t.cargo.description,
-        weightKg: t.cargo.weightKg,
+        weightTonnes: t.cargo.weightTonnes,
         origin: 'Beira',
         destination: 'Lusaka',
       },

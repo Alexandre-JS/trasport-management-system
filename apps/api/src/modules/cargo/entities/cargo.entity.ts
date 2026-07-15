@@ -6,7 +6,9 @@ export type CargoEntity = {
   clientId: string;
   code: string;
   description: string | null;
-  weightKg: Decimal | null;
+  type: string;
+  containerNumber: string | null;
+  weightTonnes: Decimal | null;
   volumeM3: Decimal | null;
   origin: string;
   destination: string;

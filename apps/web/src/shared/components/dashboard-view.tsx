@@ -1,7 +1,9 @@
 "use client";
 
 import type { EChartsOption } from "echarts";
-import { AlertTriangle, Truck } from "lucide-react";
+import { AlertTriangle, PackagePlus, Route, Truck } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { EChartsPanel } from "@/components/ui/echarts-panel";
 import { StatCard } from "@/components/ui/stat-card";
@@ -86,6 +88,7 @@ function total(query: { data?: { meta: { total: number } } }) {
 }
 
 export function DashboardView() {
+  const router = useRouter();
   const cargoTotal = useCargo({ page: 1, limit: 1 });
   const recentCargo = useCargo({
     page: 1,
@@ -133,6 +136,16 @@ export function DashboardView() {
     }),
     ARRIVED: useTrips({ page: 1, limit: 1, currentStatus: "ARRIVED" }),
     DISCHARGED: useTrips({ page: 1, limit: 1, currentStatus: "DISCHARGED" }),
+    CONTAINER_RETURN_PENDING: useTrips({
+      page: 1,
+      limit: 1,
+      currentStatus: "CONTAINER_RETURN_PENDING",
+    }),
+    CONTAINER_RETURNED: useTrips({
+      page: 1,
+      limit: 1,
+      currentStatus: "CONTAINER_RETURNED",
+    }),
     CANCELLED: useTrips({ page: 1, limit: 1, currentStatus: "CANCELLED" }),
   } satisfies Record<TripStatus, ReturnType<typeof useTrips>>;
 
@@ -172,6 +185,7 @@ export function DashboardView() {
       label: "Cargas registadas",
       value: String(total(cargoTotal)),
       tone: "blue",
+      href: "/cargas",
     },
     {
       label: "Viagens ativas",
@@ -181,16 +195,19 @@ export function DashboardView() {
           .reduce((sum, status) => sum + total(tripByStatus[status]), 0),
       ),
       tone: "green",
+      href: "/viagens",
     },
     {
       label: "Horses disponíveis",
       value: String(total(trucks.AVAILABLE)),
       tone: "slate",
+      href: "/frota?tab=camioes",
     },
     {
       label: "Incidentes abertos",
       value: String(total(incidentsOpen)),
       tone: "amber",
+      href: "/incidentes?resolved=false",
     },
   ];
 
@@ -276,6 +293,24 @@ export function DashboardView() {
       <PageHeader
         title="Dashboard"
         description="Visão geral da operação com dados reais do sistema."
+        primaryAction={
+          <Link
+            href="/cargas?action=new"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-brand-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+          >
+            <PackagePlus className="size-4" aria-hidden />
+            Nova carga
+          </Link>
+        }
+        secondaryActions={
+          <Link
+            href="/viagens"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          >
+            <Route className="size-4" aria-hidden />
+            Ver viagens
+          </Link>
+        }
       />
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -289,21 +324,29 @@ export function DashboardView() {
           title="Cargas por estado"
           description="Distribuição operacional das cargas registadas."
           option={cargoStatusOption}
+          onDataClick={(index) =>
+            router.push(`/cargas?status=${cargoStatuses[index]}`)
+          }
         />
         <EChartsPanel
           title="Viagens por etapa"
           description="Estado atual do fluxo de transporte."
           option={tripStatusOption}
+          onDataClick={(index) =>
+            router.push(`/viagens?status=${tripStatuses[index]}`)
+          }
         />
         <EChartsPanel
           title="Disponibilidade da frota"
           description="Comparativo entre horses e trailers."
           option={fleetOption}
+          onDataClick={() => router.push("/frota")}
         />
         <EChartsPanel
           title="Incidentes por tipo"
           description={`${total(incidentsOpen)} abertos · ${total(incidentsResolved)} resolvidos`}
           option={incidentsOption}
+          onDataClick={() => router.push("/incidentes")}
         />
       </div>
 
@@ -327,7 +370,17 @@ export function DashboardView() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {(recentCargo.data?.data ?? []).map((cargo: Cargo) => (
-                <tr key={cargo.id}>
+                <tr
+                  key={cargo.id}
+                  onClick={() => router.push(`/cargas?q=${encodeURIComponent(cargo.code)}`)}
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      router.push(`/cargas?q=${encodeURIComponent(cargo.code)}`);
+                    }
+                  }}
+                  className="cursor-pointer transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 dark:hover:bg-slate-900"
+                >
                   <td className="px-4 py-3 font-mono text-xs font-medium text-slate-900 dark:text-slate-100">
                     {cargo.code}
                   </td>
@@ -338,7 +391,7 @@ export function DashboardView() {
                     {cargo.origin} → {cargo.destination}
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {formatWeight(cargo.weightKg)}
+                    {formatWeight(cargo.weightTonnes)}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge tone={cargoStatusBadgeTone[cargo.status]}>

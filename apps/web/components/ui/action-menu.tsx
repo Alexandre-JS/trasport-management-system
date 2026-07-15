@@ -25,7 +25,7 @@ const toneClasses: Record<NonNullable<ActionItem["tone"]>, string> = {
   warning:
     "border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200 dark:hover:bg-amber-900",
   danger:
-    "border-rose-100 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200 dark:hover:bg-rose-900",
+    "border-rose-600 bg-rose-600 text-white shadow-sm hover:border-rose-700 hover:bg-rose-700 dark:border-rose-600 dark:bg-rose-600 dark:hover:border-rose-500 dark:hover:bg-rose-500",
   muted:
     "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700",
 };
@@ -80,7 +80,7 @@ export function ActionMenu({ items, label = "Ações" }: ActionMenuProps) {
             aria-label={item.label}
             title={item.label}
             className={cn(
-              "grid size-8 place-items-center rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900",
+              "grid size-9 place-items-center rounded-md border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900",
               item.separatorBefore && "ml-1.5",
               toneClasses[tone],
             )}

@@ -9,6 +9,7 @@ type EChartsPanelProps = {
   description?: string;
   option: EChartsOption;
   height?: string;
+  onDataClick?: (dataIndex: number) => void;
 };
 
 export function EChartsPanel({
@@ -16,6 +17,7 @@ export function EChartsPanel({
   description,
   option,
   height = "20rem",
+  onDataClick,
 }: EChartsPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -28,13 +30,17 @@ export function EChartsPanel({
     const observer = new ResizeObserver(() => chart.resize());
 
     chart.setOption(option);
+    if (onDataClick) {
+      chart.getZr().setCursorStyle("pointer");
+      chart.on("click", (params) => onDataClick(params.dataIndex));
+    }
     observer.observe(containerRef.current);
 
     return () => {
       observer.disconnect();
       chart.dispose();
     };
-  }, [option]);
+  }, [option, onDataClick]);
 
   return (
     <section className="rounded-md border border-brand-100 bg-white shadow-sm dark:border-brand-950 dark:bg-slate-950">

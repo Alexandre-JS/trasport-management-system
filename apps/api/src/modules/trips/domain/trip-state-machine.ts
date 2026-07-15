@@ -30,7 +30,18 @@ const SEQUENCE: readonly TripStatus[] = [
 
 const TERMINAL_STATUSES: readonly TripStatus[] = [
   TripStatus.DISCHARGED,
+  TripStatus.CONTAINER_RETURNED,
   TripStatus.CANCELLED,
+];
+
+const RESOURCE_HOLDING_STATUSES: readonly TripStatus[] = [
+  TripStatus.WAITING_APPOINTMENT,
+  TripStatus.APPOINTMENT_DONE,
+  TripStatus.LOADED,
+  TripStatus.DISPATCHED_ORIGIN,
+  TripStatus.AT_BORDER,
+  TripStatus.BORDER_CLEARED,
+  TripStatus.ARRIVED,
 ];
 
 /** Multi-border cycle and no-border shortcut (see header comment). */
@@ -66,9 +77,15 @@ export class TripStateMachine {
     return TERMINAL_STATUSES.includes(status);
   }
 
-  /** A trip holds its driver/truck for every status except the terminal ones. */
+  /**
+   * Só os estados de trânsito seguram o camião/motorista. A descarga
+   * (DISCHARGED) e tudo o que venha depois — incluindo a devolução do
+   * container vazio — já não bloqueiam a frota: o camião fica livre para
+   * outra viagem enquanto a devolução do container é tratada como tarefa
+   * de acompanhamento.
+   */
   occupiesResources(status: TripStatus): boolean {
-    return !this.isTerminal(status);
+    return RESOURCE_HOLDING_STATUSES.includes(status);
   }
 
   /**

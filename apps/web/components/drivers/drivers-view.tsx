@@ -2,7 +2,7 @@
 
 import {
   CircleSlash,
-  Download,
+  FileSpreadsheet,
   Eye,
   Pencil,
   Plus,
@@ -303,14 +303,25 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
 
   function buildActions(driver: Driver): ActionItem[] {
     const items: ActionItem[] = [
-      { label: "Detalhes", icon: Eye, onSelect: () => setDetailsDriver(driver) },
-      { label: "Editar", icon: Pencil, onSelect: () => openEdit(driver) },
+      {
+        label: "Detalhes",
+        icon: Eye,
+        tone: "info",
+        onSelect: () => setDetailsDriver(driver),
+      },
+      {
+        label: "Editar",
+        icon: Pencil,
+        tone: "warning",
+        onSelect: () => openEdit(driver),
+      },
     ];
 
     if (!driver.userId) {
       items.push({
         label: "Dar acesso mobile",
         icon: Smartphone,
+        tone: "default",
         onSelect: () => setAccountDriver(driver),
       });
     }
@@ -319,6 +330,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       items.push({
         label: "Marcar disponível",
         icon: Power,
+        tone: "success",
         onSelect: () =>
           runStatusAction(driver, "available", "Motorista disponível"),
       });
@@ -328,6 +340,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       items.push({
         label: "Marcar offline",
         icon: CircleSlash,
+        tone: "muted",
         onSelect: () =>
           runStatusAction(driver, "offline", "Motorista offline"),
       });
@@ -337,6 +350,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       items.push({
         label: "Desativar",
         icon: CircleSlash,
+        tone: "muted",
         onSelect: () =>
           runStatusAction(driver, "deactivate", "Motorista desativado"),
       });
@@ -364,6 +378,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 icon={<RefreshCw className="size-4" />}
                 onClick={() => refetch()}
                 loading={isFetching}
@@ -373,13 +388,15 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               <Button
                 variant="outline"
                 size="sm"
-                icon={<Download className="size-4" />}
+                className="h-9"
+                icon={<FileSpreadsheet className="size-4" />}
                 onClick={handleExport}
               >
-                Exportar
+                Exportar para Excel
               </Button>
               <Button
                 size="sm"
+                className="h-9"
                 icon={<Plus className="size-4" />}
                 onClick={openCreate}
               >
@@ -395,6 +412,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
           <Button
             variant="outline"
             size="sm"
+            className="h-9"
             icon={<RefreshCw className="size-4" />}
             onClick={() => refetch()}
             loading={isFetching}
@@ -404,13 +422,15 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
           <Button
             variant="outline"
             size="sm"
-            icon={<Download className="size-4" />}
+            className="h-9"
+            icon={<FileSpreadsheet className="size-4" />}
             onClick={handleExport}
           >
-            Exportar
+            Exportar para Excel
           </Button>
           <Button
             size="sm"
+            className="h-9"
             icon={<Plus className="size-4" />}
             onClick={openCreate}
           >
@@ -509,12 +529,13 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
 
       <Modal
         open={detailsDriver !== null}
+        size="lg"
         title={detailsDriver?.fullName ?? "Motorista"}
         description={detailsDriver ? shortCode(detailsDriver.id) : undefined}
         onClose={() => setDetailsDriver(null)}
       >
         {detailsDriver ? (
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow label="Carta de condução" value={detailsDriver.licenseNumber} />
             <DetailRow label="Passaporte" value={detailsDriver.passportNumber} />
             <DetailRow label="Telefone" value={detailsDriver.phone} />
@@ -598,11 +619,11 @@ function DetailRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+    <div className="grid border-b border-slate-100 last:border-b-0 sm:grid-cols-[minmax(9rem,38%)_1fr] dark:border-slate-800">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-800 dark:text-slate-200">
         {value && value.length > 0 ? value : "—"}
       </dd>
     </div>

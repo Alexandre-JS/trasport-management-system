@@ -2,7 +2,7 @@
 
 import {
   Ban,
-  Download,
+  FileSpreadsheet,
   Eye,
   Link2,
   Pencil,
@@ -136,7 +136,9 @@ export function CargoView() {
       { header: "Cliente", value: (row) => row.client.companyName },
       { header: "Origem", value: (row) => row.origin },
       { header: "Destino", value: (row) => row.destination },
-      { header: "Peso (kg)", value: (row) => row.weightKg ?? "" },
+      { header: "Peso (t)", value: (row) => row.weightTonnes ?? "" },
+      { header: "Tipo", value: (row) => (row.type === "CONTAINER" ? "Container" : "Granel") },
+      { header: "Nº container", value: (row) => row.containerNumber ?? "" },
       { header: "Estado", value: (row) => cargoStatusMeta[row.status].label },
       { header: "Data Recolha", value: (row) => formatDate(row.pickupDate) },
       {
@@ -207,12 +209,12 @@ export function CargoView() {
       cell: (cargo) => cargo.destination,
     },
     {
-      id: "weightKg",
+      id: "weightTonnes",
       header: "Peso",
       sortable: true,
-      sortKey: "weightKg",
+      sortKey: "weightTonnes",
       align: "right",
-      cell: (cargo) => formatWeight(cargo.weightKg),
+      cell: (cargo) => formatWeight(cargo.weightTonnes),
     },
     {
       id: "status",
@@ -292,10 +294,10 @@ export function CargoView() {
             <Button
               variant="outline"
               size="sm"
-              icon={<Download className="size-4" />}
+              icon={<FileSpreadsheet className="size-4" />}
               onClick={handleExport}
             >
-              Exportar
+              Exportar para Excel
             </Button>
             <Button
               size="sm"
@@ -398,15 +400,18 @@ export function CargoView() {
 
       <Modal
         open={detailsCargo !== null}
+        size="lg"
         title={detailsCargo?.code ?? "Carga"}
         description={detailsCargo?.client.companyName}
         onClose={() => setDetailsCargo(null)}
       >
         {detailsCargo ? (
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow label="Origem" value={detailsCargo.origin} />
             <DetailRow label="Destino" value={detailsCargo.destination} />
-            <DetailRow label="Peso" value={formatWeight(detailsCargo.weightKg)} />
+            <DetailRow label="Peso" value={formatWeight(detailsCargo.weightTonnes)} />
+            <DetailRow label="Tipo" value={detailsCargo.type === "CONTAINER" ? "Container" : "Granel"} />
+            <DetailRow label="Nº container" value={detailsCargo.containerNumber ?? "—"} />
             <DetailRow
               label="Estado"
               value={cargoStatusMeta[detailsCargo.status].label}
@@ -452,11 +457,11 @@ function DetailRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+    <div className="grid border-b border-slate-100 last:border-b-0 sm:grid-cols-[minmax(9rem,38%)_1fr] dark:border-slate-800">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-800 dark:text-slate-200">
         {value && value.length > 0 ? value : "—"}
       </dd>
     </div>

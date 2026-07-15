@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -127,21 +126,18 @@ export function LoginForm() {
         </label>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
           <input
             type="checkbox"
             className="size-4 rounded border-slate-300 accent-brand-600 dark:border-slate-700"
             {...register("rememberMe")}
           />
-          Remember me
+          Manter sessão iniciada
         </label>
-        <Link
-          href="/login"
-          className="text-sm font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200"
-        >
-          Esqueci a password
-        </Link>
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          Esqueceu a password? Contacte a administração.
+        </span>
       </div>
 
       {errors.root ? (

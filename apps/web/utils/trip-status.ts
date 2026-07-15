@@ -13,6 +13,8 @@ export const tripStatusMeta: Record<
   BORDER_CLEARED: { label: "Fronteira liberada", tone: "amber" },
   ARRIVED: { label: "Chegou", tone: "green" },
   DISCHARGED: { label: "Descarregada", tone: "green" },
+  CONTAINER_RETURN_PENDING: { label: "Container por devolver", tone: "amber" },
+  CONTAINER_RETURNED: { label: "Container devolvido", tone: "green" },
   CANCELLED: { label: "Cancelada", tone: "red" },
 };
 
@@ -31,7 +33,11 @@ export const tripStatusSequence: TripStatus[] = [
   "DISCHARGED",
 ];
 
-export const terminalTripStatuses: TripStatus[] = ["DISCHARGED", "CANCELLED"];
+export const terminalTripStatuses: TripStatus[] = [
+  "DISCHARGED",
+  "CONTAINER_RETURNED",
+  "CANCELLED",
+];
 
 export function isTerminalTripStatus(status: TripStatus): boolean {
   return terminalTripStatuses.includes(status);
@@ -71,6 +77,8 @@ export const tripStatusBadgeTone: Record<
   BORDER_CLEARED: "warning",
   ARRIVED: "success",
   DISCHARGED: "success",
+  CONTAINER_RETURN_PENDING: "warning",
+  CONTAINER_RETURNED: "success",
   CANCELLED: "danger",
 };
 

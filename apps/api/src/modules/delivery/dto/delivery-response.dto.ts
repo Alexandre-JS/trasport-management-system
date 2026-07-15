@@ -20,6 +20,9 @@ export class DeliveryResponseDto {
   signature!: string | null;
 
   @ApiProperty({ required: false, nullable: true })
+  podDocument!: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
   deliveredAt!: Date | null;
 
   @ApiProperty({ required: false, nullable: true })

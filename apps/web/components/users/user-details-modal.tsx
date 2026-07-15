@@ -37,7 +37,7 @@ export function UserDetailsModal({
     >
       {user ? (
         <div className="flex flex-col gap-5">
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow label="Nome completo">
               {user.firstName} {user.lastName}
             </DetailRow>
@@ -125,11 +125,11 @@ function DetailRow({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <div className="grid border-b border-slate-100 last:border-b-0 sm:grid-cols-[minmax(9rem,38%)_1fr] dark:border-slate-800">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-900 dark:text-white">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-900 dark:text-white">
         {children}
       </dd>
     </div>

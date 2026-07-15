@@ -12,7 +12,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-        <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <header data-print-hide className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
             <div className="flex items-center gap-3">
               <Image

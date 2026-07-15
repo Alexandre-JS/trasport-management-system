@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  FileSpreadsheet,
   Pencil,
   Plus,
   Route,
@@ -14,6 +15,7 @@ import { useMemo, useState } from "react";
 import {
   IconButton,
   PrimaryButton,
+  SecondaryButton,
 } from "@/src/shared/components/action-button";
 import { CargoFormModal } from "@/src/shared/components/cargo-form-modal";
 import { ConfirmDialog } from "@/src/shared/components/confirm-dialog";
@@ -32,6 +34,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { Cargo, CargoStatus, ListCargoParams } from "@/types/cargo";
+import { exportToCsv } from "@/utils/export-csv";
 import { formatDate, formatDateTime, formatWeight } from "@/utils/format";
 import {
   cargoStatusBadgeTone,
@@ -61,14 +64,32 @@ const PAGE_SIZE = 10;
 
 const MANAGEABLE_STATUSES: CargoStatus[] = ["CREATED", "WAITING_PICKUP"];
 
-export function CargasView() {
+type CargasViewProps = {
+  initialSearch?: string;
+  initialClientId?: string;
+  initialStatus?: string;
+  initialPage?: number;
+  initialCreateOpen?: boolean;
+};
+
+export function CargasView({
+  initialSearch = "",
+  initialClientId = "all",
+  initialStatus = "all",
+  initialPage = 1,
+  initialCreateOpen = false,
+}: CargasViewProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [searchInput, setSearchInput] = useState("");
-  const [clientId, setClientId] = useState("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [page, setPage] = useState(1);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [clientId, setClientId] = useState(initialClientId);
+  const [status, setStatus] = useState<StatusFilter>(
+    cargoStatusOptions.some((option) => option.value === initialStatus)
+      ? (initialStatus as StatusFilter)
+      : "all",
+  );
+  const [page, setPage] = useState(Math.max(1, initialPage));
+  const [createOpen, setCreateOpen] = useState(initialCreateOpen);
   const [detailsCargo, setDetailsCargo] = useState<Cargo | null>(null);
   const [editCargo, setEditCargo] = useState<Cargo | null>(null);
   const [tripCargo, setTripCargo] = useState<Cargo | null>(null);
@@ -94,6 +115,54 @@ export function CargasView() {
   const { data, isLoading, isError, refetch, isFetching } = useCargo(params);
   const cargos = data?.data ?? [];
   const meta = data?.meta;
+
+  function updateUrl(next: {
+    q?: string;
+    client?: string;
+    status?: StatusFilter;
+    page?: number;
+  }) {
+    const params = new URLSearchParams();
+    const nextSearch = next.q ?? searchInput;
+    const nextClient = next.client ?? clientId;
+    const nextStatus = next.status ?? status;
+    const nextPage = next.page ?? page;
+
+    if (nextSearch.trim()) params.set("q", nextSearch.trim());
+    if (nextClient !== "all") params.set("client", nextClient);
+    if (nextStatus !== "all") params.set("status", nextStatus);
+    if (nextPage > 1) params.set("page", String(nextPage));
+    router.replace(`/cargas${params.size ? `?${params}` : ""}`, {
+      scroll: false,
+    });
+  }
+
+  function clearFilters() {
+    setSearchInput("");
+    setClientId("all");
+    setStatus("all");
+    setPage(1);
+    router.replace("/cargas", { scroll: false });
+  }
+
+  function exportVisibleRows() {
+    if (cargos.length === 0) {
+      toast({ title: "Não existem cargas para exportar", type: "warning" });
+      return;
+    }
+
+    exportToCsv("cargas.csv", cargos, [
+      { header: "Código", value: (cargo) => cargo.code },
+      { header: "Cliente", value: (cargo) => cargo.client.companyName },
+      { header: "Origem", value: (cargo) => cargo.origin },
+      { header: "Destino", value: (cargo) => cargo.destination },
+      { header: "Peso (t)", value: (cargo) => cargo.weightTonnes },
+      { header: "Estado", value: (cargo) => cargoStatusMeta[cargo.status].label },
+      { header: "Mercadoria", value: (cargo) => cargo.description },
+      { header: "Recolha", value: (cargo) => formatDate(cargo.pickupDate) },
+      { header: "Entrega prevista", value: (cargo) => formatDate(cargo.expectedDelivery) },
+    ]);
+  }
 
   function latestTrip(cargo: Cargo) {
     return cargo.trips?.[0] ?? null;
@@ -152,6 +221,14 @@ export function CargasView() {
       <PageHeader
         title="Cargas"
         description="Cargas dos clientes — o primeiro passo do fluxo, antes de criar a viagem."
+        secondaryActions={
+          <SecondaryButton
+            icon={<FileSpreadsheet className="size-4" aria-hidden />}
+            onClick={exportVisibleRows}
+          >
+            Exportar para Excel
+          </SecondaryButton>
+        }
         primaryAction={
           <PrimaryButton
             icon={<Plus className="size-4" aria-hidden />}
@@ -168,6 +245,7 @@ export function CargasView() {
           onChange={(value) => {
             setSearchInput(value);
             setPage(1);
+            updateUrl({ q: value, page: 1 });
           }}
           placeholder="Pesquisar por código, rota ou mercadoria..."
           className="sm:w-80"
@@ -178,6 +256,7 @@ export function CargasView() {
             onChange={(event) => {
               setClientId(event.target.value);
               setPage(1);
+              updateUrl({ client: event.target.value, page: 1 });
             }}
             aria-label="Filtrar por cliente"
             className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
@@ -194,6 +273,10 @@ export function CargasView() {
             onChange={(event) => {
               setStatus(event.target.value as StatusFilter);
               setPage(1);
+              updateUrl({
+                status: event.target.value as StatusFilter,
+                page: 1,
+              });
             }}
             aria-label="Filtrar por estado"
             className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
@@ -216,11 +299,26 @@ export function CargasView() {
         />
       ) : (
         <div className="flex flex-col gap-3">
-          <DataTable columns={columns}>
+          <DataTable
+            columns={columns}
+            isEmpty={cargos.length === 0}
+            emptyTitle="Nenhuma carga encontrada"
+            emptyDescription="Altere os filtros ou registe uma nova carga para começar."
+            emptyAction={
+              searchInput || clientId !== "all" || status !== "all" ? (
+                <SecondaryButton onClick={clearFilters}>
+                  Limpar filtros
+                </SecondaryButton>
+              ) : (
+                <PrimaryButton onClick={() => setCreateOpen(true)}>
+                  Registar primeira carga
+                </PrimaryButton>
+              )
+            }
+          >
             {cargos.length > 0
               ? cargos.map((cargo) => {
                   const trip = latestTrip(cargo);
-                  const active = activeTrip(cargo);
                   const stage = cargoStage(cargo);
 
                   return (
@@ -229,7 +327,13 @@ export function CargasView() {
                       className="border-t border-slate-100 dark:border-slate-800"
                     >
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                      {cargo.code}
+                      <button
+                        type="button"
+                        onClick={() => setDetailsCargo(cargo)}
+                        className="font-medium text-brand-700 hover:underline dark:text-brand-300"
+                      >
+                        {cargo.code}
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                       {cargo.client.companyName}
@@ -238,7 +342,7 @@ export function CargasView() {
                       {cargo.origin} → {cargo.destination}
                     </td>
                     <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
-                      {formatWeight(cargo.weightKg)}
+                      {formatWeight(cargo.weightTonnes)}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                       <StatusBadge tone={stage.tone}>{stage.label}</StatusBadge>
@@ -274,7 +378,10 @@ export function CargasView() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div
+                        className="flex items-center justify-end gap-1.5"
+                        aria-label={`Ações da carga ${cargo.code}`}
+                      >
                         <IconButton
                           variant="secondary"
                           icon={<Eye className="size-4" aria-hidden />}
@@ -285,29 +392,14 @@ export function CargasView() {
                         >
                           Ver detalhes da carga
                         </IconButton>
-                        {active ? (
-                          <IconButton
-                            variant="secondary"
-                            icon={<Route className="size-4" aria-hidden />}
-                            aria-label="Abrir viagem"
-                            title="Abrir viagem"
-                            className="border-brand-100 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:border-brand-900 dark:bg-brand-950 dark:text-brand-200 dark:hover:bg-brand-900"
-                            onClick={() => router.push(`/viagens/${active.id}`)}
-                          >
-                            Abrir viagem
-                          </IconButton>
-                        ) : null}
                         {canCreateTrip(cargo) ? (
-                          <IconButton
-                            variant="secondary"
+                          <PrimaryButton
+                            size="sm"
                             icon={<Route className="size-4" aria-hidden />}
-                            aria-label="Criar viagem"
-                            title="Criar viagem"
-                            className="border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 dark:hover:bg-emerald-900"
                             onClick={() => setTripCargo(cargo)}
                           >
                             Criar viagem
-                          </IconButton>
+                          </PrimaryButton>
                         ) : null}
                         {canManageCargo(cargo) ? (
                           <IconButton
@@ -329,7 +421,7 @@ export function CargasView() {
                             title="Cancelar carga"
                             onClick={() => setCancelTarget(cargo)}
                           >
-                            Cancelar
+                            Cancelar carga
                           </IconButton>
                         ) : null}
                       </div>
@@ -350,7 +442,11 @@ export function CargasView() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  onClick={() => {
+                    const nextPage = Math.max(1, page - 1);
+                    setPage(nextPage);
+                    updateUrl({ page: nextPage });
+                  }}
                   disabled={meta.page <= 1}
                   aria-label="Página anterior"
                   className="grid size-8 place-items-center rounded-md border border-slate-200 disabled:opacity-40 dark:border-slate-700"
@@ -362,11 +458,11 @@ export function CargasView() {
                 </span>
                 <button
                   type="button"
-                  onClick={() =>
-                    setPage((current) =>
-                      Math.min(meta.totalPages, current + 1),
-                    )
-                  }
+                  onClick={() => {
+                    const nextPage = Math.min(meta.totalPages, page + 1);
+                    setPage(nextPage);
+                    updateUrl({ page: nextPage });
+                  }}
                   disabled={meta.page >= meta.totalPages}
                   aria-label="Página seguinte"
                   className="grid size-8 place-items-center rounded-md border border-slate-200 disabled:opacity-40 dark:border-slate-700"
@@ -440,7 +536,7 @@ export function CargasView() {
                           Abrir viagem
                         </button>
                       </div>
-                      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                         <DetailRow
                           label="Motorista"
                           value={trip.driver.fullName}
@@ -472,7 +568,7 @@ export function CargasView() {
                     </div>
                   ) : null}
 
-                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                     <DetailRow
                       label="Cliente"
                       value={detailsCargo.client.companyName}
@@ -482,7 +578,7 @@ export function CargasView() {
                     <DetailRow label="Destino" value={detailsCargo.destination} />
                     <DetailRow
                       label="Peso"
-                      value={formatWeight(detailsCargo.weightKg)}
+                      value={formatWeight(detailsCargo.weightTonnes)}
                     />
                     <DetailRow
                       label="Volume"
@@ -562,11 +658,11 @@ function DetailRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+    <div className="grid border-b border-slate-100 last:border-b-0 sm:grid-cols-[minmax(9rem,38%)_1fr] dark:border-slate-800">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-800 dark:text-slate-200">
         {value && value.length > 0 ? value : "—"}
       </dd>
     </div>

@@ -7,10 +7,24 @@ export const metadata: Metadata = {
   title: "Viagens",
 };
 
-export default function ViagensPage() {
+type ViagensPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ViagensPage({ searchParams }: ViagensPageProps) {
+  const params = searchParams ? await searchParams : {};
+
   return (
     <ProtectedLayout>
-      <TripsListView />
+      <TripsListView
+        initialSearch={first(params.q) ?? ""}
+        initialStatus={first(params.status) ?? "all"}
+        initialPage={Number(first(params.page)) || 1}
+      />
     </ProtectedLayout>
   );
 }

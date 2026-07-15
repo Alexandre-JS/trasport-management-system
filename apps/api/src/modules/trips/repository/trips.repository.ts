@@ -735,6 +735,10 @@ export class TripsRepository {
       case TripStatus.ARRIVED:
         return CargoStatus.NEAR_DESTINATION;
       case TripStatus.DISCHARGED:
+      // A carga já foi entregue; a devolução do container vazio não altera o
+      // estado da carga, que permanece DELIVERED.
+      case TripStatus.CONTAINER_RETURN_PENDING:
+      case TripStatus.CONTAINER_RETURNED:
         return CargoStatus.DELIVERED;
       case TripStatus.CANCELLED:
         return CargoStatus.CANCELLED;

@@ -54,13 +54,17 @@
         <span class="card-label">Voce vai para</span>
         <strong>{{ currentTrip.cargo.destination }}</strong>
         <small>Saida: {{ currentTrip.cargo.origin }}</small>
+        <small *ngIf="currentTrip.cargo.type === 'CONTAINER'" class="container-line">
+          Container: {{ currentTrip.cargo.containerNumber }}
+        </small>
         <small *ngIf="borderRoute" class="border-route">
           Fronteiras: {{ borderRoute }}
         </small>
       </ion-card-content>
     </ion-card>
 
-    <section class="main-action">
+    <!-- Ação normal de avanço, escondida quando estamos na devolução do container -->
+    <section class="main-action" *ngIf="!needsContainerReturn && !containerReturnInProgress && !containerReturned">
       <ion-button
         color="primary"
         expand="block"
@@ -73,6 +77,35 @@
       </ion-button>
       <p>{{ mainActionHelp }}</p>
     </section>
+
+    <!-- Fase 3: devolução do container -->
+    <ion-card *ngIf="needsContainerReturn" class="return-card">
+      <ion-card-content>
+        <h2>Container por devolver</h2>
+        <p>A carga foi entregue. Agora leve o container vazio ao depósito e registe a devolução.</p>
+        <ion-button color="primary" expand="block" shape="round" [disabled]="isSubmitting" (click)="startContainerReturn()">
+          <ion-icon slot="start" name="cube-outline" aria-hidden="true"></ion-icon>
+          Iniciar devolução do container
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card *ngIf="containerReturnInProgress && activeForm !== 'return'" class="return-card">
+      <ion-card-content>
+        <h2>Devolução em curso</h2>
+        <p>Quando entregar o container ao dono, confirme com o comprovativo (POD).</p>
+        <ion-button color="primary" expand="block" shape="round" (click)="openReturnForm()">
+          Confirmar devolução
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card *ngIf="containerReturned" class="return-card is-done">
+      <ion-card-content>
+        <h2>Container devolvido ✓</h2>
+        <p>Viagem concluída. Obrigado.</p>
+      </ion-card-content>
+    </ion-card>
 
     <section class="quick-actions">
       <ion-button
@@ -113,6 +146,11 @@
             [(ngModel)]="deliveryObservations"
             rows="3"
           ></ion-textarea>
+          <label class="pod-field">
+            <span>Documento POD (foto do comprovativo)</span>
+            <input type="file" accept="image/*" (change)="onPodFile($event, 'delivery')" />
+            <small *ngIf="podDocument" class="pod-ok">✓ Documento anexado</small>
+          </label>
         </div>
         <ion-button expand="block" shape="round" [disabled]="isSubmitting" (click)="confirmDelivery()">
           Confirmar entrega
@@ -143,6 +181,33 @@
         </div>
         <ion-button color="warning" expand="block" shape="round" [disabled]="isSubmitting" (click)="reportIncident()">
           Enviar problema
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card *ngIf="activeForm === 'return'" class="simple-form">
+      <ion-card-content>
+        <h2>Confirmar devolução do container</h2>
+        <p>Registe a entrega do container vazio ao dono/depósito.</p>
+        <div class="form-grid">
+          <ion-input
+            label="Depósito / dono"
+            label-placement="stacked"
+            [(ngModel)]="returnedTo"
+          ></ion-input>
+          <ion-input
+            label="Nome de quem recebeu"
+            label-placement="stacked"
+            [(ngModel)]="returnReceiverName"
+          ></ion-input>
+          <label class="pod-field">
+            <span>Documento POD da devolução (foto)</span>
+            <input type="file" accept="image/*" (change)="onPodFile($event, 'return')" />
+            <small *ngIf="returnPod" class="pod-ok">✓ Documento anexado</small>
+          </label>
+        </div>
+        <ion-button expand="block" shape="round" [disabled]="isSubmitting" (click)="confirmContainerReturn()">
+          Confirmar devolução
         </ion-button>
       </ion-card-content>
     </ion-card>

@@ -20,7 +20,9 @@ const EMPTY = {
   origin: "",
   destination: "",
   description: "",
-  weightKg: "",
+  type: "GRANEL",
+  containerNumber: "",
+  weightTonnes: "",
   volumeM3: "",
   pickupDate: "",
   expectedDelivery: "",
@@ -41,7 +43,9 @@ function formFromCargo(cargo: Cargo) {
     origin: cargo.origin,
     destination: cargo.destination,
     description: cargo.description ?? "",
-    weightKg: cargo.weightKg?.toString() ?? "",
+    type: cargo.type ?? "GRANEL",
+    containerNumber: cargo.containerNumber ?? "",
+    weightTonnes: cargo.weightTonnes?.toString() ?? "",
     volumeM3: cargo.volumeM3?.toString() ?? "",
     pickupDate: toDateInputValue(cargo.pickupDate),
     expectedDelivery: toDateInputValue(cargo.expectedDelivery),
@@ -73,7 +77,8 @@ export function CargoFormModal({
   const canSubmit =
     form.clientId &&
     isKnownPlace(form.origin) &&
-    isKnownPlace(form.destination);
+    isKnownPlace(form.destination) &&
+    (form.type !== "CONTAINER" || form.containerNumber.trim().length > 0);
 
   function set<K extends keyof typeof form>(key: K, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -90,7 +95,12 @@ export function CargoFormModal({
       origin: form.origin.trim(),
       destination: form.destination.trim(),
       description: form.description.trim() || undefined,
-      weightKg: form.weightKg ? Number(form.weightKg) : undefined,
+      type: form.type as "CONTAINER" | "GRANEL",
+      containerNumber:
+        form.type === "CONTAINER"
+          ? form.containerNumber.trim() || undefined
+          : undefined,
+      weightTonnes: form.weightTonnes ? Number(form.weightTonnes) : undefined,
       volumeM3: form.volumeM3 ? Number(form.volumeM3) : undefined,
       pickupDate: form.pickupDate || undefined,
       expectedDelivery: form.expectedDelivery || undefined,
@@ -202,6 +212,33 @@ export function CargoFormModal({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex flex-col gap-1.5">
+              <span className={labelClass}>Tipo de carga</span>
+              <select
+                value={form.type}
+                onChange={(event) => set("type", event.target.value)}
+                className={inputClass}
+              >
+                <option value="GRANEL">Granel</option>
+                <option value="CONTAINER">Container</option>
+              </select>
+            </label>
+            {form.type === "CONTAINER" ? (
+              <label className="flex flex-col gap-1.5">
+                <span className={labelClass}>Nº do container *</span>
+                <input
+                  value={form.containerNumber}
+                  onChange={(event) =>
+                    set("containerNumber", event.target.value)
+                  }
+                  placeholder="Ex.: MSKU1234567"
+                  className={inputClass}
+                />
+              </label>
+            ) : null}
+          </div>
+
           <label className="flex flex-col gap-1.5">
             <span className={labelClass}>Mercadoria</span>
             <input
@@ -214,12 +251,13 @@ export function CargoFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Peso (kg)</span>
+              <span className={labelClass}>Peso (toneladas)</span>
               <input
                 type="number"
                 min="0"
-                value={form.weightKg}
-                onChange={(event) => set("weightKg", event.target.value)}
+                step="0.001"
+                value={form.weightTonnes}
+                onChange={(event) => set("weightTonnes", event.target.value)}
                 className={inputClass}
               />
             </label>

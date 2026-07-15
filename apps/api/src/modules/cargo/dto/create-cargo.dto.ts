@@ -1,5 +1,6 @@
-import { CargoStatus } from '@prisma/client';
+import { CargoStatus, CargoType } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ValidateIf } from 'class-validator';
 import {
   IsDateString,
   IsEnum,
@@ -20,11 +21,23 @@ export class CreateCargoDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ example: 1200 })
+  @ApiPropertyOptional({ enum: CargoType, default: CargoType.GRANEL })
+  @IsOptional()
+  @IsEnum(CargoType)
+  type?: CargoType;
+
+  // Número do container é obrigatório quando o tipo é CONTAINER e ignorado
+  // (não pode vir preenchido) quando é GRANEL.
+  @ApiPropertyOptional({ example: 'MSKU1234567' })
+  @ValidateIf((dto: CreateCargoDto) => dto.type === CargoType.CONTAINER)
+  @IsString()
+  containerNumber?: string;
+
+  @ApiPropertyOptional({ example: 1.2 })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  weightKg?: number;
+  weightTonnes?: number;
 
   @ApiPropertyOptional({ example: 8.5 })
   @IsOptional()

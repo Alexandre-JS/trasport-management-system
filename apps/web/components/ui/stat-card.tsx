@@ -1,4 +1,5 @@
 import type { DashboardMetric } from "@/types/dashboard";
+import Link from "next/link";
 
 const toneClasses: Record<DashboardMetric["tone"], string> = {
   blue: "border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-100",
@@ -15,14 +16,22 @@ type StatCardProps = {
 };
 
 export function StatCard({ metric }: StatCardProps) {
-  return (
-    <article
-      className={`rounded-md border p-5 shadow-sm ${toneClasses[metric.tone]}`}
-    >
+  const content = (
+    <article className={`rounded-md border p-5 shadow-sm ${toneClasses[metric.tone]}`}>
       <p className="text-sm font-medium opacity-75">{metric.label}</p>
       <p className="mt-3 text-3xl font-semibold tracking-normal">
         {metric.value}
       </p>
     </article>
   );
+
+  return metric.href ? (
+    <Link
+      href={metric.href}
+      className="rounded-md transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      aria-label={`${metric.label}: ${metric.value}. Abrir detalhes`}
+    >
+      {content}
+    </Link>
+  ) : content;
 }

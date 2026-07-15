@@ -27,6 +27,7 @@ import {
   checkmarkCircleOutline,
   cloudDoneOutline,
   cloudOfflineOutline,
+  cubeOutline,
   locationOutline,
   logOutOutline,
   mapOutline,
@@ -95,13 +96,17 @@ export class HomePage implements OnInit, OnDestroy {
   isLoading = false;
   isSubmitting = false;
   isAutoTracking = false;
-  activeForm: 'delivery' | 'incident' | null = null;
+  activeForm: 'delivery' | 'incident' | 'return' | null = null;
 
   receiverName = '';
   receiverDocument = '';
   deliveryObservations = '';
   deliveryPhoto = '';
   signature = '';
+  podDocument = '';
+  returnReceiverName = '';
+  returnedTo = '';
+  returnPod = '';
   incidentType = 'BREAKDOWN';
   incidentDescription = '';
   incidentPhoto = '';
@@ -146,6 +151,7 @@ export class HomePage implements OnInit, OnDestroy {
       checkmarkCircleOutline,
       cloudDoneOutline,
       cloudOfflineOutline,
+      cubeOutline,
       locationOutline,
       logOutOutline,
       mapOutline,
@@ -204,6 +210,8 @@ export class HomePage implements OnInit, OnDestroy {
       BORDER_CLEARED: 'Fronteira liberada',
       ARRIVED: 'Chegou ao destino',
       DISCHARGED: 'Entregue',
+      CONTAINER_RETURN_PENDING: 'Container por devolver',
+      CONTAINER_RETURNED: 'Container devolvido',
     };
 
     return labels[status] ?? 'Viagem ativa';
@@ -261,6 +269,75 @@ export class HomePage implements OnInit, OnDestroy {
     }
 
     return this.secondaryActions.filter((action) => action.action !== 'delivery');
+  }
+
+  get isContainerCargo() {
+    return this.currentTrip?.cargo.type === 'CONTAINER';
+  }
+
+  /** Container descarregado e ainda por devolver: mostrar CTA de devolução. */
+  get needsContainerReturn() {
+    return (
+      this.isContainerCargo &&
+      this.currentTrip?.currentStatus === 'DISCHARGED' &&
+      !this.currentTrip?.containerReturn?.returnedAt
+    );
+  }
+
+  get containerReturnInProgress() {
+    return this.currentTrip?.currentStatus === 'CONTAINER_RETURN_PENDING';
+  }
+
+  get containerReturned() {
+    return this.currentTrip?.currentStatus === 'CONTAINER_RETURNED';
+  }
+
+  startContainerReturn() {
+    if (!this.currentTrip) {
+      return;
+    }
+    this.submit(
+      () => this.driverMobile.startContainerReturn(this.currentTrip!.id),
+      () => {
+        this.activeForm = 'return';
+      },
+    );
+  }
+
+  openReturnForm() {
+    this.activeForm = 'return';
+  }
+
+  confirmContainerReturn() {
+    if (!this.currentTrip) {
+      return;
+    }
+    this.submit(() =>
+      this.driverMobile.confirmContainerReturn(this.currentTrip!.id, {
+        returnedTo: this.returnedTo || undefined,
+        receiverName: this.returnReceiverName || undefined,
+        podDocument: this.returnPod || undefined,
+      }),
+    );
+  }
+
+  /** Lê um ficheiro (foto/PDF do POD) para base64 e guarda no campo dado. */
+  onPodFile(event: Event, target: 'delivery' | 'return') {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = reader.result as string;
+      if (target === 'delivery') {
+        this.podDocument = value;
+      } else {
+        this.returnPod = value;
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   private async showCachedTrip() {
@@ -362,6 +439,7 @@ export class HomePage implements OnInit, OnDestroy {
         receiverDocument: this.receiverDocument || undefined,
         deliveryPhoto: this.deliveryPhoto || undefined,
         signature: this.signature || undefined,
+        podDocument: this.podDocument || undefined,
         observations: this.deliveryObservations || undefined,
       }),
     );

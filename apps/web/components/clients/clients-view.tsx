@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Eye, Pencil, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
+import { Eye, FileSpreadsheet, Pencil, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ClientFormModal } from "@/components/clients/client-form-modal";
 import { ActionMenu } from "@/components/ui/action-menu";
@@ -290,6 +290,7 @@ export function ClientsView({ showHeader = true }: ClientsViewProps = {}) {
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 icon={<RefreshCw className="size-4" />}
                 onClick={() => refetch()}
                 loading={isFetching}
@@ -299,13 +300,15 @@ export function ClientsView({ showHeader = true }: ClientsViewProps = {}) {
               <Button
                 variant="outline"
                 size="sm"
-                icon={<Download className="size-4" />}
+                className="h-9"
+                icon={<FileSpreadsheet className="size-4" />}
                 onClick={handleExport}
               >
-                Exportar
+                Exportar para Excel
               </Button>
               <Button
                 size="sm"
+                className="h-9"
                 icon={<Plus className="size-4" />}
                 onClick={openCreate}
               >
@@ -321,6 +324,7 @@ export function ClientsView({ showHeader = true }: ClientsViewProps = {}) {
           <Button
             variant="outline"
             size="sm"
+            className="h-9"
             icon={<RefreshCw className="size-4" />}
             onClick={() => refetch()}
             loading={isFetching}
@@ -330,12 +334,18 @@ export function ClientsView({ showHeader = true }: ClientsViewProps = {}) {
           <Button
             variant="outline"
             size="sm"
-            icon={<Download className="size-4" />}
+            className="h-9"
+            icon={<FileSpreadsheet className="size-4" />}
             onClick={handleExport}
           >
-            Exportar
+            Exportar para Excel
           </Button>
-          <Button size="sm" icon={<Plus className="size-4" />} onClick={openCreate}>
+          <Button
+            size="sm"
+            className="h-9"
+            icon={<Plus className="size-4" />}
+            onClick={openCreate}
+          >
             Novo Cliente
           </Button>
         </div>
@@ -440,16 +450,19 @@ export function ClientsView({ showHeader = true }: ClientsViewProps = {}) {
                   {
                     label: "Detalhes",
                     icon: Eye,
+                    tone: "info",
                     onSelect: () => setDetailsClient(client),
                   },
                   {
                     label: "Editar",
                     icon: Pencil,
+                    tone: "warning",
                     onSelect: () => openEdit(client),
                   },
                   {
                     label: client.isActive ? "Desativar" : "Ativar",
                     icon: Power,
+                    tone: client.isActive ? "muted" : "success",
                     onSelect: () => handleToggleActive(client),
                   },
                   {
@@ -467,12 +480,13 @@ export function ClientsView({ showHeader = true }: ClientsViewProps = {}) {
 
       <Modal
         open={detailsClient !== null}
+        size="lg"
         title={detailsClient?.companyName ?? "Cliente"}
         description={detailsClient ? shortCode(detailsClient.id) : undefined}
         onClose={() => setDetailsClient(null)}
       >
         {detailsClient ? (
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow label="Contacto" value={detailsClient.contactName} />
             <DetailRow label="NUIT" value={detailsClient.nuit} />
             <DetailRow label="Telefone" value={detailsClient.phone} />
@@ -525,11 +539,11 @@ function DetailRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+    <div className="grid border-b border-slate-100 last:border-b-0 sm:grid-cols-[minmax(9rem,38%)_1fr] dark:border-slate-800">
+      <dt className="bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+      <dd className="min-w-0 break-words px-4 py-3 text-sm text-slate-800 dark:text-slate-200">
         {value && value.length > 0 ? value : "—"}
       </dd>
     </div>

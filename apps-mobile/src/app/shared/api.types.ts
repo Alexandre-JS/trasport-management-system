@@ -40,10 +40,19 @@ export interface DriverTrip {
   currentStatus: string;
   currentPosition: string | null;
   borders: DriverTripBorder[];
+  containerReturn: {
+    id: string;
+    returnedTo: string | null;
+    receiverName: string | null;
+    returnedAt: string | null;
+  } | null;
   cargo: {
     id: string;
     code: string;
     description: string | null;
+    type: 'CONTAINER' | 'GRANEL';
+    containerNumber: string | null;
+    weightTonnes: number | null;
     origin: string;
     destination: string;
     status: string;
@@ -92,6 +101,14 @@ export interface DeliveryPayload {
   receiverDocument?: string;
   deliveryPhoto?: string;
   signature?: string;
+  podDocument?: string;
+  observations?: string;
+}
+
+export interface ContainerReturnPayload {
+  returnedTo?: string;
+  receiverName?: string;
+  podDocument?: string;
   observations?: string;
 }
 

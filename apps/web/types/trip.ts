@@ -9,6 +9,8 @@ export type TripStatus =
   | "BORDER_CLEARED"
   | "ARRIVED"
   | "DISCHARGED"
+  | "CONTAINER_RETURN_PENDING"
+  | "CONTAINER_RETURNED"
   | "CANCELLED";
 
 /** One border crossing of a trip's route, in sequence order. */

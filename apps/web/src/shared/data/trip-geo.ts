@@ -81,6 +81,8 @@ export function estimateTripPosition(trip: TripGeoInput): LatLng | null {
     }
     case "ARRIVED":
     case "DISCHARGED":
+    case "CONTAINER_RETURN_PENDING":
+    case "CONTAINER_RETURNED":
       return destination;
     default:
       return origin;

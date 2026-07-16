@@ -1,10 +1,7 @@
-import Image from "next/image";
 import { Suspense } from "react";
+import { LoginCarousel } from "@/src/shared/components/login-carousel";
 import { LoginForm } from "@/src/shared/components/login-form";
-import {
-  companyIdentity,
-  systemIdentity,
-} from "@/src/shared/navigation/navigation";
+import { systemIdentity } from "@/src/shared/navigation/navigation";
 
 import type { Metadata } from "next";
 
@@ -14,39 +11,21 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="relative grid min-h-screen place-items-center px-4 py-10">
-      <Image
-        src="/login-bg.jpg"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-slate-950/70" />
+    <main className="grid min-h-screen bg-slate-950 lg:grid-cols-[minmax(0,1.35fr)_minmax(26rem,0.65fr)]">
+      <LoginCarousel />
 
-      <div className="relative w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <Image
-            src={companyIdentity.logoSrc}
-            alt={`${companyIdentity.shortName} ${companyIdentity.name}`}
-            width={876}
-            height={284}
-            priority
-            className="h-auto w-56 rounded-md bg-white p-2 shadow-lg"
-          />
+      <section className="relative flex min-h-screen flex-col bg-slate-50 px-5 py-6 dark:bg-slate-950 sm:px-10 lg:px-12">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8">
+          <Suspense>
+            <LoginForm />
+          </Suspense>
         </div>
-        <Suspense>
-          <LoginForm />
-        </Suspense>
-      </div>
 
-      <div className="absolute inset-x-4 bottom-4 flex flex-col gap-1 text-center text-xs text-white/65 sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          {systemIdentity.name} v{systemIdentity.version}
-        </span>
-        <span>{systemIdentity.fullName}</span>
-      </div>
-    </div>
+        <footer className="mx-auto flex w-full max-w-md flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+          <span>{systemIdentity.name} v{systemIdentity.version}</span>
+          <span>{systemIdentity.fullName}</span>
+        </footer>
+      </section>
+    </main>
   );
 }

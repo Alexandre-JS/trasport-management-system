@@ -351,7 +351,7 @@ export function TripDetailView({ id }: { id: string }) {
                 </p>
               ) : (
                 <div className="max-h-[28rem] overflow-auto rounded-md border border-slate-300 dark:border-slate-700">
-                  <table className="min-w-full border-separate border-spacing-0 text-sm">
+                  <table className="min-w-full border-separate border-spacing-0 text-[13px] leading-4 tabular-nums [&_td]:!px-2.5 [&_td]:!py-1.5 [&_th]:!px-2.5 [&_th]:!py-2">
                     <thead className="sticky top-0 z-10 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                       <tr>
                         <th className="whitespace-nowrap border-b border-r border-slate-300 px-3 py-2 dark:border-slate-700">Data/hora</th>

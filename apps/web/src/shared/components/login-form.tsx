@@ -12,7 +12,7 @@ import { useToast } from "@/providers/toast-provider";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Informe o email ou telefone"),
-  password: z.string().min(8, "A password deve ter pelo menos 8 caracteres"),
+  password: z.string().min(8, "A palavra-passe deve ter pelo menos 8 caracteres"),
   rememberMe: z.boolean(),
 });
 
@@ -61,7 +61,7 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full rounded-md border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+      className="w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"
     >
       <div className="mb-6">
         {/* <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 ring-1 ring-brand-100 dark:bg-brand-950/50 dark:text-brand-200 dark:ring-brand-900">
@@ -72,7 +72,7 @@ export function LoginForm() {
           Iniciar sessão
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-          Entre com as credenciais atribuídas pela administração.
+          Use as credenciais atribuídas pela administração.
         </p>
       </div>
 
@@ -103,7 +103,7 @@ export function LoginForm() {
 
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Password
+            Palavra-passe
           </span>
           <span className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-950">
             <Lock className="size-4 text-slate-400" aria-hidden />
@@ -136,7 +136,7 @@ export function LoginForm() {
           Manter sessão iniciada
         </label>
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          Esqueceu a password? Contacte a administração.
+          Esqueceu a palavra-passe? Contacte a administração.
         </span>
       </div>
 

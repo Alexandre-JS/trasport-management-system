@@ -631,15 +631,15 @@ export function OperationalBoardView() {
           <option key={item.id} value={item.fullName} />
         ))}
       </datalist>
-      <div className="max-h-[calc(100vh-15rem)] overflow-auto rounded-md border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <table className="min-w-[2700px] border-separate border-spacing-0 text-xs">
+      <div className="max-h-[calc(100vh-13rem)] overflow-auto rounded-md border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <table className="min-w-[2380px] border-separate border-spacing-0 text-[11px] leading-4 tabular-nums">
           <thead className="sticky top-0 z-30 bg-slate-100 text-left font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <tr>
               {GROUPS.map((group, index) => (
                 <th
                   key={`${group.label}-${index}`}
                   colSpan={group.span}
-                  className="border-b border-r border-slate-300 bg-slate-200 px-2 py-1.5 text-center text-[11px] dark:border-slate-700 dark:bg-slate-700"
+                  className="border-b border-r border-slate-300 bg-slate-200 px-1.5 py-1 text-center text-[10px] dark:border-slate-700 dark:bg-slate-700"
                 >
                   {group.label}
                 </th>
@@ -649,7 +649,7 @@ export function OperationalBoardView() {
               {HEADERS.map((header, index) => (
                 <th
                   key={`${header}-${index}`}
-                  className={`whitespace-nowrap border-b border-r border-slate-300 px-2 py-2 dark:border-slate-700 ${index === 0 ? "sticky left-0 z-40 w-12 bg-slate-100 dark:bg-slate-800" : ""}`}
+                  className={`whitespace-nowrap border-b border-r border-slate-300 px-1.5 py-1.5 dark:border-slate-700 ${index === 0 ? "sticky left-0 z-40 w-10 bg-slate-100 dark:bg-slate-800" : ""}`}
                 >
                   {header}
                 </th>
@@ -977,7 +977,7 @@ function Cell({
 }) {
   return (
     <td
-      className={`border-b border-r border-slate-200 p-1 dark:border-slate-800 ${sticky ? `sticky z-20 ${sticky} bg-inherit` : ""} ${className}`}
+      className={`border-b border-r border-slate-200 p-0.5 dark:border-slate-800 ${sticky ? `sticky z-20 ${sticky} bg-inherit` : ""} ${className}`}
     >
       {children}
     </td>
@@ -1008,7 +1008,7 @@ function Input({
       list={list}
       placeholder={placeholder}
       title={title}
-      className={`h-8 min-w-28 w-full rounded-sm px-2 outline-none ${
+      className={`h-7 min-w-24 w-full rounded-sm px-1.5 outline-none ${
         invalid
           ? "border border-rose-400 bg-rose-50 focus:border-rose-500 dark:border-rose-500 dark:bg-rose-950/40"
           : "border border-transparent bg-transparent hover:border-slate-300 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-950"
@@ -1031,7 +1031,7 @@ function Select({
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-8 min-w-36 w-full rounded-sm border border-transparent bg-transparent px-1 outline-none hover:border-slate-300 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-950"
+      className="h-7 min-w-28 w-full rounded-sm border border-transparent bg-transparent px-1 outline-none hover:border-slate-300 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-950"
     >
       {empty !== undefined ? <option value="">{empty}</option> : null}
       {options.map(([id, label]) => (

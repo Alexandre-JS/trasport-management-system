@@ -65,7 +65,7 @@ export function PortalShipmentsView() {
         <>
         <div className="hidden overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm md:block dark:border-slate-700 dark:bg-slate-900">
           <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-0 text-sm">
+            <table className="min-w-full border-separate border-spacing-0 text-[13px] leading-4 tabular-nums [&_td]:!px-2.5 [&_td]:!py-1.5 [&_th]:!px-2.5 [&_th]:!py-2">
               <thead className="bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
                   {[

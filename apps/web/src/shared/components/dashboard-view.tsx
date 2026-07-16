@@ -357,7 +357,7 @@ export function DashboardView() {
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-[13px] leading-4 tabular-nums [&_td]:!px-2.5 [&_td]:!py-2 [&_th]:!px-2.5 [&_th]:!py-2">
             <thead className="bg-brand-50 text-left text-xs font-semibold uppercase text-brand-700 dark:bg-brand-950/50 dark:text-brand-200">
               <tr>
                 <th className="px-4 py-3">Código</th>

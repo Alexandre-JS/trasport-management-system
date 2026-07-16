@@ -259,6 +259,7 @@ model Trailer {
 enum CargoType {
   CONTAINER
   GRANEL
+  GERAL
 }
 
 model Cargo {

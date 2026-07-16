@@ -16,7 +16,7 @@ export type Cargo = {
   clientId: string;
   code: string;
   description: string | null;
-  type: "CONTAINER" | "GRANEL";
+  type: "CONTAINER" | "GRANEL" | "GERAL";
   containerNumber: string | null;
   weightTonnes: number | null;
   volumeM3: number | null;
@@ -82,7 +82,7 @@ export type CreateCargoPayload = {
   origin: string;
   destination: string;
   description?: string;
-  type?: "CONTAINER" | "GRANEL";
+  type?: "CONTAINER" | "GRANEL" | "GERAL";
   containerNumber?: string;
   weightTonnes?: number;
   volumeM3?: number;

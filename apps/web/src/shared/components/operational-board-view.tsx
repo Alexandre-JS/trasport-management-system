@@ -38,6 +38,8 @@ type BoardRow = {
   destination: string;
   transporter: string;
   subcontracted: boolean;
+  cargoType: string;
+  cargoDetail: string;
   horse: string;
   trailer: string;
   driver: string;
@@ -125,7 +127,7 @@ export function OperationalBoardView() {
   // Erro por CAMPO de uma linha (para pintar a célula certa a vermelho e dar
   // uma mensagem clara): campo obrigatório em falta, recurso já numa viagem
   // em curso, ou recurso repetido noutra linha da mesma folha.
-  type FieldKey = "horse" | "trailer" | "driver" | "license";
+  type FieldKey = "horse" | "trailer" | "driver" | "license" | "cargoDetail";
   function rowFieldErrors(row: BoardRow): Partial<Record<FieldKey, string>> {
     const e: Partial<Record<FieldKey, string>> = {};
     const nh = normalize(row.horse);
@@ -149,6 +151,8 @@ export function OperationalBoardView() {
       e.trailer = "Trailer repetido noutra linha desta folha";
 
     if (!row.driver.trim()) e.driver = "Preencha o motorista";
+    if (row.cargoType === "CONTAINER" && !row.cargoDetail.trim())
+      e.cargoDetail = "Indique o nº do container";
     if (!row.license.trim()) e.license = "Preencha a carta de condução";
     else if (inUse.drivers.has(nl)) {
       e.license = "Este motorista já está numa viagem em curso — use outro";
@@ -311,11 +315,18 @@ export function OperationalBoardView() {
       (item) => normalize(item.licenseNumber) === normalize(row.license),
     );
 
+    const detail = row.cargoDetail.trim();
     const cargo = await createCargo({
       clientId: ctx.clientId,
       origin: ctx.origin,
       destination: ctx.destination,
-      description: row.booking.trim() || undefined,
+      type: row.cargoType as "GRANEL" | "CONTAINER" | "GERAL",
+      containerNumber:
+        row.cargoType === "CONTAINER" ? detail || undefined : undefined,
+      description:
+        row.cargoType === "GERAL"
+          ? detail || undefined
+          : row.booking.trim() || undefined,
       weightTonnes: numberOrUndefined(row.tonnage),
     });
 
@@ -434,6 +445,16 @@ export function OperationalBoardView() {
       { header: "Phone Number", value: (row) => row.phone },
       { header: "Border", value: (row) => borderName(row.borderId) },
       { header: "Ton - Beira", value: (row) => row.tonnage },
+      {
+        header: "Tipo",
+        value: (row) =>
+          row.cargoType === "CONTAINER"
+            ? "Container"
+            : row.cargoType === "GERAL"
+              ? "Carga Geral"
+              : "Granel",
+      },
+      { header: "Container / Descrição", value: (row) => row.cargoDetail },
       { header: "Dispatched From Beira", value: (row) => row.dispatchedBy },
       { header: "GMS Dispatch Date", value: (row) => row.departureDate },
       { header: "Arrive Date", value: (row) => row.arrivalDate },
@@ -706,6 +727,36 @@ export function OperationalBoardView() {
                   />
                 </Cell>
                 <Cell>
+                  <Select
+                    value={row.cargoType}
+                    onChange={(v) => change(row.key, "cargoType", v)}
+                    options={[
+                      ["GRANEL", "Granel"],
+                      ["CONTAINER", "Container"],
+                      ["GERAL", "Carga Geral"],
+                    ]}
+                  />
+                </Cell>
+                <Cell>
+                  {row.cargoType === "GRANEL" ? (
+                    <span className="px-2 text-slate-300 dark:text-slate-600">
+                      —
+                    </span>
+                  ) : (
+                    <Input
+                      value={row.cargoDetail}
+                      onChange={(v) => change(row.key, "cargoDetail", v)}
+                      placeholder={
+                        row.cargoType === "CONTAINER"
+                          ? "Nº do container"
+                          : "O que transporta"
+                      }
+                      invalid={Boolean(fieldErrors.cargoDetail)}
+                      title={fieldErrors.cargoDetail}
+                    />
+                  )}
+                </Cell>
+                <Cell>
                   <Input
                     value={row.dispatchedBy}
                     onChange={(v) => change(row.key, "dispatchedBy", v)}
@@ -793,6 +844,8 @@ const HEADERS = [
   "Phone Number",
   "Border",
   "Ton - Beira",
+  "Tipo",
+  "Container / Descrição",
   "Dispatched From Beira",
   "GMS Dispatch Date",
   "Arrive Date",
@@ -805,7 +858,7 @@ const HEADERS = [
 // Cabeçalhos-grupo do PDF (BOOKING / TRACKING / REMARK) com o nº de colunas
 // que cada um cobre (incluindo a coluna Nu. dentro de BOOKING).
 const GROUPS: { label: string; span: number }[] = [
-  { label: "BOOKING", span: 11 },
+  { label: "BOOKING", span: 13 },
   { label: "TRACKING", span: 4 },
   { label: "REMARK", span: 1 },
   { label: "", span: 1 },
@@ -846,6 +899,8 @@ function blankRow(ctx: {
     destination: ctx.destination,
     transporter: "LUMAC",
     subcontracted: false,
+    cargoType: "GRANEL",
+    cargoDetail: "",
     horse: "",
     trailer: "",
     driver: "",

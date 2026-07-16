@@ -7,6 +7,7 @@ import {
   Save,
   Sheet,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ import { useToast } from "@/providers/toast-provider";
 import { createCargo } from "@/services/cargo-service";
 import { createTrip } from "@/services/trips-service";
 import { exportToCsv } from "@/utils/export-csv";
+import { parseBoardExcel } from "@/utils/import-board-excel";
 
 type BoardRow = {
   key: string;
@@ -67,6 +69,7 @@ export function OperationalBoardView() {
   const [rows, setRows] = useState<BoardRow[]>([]);
   const [saving, setSaving] = useState(false);
   const initialized = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Contexto da folha (como o título do Excel: cliente / rota). Aplica-se às
   // linhas novas; a origem é Beira por defeito (a operação parte de Beira).
   const [sheetClientId, setSheetClientId] = useState("");
@@ -353,6 +356,67 @@ export function OperationalBoardView() {
     }
   }
 
+  function matchBorderId(text: string): string {
+    if (!text.trim()) return "";
+    const n = normalize(text);
+    const exact = borders.find((b) => normalize(b.name) === n);
+    if (exact) return exact.id;
+    const prefix = borders.find(
+      (b) => normalize(b.name).startsWith(n) || n.startsWith(normalize(b.name)),
+    );
+    return prefix?.id ?? "";
+  }
+
+  async function importExcel(file: File) {
+    try {
+      const imported = await parseBoardExcel(await file.arrayBuffer());
+      if (imported.length === 0) {
+        toast({
+          title: "Nenhuma linha encontrada no ficheiro",
+          type: "warning",
+        });
+        return;
+      }
+      const ctx = sheetCtx();
+      const newRows: BoardRow[] = imported.map((r) => ({
+        ...blankRow(ctx),
+        transporter: r.transporter || "LUMAC",
+        horse: r.horse,
+        trailer: r.trailer,
+        driver: r.driver,
+        passport: r.passport,
+        license: r.license,
+        phone: r.phone,
+        borderId: matchBorderId(r.border),
+        tonnage: r.tonnage,
+        dispatchedBy: r.dispatchedBy,
+        departureDate: r.departureDate,
+        arrivalDate: r.arrivalDate,
+        dischargeDate: r.dischargeDate,
+        currentPosition: r.currentPosition,
+        remarks: r.remarks,
+        dirty: true,
+      }));
+      // Substitui as linhas em branco iniciais pelas importadas + uma vazia.
+      setRows((current) => {
+        const withContent = current.filter(hasContent);
+        return [...withContent, ...newRows, blankRow(ctx)];
+      });
+      toast({
+        title: `${newRows.length} linha(s) importada(s)`,
+        description:
+          "Reveja os dados (fronteira e datas) e clique em Guardar.",
+        type: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Não foi possível importar o Excel",
+        description: error instanceof Error ? error.message : "erro ao ler o ficheiro",
+        type: "error",
+      });
+    }
+  }
+
   function exportBoard() {
     const borderName = (id: string) =>
       borders.find((item) => item.id === id)?.name ?? "";
@@ -386,6 +450,23 @@ export function OperationalBoardView() {
         description="Preencha várias viagens diretamente na grelha. Desloque horizontalmente para ver todas as colunas."
         secondaryActions={
           <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void importExcel(file);
+                event.target.value = "";
+              }}
+            />
+            <ActionButton
+              icon={<Upload className="size-4" />}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Importar Excel
+            </ActionButton>
             <ActionButton
               icon={<FileSpreadsheet className="size-4" />}
               onClick={exportBoard}

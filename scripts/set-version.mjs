@@ -44,6 +44,21 @@ for (const file of versionFiles) {
   console.log(`✓ ${file} → ${version}`);
 }
 
+// O Android exige versionCode inteiro e crescente além do versionName visível.
+const [major, minor, patch] = version
+  .split('-')[0]
+  .split('.')
+  .map(Number);
+const androidVersionCode = major * 10000 + minor * 100 + patch;
+const androidBuildFile = join(root, 'apps-mobile/android/app/build.gradle');
+const androidBuild = readFileSync(androidBuildFile, 'utf8')
+  .replace(/versionCode\s+\d+/, `versionCode ${androidVersionCode}`)
+  .replace(/versionName\s+"[^"]+"/, `versionName "${version}"`);
+writeFileSync(androidBuildFile, androidBuild);
+console.log(
+  `✓ apps-mobile/android/app/build.gradle → ${version} (${androidVersionCode})`,
+);
+
 console.log(`\nVersão ${version} sincronizada. Próximos passos:`);
 console.log(`  git add -A && git commit -m "chore(release): v${version}"`);
 console.log(`  git tag v${version} && git push && git push --tags`);

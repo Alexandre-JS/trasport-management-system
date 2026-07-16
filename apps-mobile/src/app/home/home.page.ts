@@ -369,6 +369,13 @@ export class HomePage implements OnInit, OnDestroy {
       next: (trip) => {
         this.currentTrip = trip;
         this.isLoading = false;
+        if (!trip) {
+          this.stopAutoTracking();
+          this.errorMessage =
+            'Ainda não tem uma viagem ativa. Aguarde a atribuição pela equipa de operações.';
+          void Preferences.remove({ key: HomePage.TRIP_CACHE_KEY });
+          return;
+        }
         void Preferences.set({
           key: HomePage.TRIP_CACHE_KEY,
           value: JSON.stringify(trip),

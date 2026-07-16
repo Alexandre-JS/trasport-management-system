@@ -20,7 +20,7 @@ export class DriverMobileService {
   private readonly auth = inject(AuthService);
 
   getCurrentTrip() {
-    return this.http.get<DriverTrip>(`${this.baseUrl}/trips/current`, {
+    return this.http.get<DriverTrip | null>(`${this.baseUrl}/trips/current`, {
       headers: this.auth.authHeaders(),
     });
   }

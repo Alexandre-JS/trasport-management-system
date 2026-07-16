@@ -22,6 +22,8 @@ import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../core/auth/guards/permissions.guard';
 import { ChangeUserRoleDto } from '../dto/change-user-role.dto';
 import { CreateClientAccountDto } from '../dto/create-client-account.dto';
+import { CreateDriverAccountDto } from '../dto/create-driver-account.dto';
+import { ProvisionDriverAccessDto } from '../dto/provision-driver-access.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { ListUsersQueryDto } from '../dto/list-users-query.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -76,6 +78,33 @@ export class UsersController {
   @ApiCreatedResponse({ type: UserResponseDto })
   createClientAccount(@Body() dto: CreateClientAccountDto) {
     return this.usersService.createClientAccount(dto);
+  }
+
+  @Post('drivers')
+  @ApiOperation({
+    summary:
+      'Create a driver user + driver record with a generated mobile access code',
+  })
+  @ApiCreatedResponse({ type: UserResponseDto })
+  createDriverAccount(@Body() dto: CreateDriverAccountDto) {
+    return this.usersService.createDriverAccount(dto);
+  }
+
+  @Post('drivers/:driverId/access')
+  @ApiOperation({
+    summary: 'Provision mobile access for an existing operational driver',
+  })
+  provisionDriverAccess(
+    @Param('driverId') driverId: string,
+    @Body() dto: ProvisionDriverAccessDto,
+  ) {
+    return this.usersService.provisionDriverAccess(driverId, dto);
+  }
+
+  @Post(':id/access-code')
+  @ApiOperation({ summary: 'Regenerate a driver mobile access code' })
+  regenerateAccessCode(@Param('id') id: string) {
+    return this.usersService.regenerateAccessCode(id);
   }
 
   @Patch(':id')

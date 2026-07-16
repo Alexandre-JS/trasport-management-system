@@ -8,16 +8,20 @@ import {
 } from "@tanstack/react-query";
 import {
   changeUserRole,
+  createDriverAccount,
   createUser,
   deleteUser,
   getUser,
   listRoles,
   listUsers,
+  provisionDriverAccess,
+  regenerateAccessCode,
   resetUserPassword,
   setUserActive,
   updateUser,
 } from "@/services/users-service";
 import type {
+  CreateDriverAccountPayload,
   CreateUserPayload,
   ListUsersParams,
   UpdateUserPayload,
@@ -67,6 +71,49 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: (payload: CreateUserPayload) => createUser(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+    },
+  });
+}
+
+export function useCreateDriverAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateDriverAccountPayload) =>
+      createDriverAccount(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+    },
+  });
+}
+
+export function useProvisionDriverAccess() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      driverId,
+      phone,
+      email,
+    }: {
+      driverId: string;
+      phone: string;
+      email?: string;
+    }) => provisionDriverAccess(driverId, { phone, email }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
+      void queryClient.invalidateQueries({ queryKey: ["drivers"] });
+    },
+  });
+}
+
+export function useRegenerateAccessCode() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => regenerateAccessCode(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [USERS_KEY] });
     },

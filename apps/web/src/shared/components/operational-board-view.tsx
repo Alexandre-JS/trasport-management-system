@@ -24,7 +24,10 @@ import { useTrailers } from "@/hooks/use-trailers";
 import { useTrucks } from "@/hooks/use-trucks";
 import { useToast } from "@/providers/toast-provider";
 import { createCargo } from "@/services/cargo-service";
+import { createDriver } from "@/services/drivers-service";
+import { createTrailer } from "@/services/trailers-service";
 import { createTrip } from "@/services/trips-service";
+import { createTruck } from "@/services/trucks-service";
 import { exportToCsv } from "@/utils/export-csv";
 import { parseBoardExcel } from "@/utils/import-board-excel";
 
@@ -178,9 +181,7 @@ export function OperationalBoardView() {
   // linha vazia por baixo — há sempre uma pronta para a próxima viagem.
   function withTrailingBlank(list: BoardRow[]): BoardRow[] {
     const last = list[list.length - 1];
-    return last && hasContent(last)
-      ? [...list, blankRow(sheetCtx())]
-      : list;
+    return last && hasContent(last) ? [...list, blankRow(sheetCtx())] : list;
   }
 
   function change(key: string, field: keyof BoardRow, value: string | boolean) {
@@ -251,9 +252,7 @@ export function OperationalBoardView() {
       } catch (error) {
         // Rede de segurança: se o backend recusar (recurso ocupado entretanto),
         // dá uma mensagem clara em vez do 409 cru.
-        errors.push(
-          `Linha ${lineNo}: ${translateSaveError(error, row)}`,
-        );
+        errors.push(`Linha ${lineNo}: ${translateSaveError(error, row)}`);
       }
     }
     void resourcesInUseQuery.refetch();
@@ -280,7 +279,8 @@ export function OperationalBoardView() {
     if (errors.length === 0) {
       toast({
         title: `✓ ${savedCount} viagem${s} guardada${s}`,
-        description: "Já aparecem na página de Atividades. Pode continuar a inserir.",
+        description:
+          "Já aparecem na página de Atividades. Pode continuar a inserir.",
         type: "success",
       });
     } else if (savedCount === 0) {
@@ -302,9 +302,9 @@ export function OperationalBoardView() {
     row: BoardRow,
     ctx: { clientId: string; origin: string; destination: string },
   ) {
-    // Recursos EXTERNOS (subcontratados) não geram cadastro: os dados vivem
-    // nos campos snapshot da viagem. Só se LIGA a um registo próprio quando a
-    // matrícula/carta já existe na frota — sem nunca criar registos novos.
+    // Todos os recursos alimentam os cadastros operacionais, mesmo quando são
+    // externos. `isSubcontracted` distingue a propriedade; uma conta de login
+    // só é criada depois, explicitamente, em Gestão de Utilizadores.
     const existingTruck = trucks.find(
       (item) => normalize(item.plateNumber) === normalize(row.horse),
     );
@@ -330,13 +330,32 @@ export function OperationalBoardView() {
       weightTonnes: numberOrUndefined(row.tonnage),
     });
 
+    const [truck, trailer, driver] = await Promise.all([
+      existingTruck
+        ? Promise.resolve(existingTruck)
+        : createTruck({ plateNumber: row.horse.trim() }),
+      existingTrailer
+        ? Promise.resolve(existingTrailer)
+        : createTrailer({
+            plateNumber: row.trailer.trim(),
+            tonnage: numberOrUndefined(row.tonnage),
+          }),
+      existingDriver
+        ? Promise.resolve(existingDriver)
+        : createDriver({
+            fullName: row.driver.trim(),
+            licenseNumber: row.license.trim(),
+            passportNumber: row.passport.trim() || undefined,
+            phone: row.phone.trim() || undefined,
+          }),
+    ]);
+
     return createTrip({
       cargoId: cargo.id,
-      truckId: existingTruck?.id,
-      trailerId: existingTrailer?.id,
-      driverId: existingDriver?.id,
-      // Sem recurso próprio ligado = transporte externo/subcontratado.
-      ...operationalPayload(row, !existingTruck && !existingDriver),
+      truckId: truck.id,
+      trailerId: trailer.id,
+      driverId: driver.id,
+      ...operationalPayload(row),
     });
   }
 
@@ -352,7 +371,9 @@ export function OperationalBoardView() {
     const name = newClientName.trim();
     if (!name) return;
     try {
-      const client = await createClientMutation.mutateAsync({ companyName: name });
+      const client = await createClientMutation.mutateAsync({
+        companyName: name,
+      });
       await queryClient.invalidateQueries({ queryKey: ["clients"] });
       setSheetClientId(client.id);
       setNewClientName("");
@@ -415,14 +436,14 @@ export function OperationalBoardView() {
       });
       toast({
         title: `${newRows.length} linha(s) importada(s)`,
-        description:
-          "Reveja os dados (fronteira e datas) e clique em Guardar.",
+        description: "Reveja os dados (fronteira e datas) e clique em Guardar.",
         type: "success",
       });
     } catch (error) {
       toast({
         title: "Não foi possível importar o Excel",
-        description: error instanceof Error ? error.message : "erro ao ler o ficheiro",
+        description:
+          error instanceof Error ? error.message : "erro ao ler o ficheiro",
         type: "error",
       });
     }
@@ -637,181 +658,179 @@ export function OperationalBoardView() {
           </thead>
           <tbody>
             {rows.map((row, index) => {
-              const fieldErrors = hasContent(row)
-                ? rowFieldErrors(row)
-                : {};
+              const fieldErrors = hasContent(row) ? rowFieldErrors(row) : {};
               const problems = Object.values(fieldErrors);
               return (
-              <tr
-                key={row.key}
-                className={
-                  problems.length > 0
-                    ? "bg-rose-50/70 dark:bg-rose-950/20"
-                    : row.dirty
-                      ? "bg-brand-50/70 dark:bg-brand-950/20"
-                      : "odd:bg-white even:bg-slate-50/60 dark:odd:bg-slate-900 dark:even:bg-slate-900/70"
-                }
-              >
-                <Cell
-                  sticky="left-0 w-12"
-                  className="text-center font-semibold"
+                <tr
+                  key={row.key}
+                  className={
+                    problems.length > 0
+                      ? "bg-rose-50/70 dark:bg-rose-950/20"
+                      : row.dirty
+                        ? "bg-brand-50/70 dark:bg-brand-950/20"
+                        : "odd:bg-white even:bg-slate-50/60 dark:odd:bg-slate-900 dark:even:bg-slate-900/70"
+                  }
                 >
-                  {index + 1}
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.transporter}
-                    onChange={(v) => change(row.key, "transporter", v)}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.horse}
-                    onChange={(v) => change(row.key, "horse", v)}
-                    list="board-horses"
-                    invalid={Boolean(fieldErrors.horse)}
-                    title={fieldErrors.horse}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.trailer}
-                    onChange={(v) => change(row.key, "trailer", v)}
-                    list="board-trailers"
-                    invalid={Boolean(fieldErrors.trailer)}
-                    title={fieldErrors.trailer}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.driver}
-                    onChange={(v) => changeDriver(row.key, v)}
-                    list="board-drivers"
-                    invalid={Boolean(fieldErrors.driver)}
-                    title={fieldErrors.driver}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.passport}
-                    onChange={(v) => change(row.key, "passport", v)}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.license}
-                    onChange={(v) => change(row.key, "license", v)}
-                    invalid={Boolean(fieldErrors.license)}
-                    title={fieldErrors.license}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.phone}
-                    onChange={(v) => change(row.key, "phone", v)}
-                  />
-                </Cell>
-                <Cell>
-                  <Select
-                    value={row.borderId}
-                    onChange={(v) => change(row.key, "borderId", v)}
-                    options={borders.map((item) => [item.id, item.name])}
-                    empty="—"
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.tonnage}
-                    onChange={(v) => change(row.key, "tonnage", v)}
-                    type="number"
-                  />
-                </Cell>
-                <Cell>
-                  <Select
-                    value={row.cargoType}
-                    onChange={(v) => change(row.key, "cargoType", v)}
-                    options={[
-                      ["GRANEL", "Granel"],
-                      ["CONTAINER", "Container"],
-                      ["GERAL", "Carga Geral"],
-                    ]}
-                  />
-                </Cell>
-                <Cell>
-                  {row.cargoType === "GRANEL" ? (
-                    <span className="px-2 text-slate-300 dark:text-slate-600">
-                      —
-                    </span>
-                  ) : (
+                  <Cell
+                    sticky="left-0 w-12"
+                    className="text-center font-semibold"
+                  >
+                    {index + 1}
+                  </Cell>
+                  <Cell>
                     <Input
-                      value={row.cargoDetail}
-                      onChange={(v) => change(row.key, "cargoDetail", v)}
-                      placeholder={
-                        row.cargoType === "CONTAINER"
-                          ? "Nº do container"
-                          : "O que transporta"
-                      }
-                      invalid={Boolean(fieldErrors.cargoDetail)}
-                      title={fieldErrors.cargoDetail}
+                      value={row.transporter}
+                      onChange={(v) => change(row.key, "transporter", v)}
                     />
-                  )}
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.dispatchedBy}
-                    onChange={(v) => change(row.key, "dispatchedBy", v)}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.departureDate}
-                    onChange={(v) => change(row.key, "departureDate", v)}
-                    type="date"
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.arrivalDate}
-                    onChange={(v) => change(row.key, "arrivalDate", v)}
-                    type="date"
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.dischargeDate}
-                    onChange={(v) => change(row.key, "dischargeDate", v)}
-                    type="date"
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.currentPosition}
-                    onChange={(v) => change(row.key, "currentPosition", v)}
-                  />
-                </Cell>
-                <Cell>
-                  <Input
-                    value={row.remarks}
-                    onChange={(v) => change(row.key, "remarks", v)}
-                  />
-                </Cell>
-                <Cell className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    {problems.length > 0 ? (
-                      <span title={problems.join("\n")}>
-                        <AlertTriangle className="size-4 text-rose-500" />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.horse}
+                      onChange={(v) => change(row.key, "horse", v)}
+                      list="board-horses"
+                      invalid={Boolean(fieldErrors.horse)}
+                      title={fieldErrors.horse}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.trailer}
+                      onChange={(v) => change(row.key, "trailer", v)}
+                      list="board-trailers"
+                      invalid={Boolean(fieldErrors.trailer)}
+                      title={fieldErrors.trailer}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.driver}
+                      onChange={(v) => changeDriver(row.key, v)}
+                      list="board-drivers"
+                      invalid={Boolean(fieldErrors.driver)}
+                      title={fieldErrors.driver}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.passport}
+                      onChange={(v) => change(row.key, "passport", v)}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.license}
+                      onChange={(v) => change(row.key, "license", v)}
+                      invalid={Boolean(fieldErrors.license)}
+                      title={fieldErrors.license}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.phone}
+                      onChange={(v) => change(row.key, "phone", v)}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Select
+                      value={row.borderId}
+                      onChange={(v) => change(row.key, "borderId", v)}
+                      options={borders.map((item) => [item.id, item.name])}
+                      empty="—"
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.tonnage}
+                      onChange={(v) => change(row.key, "tonnage", v)}
+                      type="number"
+                    />
+                  </Cell>
+                  <Cell>
+                    <Select
+                      value={row.cargoType}
+                      onChange={(v) => change(row.key, "cargoType", v)}
+                      options={[
+                        ["GRANEL", "Granel"],
+                        ["CONTAINER", "Container"],
+                        ["GERAL", "Carga Geral"],
+                      ]}
+                    />
+                  </Cell>
+                  <Cell>
+                    {row.cargoType === "GRANEL" ? (
+                      <span className="px-2 text-slate-300 dark:text-slate-600">
+                        —
                       </span>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => removeBlank(row.key)}
-                      title="Remover linha"
-                    >
-                      <Trash2 className="size-4 text-slate-400 hover:text-rose-600" />
-                    </button>
-                  </div>
-                </Cell>
-              </tr>
+                    ) : (
+                      <Input
+                        value={row.cargoDetail}
+                        onChange={(v) => change(row.key, "cargoDetail", v)}
+                        placeholder={
+                          row.cargoType === "CONTAINER"
+                            ? "Nº do container"
+                            : "O que transporta"
+                        }
+                        invalid={Boolean(fieldErrors.cargoDetail)}
+                        title={fieldErrors.cargoDetail}
+                      />
+                    )}
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.dispatchedBy}
+                      onChange={(v) => change(row.key, "dispatchedBy", v)}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.departureDate}
+                      onChange={(v) => change(row.key, "departureDate", v)}
+                      type="date"
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.arrivalDate}
+                      onChange={(v) => change(row.key, "arrivalDate", v)}
+                      type="date"
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.dischargeDate}
+                      onChange={(v) => change(row.key, "dischargeDate", v)}
+                      type="date"
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.currentPosition}
+                      onChange={(v) => change(row.key, "currentPosition", v)}
+                    />
+                  </Cell>
+                  <Cell>
+                    <Input
+                      value={row.remarks}
+                      onChange={(v) => change(row.key, "remarks", v)}
+                    />
+                  </Cell>
+                  <Cell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      {problems.length > 0 ? (
+                        <span title={problems.join("\n")}>
+                          <AlertTriangle className="size-4 text-rose-500" />
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => removeBlank(row.key)}
+                        title="Remover linha"
+                      >
+                        <Trash2 className="size-4 text-slate-400 hover:text-rose-600" />
+                      </button>
+                    </div>
+                  </Cell>
+                </tr>
               );
             })}
           </tbody>
@@ -923,11 +942,11 @@ function hasContent(row: BoardRow) {
   // quando o operador digita dados próprios da viagem.
   return Boolean(
     row.tripId ||
-      row.horse.trim() ||
-      row.driver.trim() ||
-      row.trailer.trim() ||
-      row.tonnage.trim() ||
-      row.currentPosition.trim(),
+    row.horse.trim() ||
+    row.driver.trim() ||
+    row.trailer.trim() ||
+    row.tonnage.trim() ||
+    row.currentPosition.trim(),
   );
 }
 function translateSaveError(error: unknown, row: BoardRow): string {

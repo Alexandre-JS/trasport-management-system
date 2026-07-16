@@ -106,6 +106,124 @@ export class UsersRepository {
       .then((role) => role?.id ?? null);
   }
 
+  /** Telefone já usado por outra conta (login por telefone tem de ser único). */
+  async phoneInUse(phone: string): Promise<boolean> {
+    const suffix = phone.replace(/\D/g, '').slice(-9);
+    if (!suffix) return false;
+    const count = await this.prisma.user.count({
+      where: { deletedAt: null, phone: { endsWith: suffix } },
+    });
+    return count > 0;
+  }
+
+  async licenseInUse(licenseNumber: string): Promise<boolean> {
+    const count = await this.prisma.driver.count({
+      where: { licenseNumber, deletedAt: null },
+    });
+    return count > 0;
+  }
+
+  /**
+   * Cria o utilizador (perfil Motorista) e o registo do motorista numa só
+   * transação, já ligados pelo userId. Devolve o utilizador criado.
+   */
+  createDriverAccount(params: {
+    roleId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    password: string;
+    fullName: string;
+    licenseNumber: string;
+    passportNumber?: string;
+  }): Promise<UserEntity> {
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          roleId: params.roleId,
+          firstName: params.firstName,
+          lastName: params.lastName,
+          email: params.email,
+          phone: params.phone,
+          password: params.password,
+          isActive: true,
+        },
+        select: userSelect,
+      });
+
+      await tx.driver.create({
+        data: {
+          userId: user.id,
+          fullName: params.fullName,
+          licenseNumber: params.licenseNumber,
+          passportNumber: params.passportNumber ?? null,
+          phone: params.phone,
+          email: params.email,
+        },
+        select: { id: true },
+      });
+
+      return user;
+    });
+  }
+
+  findDriverForAccess(id: string) {
+    return this.prisma.driver.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        id: true,
+        userId: true,
+        fullName: true,
+        phone: true,
+        email: true,
+      },
+    });
+  }
+
+  provisionExistingDriverAccount(params: {
+    driverId: string;
+    roleId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    password: string;
+  }): Promise<UserEntity> {
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          roleId: params.roleId,
+          firstName: params.firstName,
+          lastName: params.lastName,
+          email: params.email,
+          phone: params.phone,
+          password: params.password,
+          isActive: true,
+        },
+        select: userSelect,
+      });
+
+      await tx.driver.update({
+        where: { id: params.driverId },
+        data: {
+          userId: user.id,
+          phone: params.phone,
+          email: params.email,
+        },
+      });
+
+      return user;
+    });
+  }
+
+  async revokeRefreshTokens(userId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   clientExists(clientId: string): Promise<boolean> {
     return this.prisma.client
       .count({ where: { id: clientId, deletedAt: null } })

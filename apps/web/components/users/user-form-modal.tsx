@@ -1,30 +1,41 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { FormActions } from "@/components/ui/form-actions";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
-import { useCreateUser, useRoles, useUpdateUser } from "@/hooks/use-users";
+import {
+  useCreateDriverAccount,
+  useCreateUser,
+  useRoles,
+  useUpdateUser,
+} from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { User } from "@/types/user";
 import { emptyToUndefined } from "@/utils/form";
 import { optionalPhoneSchema, passwordSchema } from "@/utils/validation";
 import { roleLabelMap } from "@/utils/role-permissions";
+import {
+  AccessDeliveryPanel,
+  type AccessDelivery,
+} from "@/src/shared/components/access-delivery-panel";
 
 // Na edição a senha não é alterada aqui (ação "Repor senha" nos detalhes)
 // e o perfil muda pela ação dedicada "Mudar perfil".
 const baseSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Apelido é obrigatório"),
-  email: z.string().email("Email inválido"),
+  email: z.string(),
   phone: optionalPhoneSchema,
   password: z.string(),
   roleId: z.string(),
+  licenseNumber: z.string(),
+  passportNumber: z.string(),
 });
 
 type FormValues = z.infer<typeof baseSchema>;
@@ -36,6 +47,8 @@ const emptyValues: FormValues = {
   phone: "",
   password: "",
   roleId: "",
+  licenseNumber: "",
+  passportNumber: "",
 };
 
 function toFormValues(user: User): FormValues {
@@ -46,6 +59,8 @@ function toFormValues(user: User): FormValues {
     phone: user.phone ?? "",
     password: "",
     roleId: user.roleId,
+    licenseNumber: "",
+    passportNumber: "",
   };
 }
 
@@ -59,11 +74,57 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
   const isEdit = user !== null;
   const { toast } = useToast();
   const createUser = useCreateUser();
+  const createDriverAccount = useCreateDriverAccount();
   const updateUser = useUpdateUser();
   const { data: roles } = useRoles();
+  const [createdAccess, setCreatedAccess] = useState<AccessDelivery | null>(
+    null,
+  );
+
+  const isDriverRole = (roleId: string) =>
+    roles?.find((role) => role.id === roleId)?.name === "DRIVER";
 
   const schema = baseSchema.superRefine((values, ctx) => {
-    if (!isEdit) {
+    if (isEdit) return;
+
+    if (!values.roleId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["roleId"],
+        message: "Perfil é obrigatório",
+      });
+      return;
+    }
+
+    const driver = isDriverRole(values.roleId);
+    const email = values.email.trim();
+
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+      ctx.addIssue({ code: "custom", path: ["email"], message: "Email inválido" });
+    } else if (!email && !driver) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["email"],
+        message: "Email é obrigatório",
+      });
+    }
+
+    if (driver) {
+      if (!values.phone?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["phone"],
+          message: "Telefone é obrigatório para o acesso mobile",
+        });
+      }
+      if (!values.licenseNumber.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["licenseNumber"],
+          message: "Nº da carta de condução é obrigatório",
+        });
+      }
+    } else {
       const result = passwordSchema.safeParse(values.password);
       if (!result.success) {
         ctx.addIssue({
@@ -73,19 +134,13 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
         });
       }
     }
-    if (!isEdit && !values.roleId) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["roleId"],
-        message: "Perfil é obrigatório",
-      });
-    }
   });
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -98,21 +153,28 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
     }
   }, [open, user, reset]);
 
-  // Contas de motorista criam-se em Motoristas → "Dar acesso mobile", que
-  // cria a conta E o registo operacional (com carta de condução) ligados.
-  // Criar aqui um usuário DRIVER deixaria uma conta órfã, invisível na
-  // tabela de Motoristas e sem acesso à app.
+  function handleClose() {
+    setCreatedAccess(null);
+    onClose();
+  }
+
+  const selectedRoleId = useWatch({ control, name: "roleId" });
+  const driverSelected = !isEdit && isDriverRole(selectedRoleId);
+
+  // Motoristas podem agora ser criados aqui: além da conta, o sistema cria o
+  // registo do motorista (com carta) e gera o código de acesso mobile.
   const roleOptions = [
     { label: "Selecionar perfil...", value: "" },
-    ...(roles ?? [])
-      .filter((role) => role.name !== "DRIVER")
-      .map((role) => ({
-        label: roleLabelMap[role.name] ?? role.name,
-        value: role.id,
-      })),
+    ...(roles ?? []).map((role) => ({
+      label: roleLabelMap[role.name] ?? role.name,
+      value: role.id,
+    })),
   ];
 
-  const loading = createUser.isPending || updateUser.isPending;
+  const loading =
+    createUser.isPending ||
+    createDriverAccount.isPending ||
+    updateUser.isPending;
 
   async function onSubmit(values: FormValues, continueAfter: boolean) {
     try {
@@ -128,6 +190,38 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
         });
         toast({ title: "Usuário atualizado", type: "success" });
         onClose();
+        return;
+      }
+
+      if (isDriverRole(values.roleId)) {
+        const result = await createDriverAccount.mutateAsync({
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
+          phone: values.phone!.trim(),
+          licenseNumber: values.licenseNumber.trim(),
+          email: emptyToUndefined(values.email?.trim()),
+          passportNumber: emptyToUndefined(values.passportNumber?.trim()),
+        });
+        toast({
+          title: "Conta de motorista criada",
+          description:
+            "Entregue ao motorista o telefone e o código de acesso à app.",
+          type: "success",
+        });
+        setCreatedAccess({
+          recipientName: `${result.firstName} ${result.lastName}`.trim(),
+          email: result.phone ?? values.phone!.trim(),
+          identifierLabel: "Telefone",
+          password: result.accessCode,
+          secretLabel: "Código de acesso",
+          changeableSecret: false,
+          destinationUrl:
+            process.env.NEXT_PUBLIC_DRIVER_APP_URL?.trim() ||
+            "https://play.google.com/store/apps",
+          destinationLabel: "App do motorista (Play Store)",
+          documentTitle: "Dados de acesso do motorista",
+        });
+        reset(emptyValues);
         return;
       }
 
@@ -163,14 +257,16 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
       description={
         isEdit
           ? "O perfil e a senha mudam pelas ações dedicadas nos detalhes."
-          : "A senha definida aqui é provisória — o usuário deve alterá-la no primeiro acesso."
+          : "A senha definida aqui é provisória — o usuário deve alterá-la no primeiro acesso. Para motoristas o sistema gera o código de acesso à app."
       }
-      onClose={onClose}
+      onClose={handleClose}
     >
       <form
         onSubmit={handleSubmit((values) => onSubmit(values, false))}
         className="flex flex-col gap-4"
       >
+        {createdAccess ? <AccessDeliveryPanel access={createdAccess} /> : null}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             id="firstName"
@@ -186,27 +282,44 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
           />
           <Input
             id="email"
-            label="Email *"
+            label={driverSelected ? "Email (opcional)" : "Email *"}
             type="email"
             error={errors.email?.message}
             {...register("email")}
           />
           <Input
             id="phone"
-            label="Telefone"
+            label={driverSelected ? "Telefone *" : "Telefone"}
             error={errors.phone?.message}
             {...register("phone")}
           />
           {isEdit ? null : (
             <>
-              <Input
-                id="password"
-                label="Senha provisória *"
-                type="password"
-                autoComplete="new-password"
-                error={errors.password?.message}
-                {...register("password")}
-              />
+              {driverSelected ? (
+                <>
+                  <Input
+                    id="licenseNumber"
+                    label="Nº carta de condução *"
+                    error={errors.licenseNumber?.message}
+                    {...register("licenseNumber")}
+                  />
+                  <Input
+                    id="passportNumber"
+                    label="Nº passaporte"
+                    error={errors.passportNumber?.message}
+                    {...register("passportNumber")}
+                  />
+                </>
+              ) : (
+                <Input
+                  id="password"
+                  label="Senha provisória *"
+                  type="password"
+                  autoComplete="new-password"
+                  error={errors.password?.message}
+                  {...register("password")}
+                />
+              )}
               <div>
                 <label
                   htmlFor="roleId"
@@ -225,9 +338,9 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
                   </p>
                 ) : null}
                 <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                  Contas de <strong>motorista</strong> criam-se na página
-                  Motoristas → ação “Dar acesso mobile”, já ligadas ao registo
-                  do motorista.
+                  {driverSelected
+                    ? "Login na app: telefone + código de acesso (gerado ao criar). A senha não é definida à mão."
+                    : "Motoristas entram na app com telefone + código gerado pelo sistema."}
                 </p>
               </div>
             </>
@@ -235,11 +348,12 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
         </div>
 
         <FormActions
-          onCancel={onClose}
+          onCancel={handleClose}
           onReset={() => reset(user ? toFormValues(user) : emptyValues)}
           onSaveAndContinue={handleSubmit((values) => onSubmit(values, true))}
           loading={loading}
-          showContinue={!isEdit}
+          showContinue={!isEdit && !driverSelected}
+          submitLabel={driverSelected ? "Criar e gerar código" : undefined}
         />
       </form>
     </Modal>

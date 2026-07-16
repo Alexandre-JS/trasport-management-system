@@ -119,36 +119,46 @@ export function OperationalBoardView() {
     [resourcesInUseQuery.data],
   );
 
-  // Problemas de uma linha: campos obrigatórios em falta, recurso já numa
-  // viagem ativa, ou recurso repetido noutra linha da própria folha.
-  function rowProblems(row: BoardRow): string[] {
-    const out: string[] = [];
-    if (!row.horse.trim()) out.push("Falta o Horse");
-    if (!row.trailer.trim()) out.push("Falta o Trailer");
-    if (!row.driver.trim()) out.push("Falta o motorista");
-    if (!row.license.trim()) out.push("Falta a carta");
-
+  // Erro por CAMPO de uma linha (para pintar a célula certa a vermelho e dar
+  // uma mensagem clara): campo obrigatório em falta, recurso já numa viagem
+  // em curso, ou recurso repetido noutra linha da mesma folha.
+  type FieldKey = "horse" | "trailer" | "driver" | "license";
+  function rowFieldErrors(row: BoardRow): Partial<Record<FieldKey, string>> {
+    const e: Partial<Record<FieldKey, string>> = {};
     const nh = normalize(row.horse);
     const nt = normalize(row.trailer);
     const nl = normalize(row.license);
-    if (nh && inUse.horses.has(nh))
-      out.push(`Horse ${row.horse} já está numa viagem ativa`);
-    if (nt && inUse.trailers.has(nt))
-      out.push(`Trailer ${row.trailer} já está numa viagem ativa`);
-    if (nl && inUse.drivers.has(nl))
-      out.push(`Motorista (carta ${row.license}) já está numa viagem ativa`);
-
     const dup = (get: (r: BoardRow) => string, value: string) =>
-      value &&
+      Boolean(value) &&
       rows.filter((r) => hasContent(r) && normalize(get(r)) === value).length >
         1;
-    if (dup((r) => r.horse, nh))
-      out.push(`Horse ${row.horse} repetido em várias linhas`);
-    if (dup((r) => r.trailer, nt))
-      out.push(`Trailer ${row.trailer} repetido em várias linhas`);
-    if (dup((r) => r.license, nl))
-      out.push(`Carta ${row.license} repetida em várias linhas`);
-    return out;
+
+    if (!row.horse.trim()) e.horse = "Preencha o Horse";
+    else if (inUse.horses.has(nh))
+      e.horse = "Este Horse já está numa viagem em curso — use outro";
+    else if (dup((r) => r.horse, nh))
+      e.horse = "Horse repetido noutra linha desta folha";
+
+    if (!row.trailer.trim()) e.trailer = "Preencha o Trailer";
+    else if (inUse.trailers.has(nt))
+      e.trailer = "Este Trailer já está numa viagem em curso — use outro";
+    else if (dup((r) => r.trailer, nt))
+      e.trailer = "Trailer repetido noutra linha desta folha";
+
+    if (!row.driver.trim()) e.driver = "Preencha o motorista";
+    if (!row.license.trim()) e.license = "Preencha a carta de condução";
+    else if (inUse.drivers.has(nl)) {
+      e.license = "Este motorista já está numa viagem em curso — use outro";
+      if (row.driver.trim()) e.driver = e.license;
+    } else if (dup((r) => r.license, nl)) {
+      e.license = "Carta repetida noutra linha desta folha";
+      if (row.driver.trim()) e.driver = e.license;
+    }
+    return e;
+  }
+
+  function rowProblems(row: BoardRow): string[] {
+    return Object.values(rowFieldErrors(row));
   }
 
   const sheetCtx = () => ({
@@ -259,16 +269,23 @@ export function OperationalBoardView() {
     setSaving(false);
 
     const savedCount = savedKeys.size;
+    const s = savedCount === 1 ? "" : "s";
     if (errors.length === 0) {
       toast({
-        title: `${savedCount} viagem${savedCount === 1 ? "" : "s"} guardada${savedCount === 1 ? "" : "s"}`,
-        description: "Já aparecem na página de Atividades.",
+        title: `✓ ${savedCount} viagem${s} guardada${s}`,
+        description: "Já aparecem na página de Atividades. Pode continuar a inserir.",
         type: "success",
+      });
+    } else if (savedCount === 0) {
+      toast({
+        title: "Nenhuma viagem guardada",
+        description: `Corrija as células a vermelho: ${errors.slice(0, 2).join(" · ")}`,
+        type: "error",
       });
     } else {
       toast({
-        title: `${savedCount} guardada(s), ${errors.length} por corrigir`,
-        description: errors.slice(0, 3).join(" · "),
+        title: `${savedCount} guardada${s} · ${errors.length} por corrigir`,
+        description: `As linhas a vermelho ficaram no quadro. ${errors.slice(0, 2).join(" · ")}`,
         type: "warning",
       });
     }
@@ -518,7 +535,10 @@ export function OperationalBoardView() {
           </thead>
           <tbody>
             {rows.map((row, index) => {
-              const problems = hasContent(row) ? rowProblems(row) : [];
+              const fieldErrors = hasContent(row)
+                ? rowFieldErrors(row)
+                : {};
+              const problems = Object.values(fieldErrors);
               return (
               <tr
                 key={row.key}
@@ -547,6 +567,8 @@ export function OperationalBoardView() {
                     value={row.horse}
                     onChange={(v) => change(row.key, "horse", v)}
                     list="board-horses"
+                    invalid={Boolean(fieldErrors.horse)}
+                    title={fieldErrors.horse}
                   />
                 </Cell>
                 <Cell>
@@ -554,6 +576,8 @@ export function OperationalBoardView() {
                     value={row.trailer}
                     onChange={(v) => change(row.key, "trailer", v)}
                     list="board-trailers"
+                    invalid={Boolean(fieldErrors.trailer)}
+                    title={fieldErrors.trailer}
                   />
                 </Cell>
                 <Cell>
@@ -561,6 +585,8 @@ export function OperationalBoardView() {
                     value={row.driver}
                     onChange={(v) => changeDriver(row.key, v)}
                     list="board-drivers"
+                    invalid={Boolean(fieldErrors.driver)}
+                    title={fieldErrors.driver}
                   />
                 </Cell>
                 <Cell>
@@ -573,6 +599,8 @@ export function OperationalBoardView() {
                   <Input
                     value={row.license}
                     onChange={(v) => change(row.key, "license", v)}
+                    invalid={Boolean(fieldErrors.license)}
+                    title={fieldErrors.license}
                   />
                 </Cell>
                 <Cell>
@@ -806,12 +834,16 @@ function Input({
   type = "text",
   list,
   placeholder,
+  invalid,
+  title,
 }: {
   value: string;
   onChange: (value: string) => void;
   type?: string;
   list?: string;
   placeholder?: string;
+  invalid?: boolean;
+  title?: string;
 }) {
   return (
     <input
@@ -820,7 +852,12 @@ function Input({
       type={type}
       list={list}
       placeholder={placeholder}
-      className="h-8 min-w-28 w-full rounded-sm border border-transparent bg-transparent px-2 outline-none hover:border-slate-300 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-950"
+      title={title}
+      className={`h-8 min-w-28 w-full rounded-sm px-2 outline-none ${
+        invalid
+          ? "border border-rose-400 bg-rose-50 focus:border-rose-500 dark:border-rose-500 dark:bg-rose-950/40"
+          : "border border-transparent bg-transparent hover:border-slate-300 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-950"
+      }`}
     />
   );
 }

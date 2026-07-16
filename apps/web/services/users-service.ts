@@ -1,8 +1,12 @@
 import { http } from "@/services/http";
 import type { Paginated } from "@/types/api";
 import type {
+  AccessCodeResult,
+  CreateDriverAccountPayload,
   CreateUserPayload,
+  DriverAccountResult,
   ListUsersParams,
+  ProvisionDriverAccessPayload,
   Role,
   UpdateUserPayload,
   User,
@@ -44,6 +48,38 @@ export async function listRoles(): Promise<Role[]> {
 
 export async function createUser(payload: CreateUserPayload): Promise<User> {
   const { data } = await http.post<User>("/users", payload);
+
+  return data;
+}
+
+export async function createDriverAccount(
+  payload: CreateDriverAccountPayload,
+): Promise<DriverAccountResult> {
+  const { data } = await http.post<DriverAccountResult>(
+    "/users/drivers",
+    payload,
+  );
+
+  return data;
+}
+
+export async function provisionDriverAccess(
+  driverId: string,
+  payload: ProvisionDriverAccessPayload,
+): Promise<DriverAccountResult> {
+  const { data } = await http.post<DriverAccountResult>(
+    `/users/drivers/${driverId}/access`,
+    payload,
+  );
+  return data;
+}
+
+export async function regenerateAccessCode(
+  id: string,
+): Promise<AccessCodeResult> {
+  const { data } = await http.post<AccessCodeResult>(
+    `/users/${id}/access-code`,
+  );
 
   return data;
 }

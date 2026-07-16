@@ -26,6 +26,14 @@ const portalTripSelect = {
   departureDate: true,
   arrivalEstimate: true,
   arrivalDate: true,
+  dischargeDate: true,
+  // Campos do quadro operacional visíveis ao cliente. Documentos do
+  // motorista (passaporte, carta, telefone) ficam DE FORA de propósito.
+  bookingReference: true,
+  transporterName: true,
+  horsePlate: true,
+  trailerPlate: true,
+  driverName: true,
   cargo: {
     select: {
       code: true,
@@ -35,6 +43,7 @@ const portalTripSelect = {
     },
   },
   truck: { select: { plateNumber: true } },
+  trailer: { select: { plateNumber: true } },
   driver: { select: { fullName: true } },
   createdAt: true,
 } satisfies Prisma.TripSelect;

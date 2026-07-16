@@ -1,239 +1,154 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { Select } from "@/components/ui/select";
-import { AccessDeliveryPanel, type AccessDelivery } from "@/src/shared/components/access-delivery-panel";
-import { useUpdateDriver } from "@/hooks/use-drivers";
-import { useCreateUser, useRoles, useUsers } from "@/hooks/use-users";
+import {
+  AccessDeliveryPanel,
+  type AccessDelivery,
+} from "@/src/shared/components/access-delivery-panel";
+import { useProvisionDriverAccess } from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { Driver } from "@/types/driver";
-import { passwordSchema } from "@/utils/validation";
 
 type DriverAccountModalProps = {
   driver: Driver | null;
   onClose: () => void;
 };
 
-type Mode = "create" | "existing";
-
 /**
- * Dá acesso à app mobile a um motorista: cria um utilizador com perfil
- * DRIVER (email + senha provisória) e associa-o ao registo do motorista,
- * ou associa uma conta DRIVER já existente.
+ * Ativa o login de um motorista operacional já existente. O telefone é o
+ * identificador e a API gera um código mostrado apenas nesta confirmação.
  */
-export function DriverAccountModal({ driver, onClose }: DriverAccountModalProps) {
+export function DriverAccountModal({
+  driver,
+  onClose,
+}: DriverAccountModalProps) {
   const { toast } = useToast();
-  const { data: roles } = useRoles();
-  const createUser = useCreateUser();
-  const updateDriver = useUpdateDriver();
-
-  const [mode, setMode] = useState<Mode>("create");
+  const provisionAccess = useProvisionDriverAccess();
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [existingUserId, setExistingUserId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [createdAccess, setCreatedAccess] = useState<AccessDelivery | null>(null);
-
-  // contas com perfil DRIVER para o modo "associar existente"
-  const driverUsers = useUsers({ role: "DRIVER", limit: 100, isActive: true });
-
-  useEffect(() => {
-    if (driver) {
-      // Resetar o formulário é intencional quando o motorista selecionado muda.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMode("create");
-      setEmail(driver.email ?? "");
-      setPassword("");
-      setExistingUserId("");
-      setFormError(null);
-      setCreatedAccess(null);
-    }
-  }, [driver]);
-
-  const driverRoleId = useMemo(
-    () => roles?.find((role) => role.name === "DRIVER")?.id ?? null,
-    [roles],
+  const [createdAccess, setCreatedAccess] = useState<AccessDelivery | null>(
+    null,
   );
 
-  const existingOptions = [
-    { label: "Selecionar conta...", value: "" },
-    ...(driverUsers.data?.data ?? []).map((user) => ({
-      label: `${user.firstName} ${user.lastName} — ${user.email}`,
-      value: user.id,
-    })),
-  ];
+  useEffect(() => {
+    if (!driver) return;
+    // O motorista selecionado muda a origem dos dados do formulário.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPhone(driver.phone ?? "");
+    setEmail(driver.email ?? "");
+    setFormError(null);
+    setCreatedAccess(null);
+  }, [driver]);
 
-  const loading = createUser.isPending || updateDriver.isPending;
-
-  async function handleSubmit() {
-    if (!driver) {
+  async function activateAccess() {
+    if (!driver) return;
+    const normalizedPhone = phone.trim();
+    if (!normalizedPhone) {
+      setFormError("Informe o telefone que o motorista usará no login.");
       return;
     }
 
     setFormError(null);
-
     try {
-      if (mode === "create") {
-        if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
-          setFormError("Email inválido");
-          return;
-        }
-        const result = passwordSchema.safeParse(password);
-        if (!result.success) {
-          setFormError(result.error.issues[0]?.message ?? "Senha inválida");
-          return;
-        }
-        if (!driverRoleId) {
-          setFormError("Perfil DRIVER não encontrado — recarregue a página");
-          return;
-        }
-
-        const [firstName, ...rest] = driver.fullName.trim().split(/\s+/);
-        const user = await createUser.mutateAsync({
-          roleId: driverRoleId,
-          firstName,
-          lastName: rest.join(" ") || firstName,
-          email: email.trim(),
-          password,
-          phone: driver.phone ?? undefined,
-        });
-
-        await updateDriver.mutateAsync({
-          id: driver.id,
-          payload: { userId: user.id },
-        });
-
-        toast({
-          title: "Conta de acesso criada",
-          description: `O motorista já pode entrar na app mobile com ${user.email}. Comunique-lhe a senha provisória.`,
-          type: "success",
-        });
-        setCreatedAccess({
-          recipientName: driver.fullName,
-          email: user.email,
-          password,
-          destinationUrl:
-            process.env.NEXT_PUBLIC_DRIVER_APP_URL?.trim() ||
-            "https://play.google.com/store/apps",
-          destinationLabel: "App do motorista (Play Store)",
-          documentTitle: "Dados de acesso do motorista",
-        });
-        return;
-      } else {
-        if (!existingUserId) {
-          setFormError("Escolha a conta a associar");
-          return;
-        }
-
-        await updateDriver.mutateAsync({
-          id: driver.id,
-          payload: { userId: existingUserId },
-        });
-
-        toast({ title: "Conta associada ao motorista", type: "success" });
-      }
-
-      onClose();
-    } catch (error) {
-      toast({
-        title: "Não foi possível concluir",
-        description: extractErrorMessage(error),
-        type: "error",
+      const result = await provisionAccess.mutateAsync({
+        driverId: driver.id,
+        phone: normalizedPhone,
+        email: email.trim() || undefined,
       });
+
+      setCreatedAccess({
+        recipientName: driver.fullName,
+        email: result.phone ?? normalizedPhone,
+        identifierLabel: "Telefone",
+        password: result.accessCode,
+        secretLabel: "Código de acesso",
+        changeableSecret: false,
+        destinationUrl:
+          process.env.NEXT_PUBLIC_DRIVER_APP_URL?.trim() ||
+          "https://play.google.com/store/apps",
+        destinationLabel: "App do motorista (Play Store)",
+        documentTitle: "Dados de acesso do motorista",
+      });
+      toast({
+        title: "Acesso mobile ativado",
+        description: "Envie agora o telefone e o código ao motorista.",
+        type: "success",
+      });
+    } catch (error) {
+      setFormError(extractErrorMessage(error));
     }
   }
 
   return (
     <Modal
       open={driver !== null}
+      size="lg"
       title="Conta de acesso mobile"
       description={
-        driver
-          ? `Dar acesso à app do motorista a “${driver.fullName}”.`
-          : undefined
+        driver ? `Ativar o acesso à app para “${driver.fullName}”.` : undefined
       }
       onClose={onClose}
     >
-      <div className="flex flex-col gap-4">
-        {createdAccess ? <AccessDeliveryPanel access={createdAccess} /> : null}
-        <div className="flex gap-2">
-          <Button
-            variant={mode === "create" ? "primary" : "outline"}
-            size="sm"
-            onClick={() => setMode("create")}
-          >
-            Criar conta nova
-          </Button>
-          <Button
-            variant={mode === "existing" ? "primary" : "outline"}
-            size="sm"
-            onClick={() => setMode("existing")}
-          >
-            Associar existente
-          </Button>
-        </div>
-
-        {mode === "create" ? (
-          <div className="flex flex-col gap-4">
-            <Input
-              id="account-email"
-              label="Email de acesso *"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-            <Input
-              id="account-password"
-              label="Senha provisória *"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              A conta é criada com o perfil Motorista (acesso apenas à app
-              mobile). Comunique a senha ao motorista — ele deve alterá-la no
-              primeiro acesso.
-            </p>
+      {createdAccess ? (
+        <div className="flex flex-col gap-4">
+          <AccessDeliveryPanel access={createdAccess} />
+          <div className="flex justify-end">
+            <Button onClick={onClose}>Concluir</Button>
           </div>
-        ) : (
-          <div>
-            <label
-              htmlFor="existing-user"
-              className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="rounded-md border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-800 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-200">
+            O motorista entrará com o telefone e um código gerado pelo sistema.
+            A conta ficará ligada ao registo operacional já existente.
+          </div>
+
+          <Input
+            id="driver-access-phone"
+            label="Telefone de acesso *"
+            type="tel"
+            value={phone}
+            placeholder="+258 84 123 4567"
+            onChange={(event) => setPhone(event.target.value)}
+          />
+          <Input
+            id="driver-access-email"
+            label="Email (opcional)"
+            type="email"
+            value={email}
+            placeholder="motorista@exemplo.com"
+            onChange={(event) => setEmail(event.target.value)}
+          />
+
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Depois de ativar, o código será mostrado uma única vez para envio
+            por WhatsApp ou PDF com QR Code.
+          </p>
+
+          {formError ? (
+            <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+              {formError}
+            </p>
+          ) : null}
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => void activateAccess()}
+              loading={provisionAccess.isPending}
             >
-              Conta com perfil Motorista
-            </label>
-            <Select
-              id="existing-user"
-              options={existingOptions}
-              value={existingUserId}
-              onChange={(event) => setExistingUserId(event.target.value)}
-            />
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              Só é possível associar contas que ainda não estejam ligadas a
-              outro motorista.
-            </p>
+              Gerar e ativar acesso
+            </Button>
           </div>
-        )}
-
-        {formError ? (
-          <p className="text-sm text-rose-600 dark:text-rose-400">{formError}</p>
-        ) : null}
-
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} loading={loading}>
-            {mode === "create" ? "Criar e associar" : "Associar"}
-          </Button>
         </div>
-      </div>
+      )}
     </Modal>
   );
 }

@@ -63,20 +63,33 @@ export type TripEvent = {
 export type Trip = {
   id: string;
   cargoId: string;
-  truckId: string;
+  truckId: string | null;
   trailerId: string | null;
-  driverId: string;
+  driverId: string | null;
   departureDate: string | null;
   arrivalEstimate: string | null;
   arrivalDate: string | null;
   loadedDate: string | null;
+  dischargeDate: string | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
   borders: TripBorder[];
   /** Decimal serialised as string by the API. */
   tonnage: string | null;
+  transporterName: string | null;
+  isSubcontracted: boolean;
+  dispatchedBy: string | null;
+  remarks: string | null;
+  horsePlate: string | null;
+  trailerPlate: string | null;
+  driverName: string | null;
+  driverPassport: string | null;
+  driverLicense: string | null;
+  driverPhone: string | null;
+  bookingReference: string | null;
   cargo: {
     id: string;
+    clientId: string;
     code: string;
     origin: string;
     destination: string;
@@ -86,11 +99,11 @@ export type Trip = {
     fullName: string;
     licenseNumber: string;
     passportNumber: string | null;
-  };
+  } | null;
   truck: {
     id: string;
     plateNumber: string;
-  };
+  } | null;
   trailer: {
     id: string;
     plateNumber: string;
@@ -119,8 +132,28 @@ export type ListTripsParams = {
   trailerId?: string;
   driverId?: string;
   currentStatus?: TripStatus;
+  clientId?: string;
+  origin?: string;
+  destination?: string;
+  day?: string;
   sortBy?: TripSortBy;
   sortOrder?: SortOrder;
+};
+
+export type ResourcesInUse = {
+  horses: string[];
+  trailers: string[];
+  drivers: string[];
+};
+
+export type ActivitySheet = {
+  clientId: string;
+  clientName: string;
+  origin: string;
+  destination: string;
+  day: string;
+  total: number;
+  delivered: number;
 };
 
 export type AssignDriverPayload = { driverId: string };
@@ -129,16 +162,32 @@ export type AssignTrailerPayload = { trailerId: string };
 export type AssignCargoPayload = { cargoId: string };
 export type CreateTripPayload = {
   cargoId: string;
-  truckId: string;
-  trailerId: string;
-  driverId: string;
+  truckId?: string;
+  trailerId?: string;
+  driverId?: string;
   departureDate?: string;
   arrivalEstimate?: string;
   arrivalDate?: string;
   currentStatus?: TripStatus;
   /** Ids of the border posts the route crosses, in order. */
   borderIds?: string[];
+  loadedDate?: string;
+  dischargeDate?: string;
+  currentPosition?: string;
+  tonnage?: number;
+  transporterName?: string;
+  isSubcontracted?: boolean;
+  dispatchedBy?: string;
+  remarks?: string;
+  horsePlate?: string;
+  trailerPlate?: string;
+  driverName?: string;
+  driverPassport?: string;
+  driverLicense?: string;
+  driverPhone?: string;
+  bookingReference?: string;
 };
+export type UpdateTripPayload = Partial<CreateTripPayload>;
 export type UpdateTripStatusPayload = { currentStatus: TripStatus };
 export type RecordTripEventPayload = {
   type: TripEventType;

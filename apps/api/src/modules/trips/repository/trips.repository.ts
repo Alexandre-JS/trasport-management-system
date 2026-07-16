@@ -29,9 +29,22 @@ const tripSelect = {
   arrivalEstimate: true,
   arrivalDate: true,
   loadedDate: true,
+  dischargeDate: true,
   currentStatus: true,
   currentPosition: true,
   tonnage: true,
+  transporterName: true,
+  isSubcontracted: true,
+  dispatchedBy: true,
+  remarks: true,
+  horsePlate: true,
+  trailerPlate: true,
+  driverName: true,
+  driverPassport: true,
+  driverLicense: true,
+  driverPhone: true,
+  bookingReference: true,
+  trackingToken: true,
   borders: {
     select: {
       id: true,
@@ -54,6 +67,7 @@ const tripSelect = {
   cargo: {
     select: {
       id: true,
+      clientId: true,
       code: true,
       origin: true,
       destination: true,
@@ -205,62 +219,87 @@ export class TripsRepository {
 
   create(data: CreateTripDto): Promise<TripEntity> {
     return this.prisma.$transaction(async (tx) => {
-      const driver = await tx.driver.findFirst({
-        where: { id: data.driverId, deletedAt: null },
-        select: { id: true, status: true },
-      });
-      if (!driver) {
-        throw new NotFoundException('Driver not found');
-      }
-      if (driver.status !== DriverStatus.AVAILABLE) {
-        throw new ConflictException(
-          `Driver is not available (status: ${driver.status})`,
-        );
-      }
-
-      const truck = await tx.truck.findFirst({
-        where: { id: data.truckId, deletedAt: null },
-        select: { id: true, status: true },
-      });
-      if (!truck) {
-        throw new NotFoundException('Truck not found');
-      }
-      if (truck.status !== TruckStatus.AVAILABLE) {
-        throw new ConflictException(
-          `Truck is not available (status: ${truck.status})`,
-        );
+      // Recursos próprios são opcionais (viagem subcontratada usa só snapshots).
+      // Cada um só é validado/ocupado/anti-duplicado quando o seu id vem no DTO.
+      if (data.driverId) {
+        const driver = await tx.driver.findFirst({
+          where: { id: data.driverId, deletedAt: null },
+          select: { id: true, status: true },
+        });
+        if (!driver) {
+          throw new NotFoundException('Driver not found');
+        }
+        if (driver.status !== DriverStatus.AVAILABLE) {
+          throw new ConflictException(
+            `Driver is not available (status: ${driver.status})`,
+          );
+        }
       }
 
-      const trailer = await tx.trailer.findFirst({
-        where: { id: data.trailerId, deletedAt: null },
-        select: { id: true, status: true, truckId: true },
-      });
-      if (!trailer) {
-        throw new NotFoundException('Trailer not found');
+      if (data.truckId) {
+        const truck = await tx.truck.findFirst({
+          where: { id: data.truckId, deletedAt: null },
+          select: { id: true, status: true },
+        });
+        if (!truck) {
+          throw new NotFoundException('Truck not found');
+        }
+        if (truck.status !== TruckStatus.AVAILABLE) {
+          throw new ConflictException(
+            `Truck is not available (status: ${truck.status})`,
+          );
+        }
       }
-      if (trailer.status !== TrailerStatus.AVAILABLE) {
-        throw new ConflictException(
-          `Trailer is not available (status: ${trailer.status})`,
-        );
-      }
-      if (trailer.truckId && trailer.truckId !== data.truckId) {
-        throw new ConflictException('Trailer is assigned to a different truck');
+
+      if (data.trailerId) {
+        const trailer = await tx.trailer.findFirst({
+          where: { id: data.trailerId, deletedAt: null },
+          select: { id: true, status: true, truckId: true },
+        });
+        if (!trailer) {
+          throw new NotFoundException('Trailer not found');
+        }
+        if (trailer.status !== TrailerStatus.AVAILABLE) {
+          throw new ConflictException(
+            `Trailer is not available (status: ${trailer.status})`,
+          );
+        }
+        if (
+          data.truckId &&
+          trailer.truckId &&
+          trailer.truckId !== data.truckId
+        ) {
+          throw new ConflictException(
+            'Trailer is assigned to a different truck',
+          );
+        }
       }
 
       await this.assertNoActiveTrip(tx, { cargoId: data.cargoId }, '', 'Cargo');
-      await this.assertNoActiveTrip(
-        tx,
-        { driverId: data.driverId },
-        '',
-        'Driver',
-      );
-      await this.assertNoActiveTrip(tx, { truckId: data.truckId }, '', 'Truck');
-      await this.assertNoActiveTrip(
-        tx,
-        { trailerId: data.trailerId },
-        '',
-        'Trailer',
-      );
+      if (data.driverId) {
+        await this.assertNoActiveTrip(
+          tx,
+          { driverId: data.driverId },
+          '',
+          'Driver',
+        );
+      }
+      if (data.truckId) {
+        await this.assertNoActiveTrip(
+          tx,
+          { truckId: data.truckId },
+          '',
+          'Truck',
+        );
+      }
+      if (data.trailerId) {
+        await this.assertNoActiveTrip(
+          tx,
+          { trailerId: data.trailerId },
+          '',
+          'Trailer',
+        );
+      }
 
       const created = await tx.trip.create({
         data: this.toTripData(data),
@@ -292,18 +331,24 @@ export class TripsRepository {
           where: { id: data.cargoId, status: CargoStatus.CREATED },
           data: { status: CargoStatus.WAITING_PICKUP },
         });
-        await tx.driver.update({
-          where: { id: data.driverId },
-          data: { status: DriverStatus.ON_TRIP },
-        });
-        await tx.truck.update({
-          where: { id: data.truckId },
-          data: { status: TruckStatus.ON_TRIP },
-        });
-        await tx.trailer.update({
-          where: { id: data.trailerId },
-          data: { status: TrailerStatus.ON_TRIP },
-        });
+        if (data.driverId) {
+          await tx.driver.update({
+            where: { id: data.driverId },
+            data: { status: DriverStatus.ON_TRIP },
+          });
+        }
+        if (data.truckId) {
+          await tx.truck.update({
+            where: { id: data.truckId },
+            data: { status: TruckStatus.ON_TRIP },
+          });
+        }
+        if (data.trailerId) {
+          await tx.trailer.update({
+            where: { id: data.trailerId },
+            data: { status: TrailerStatus.ON_TRIP },
+          });
+        }
       }
 
       return trip;
@@ -701,18 +746,24 @@ export class TripsRepository {
    */
   private async releaseResources(
     tx: Prisma.TransactionClient,
-    driverId: string,
-    truckId: string,
+    driverId: string | null,
+    truckId: string | null,
     trailerId: string | null,
   ): Promise<void> {
-    await tx.driver.updateMany({
-      where: { id: driverId, status: DriverStatus.ON_TRIP },
-      data: { status: DriverStatus.AVAILABLE },
-    });
-    await tx.truck.updateMany({
-      where: { id: truckId, status: TruckStatus.ON_TRIP },
-      data: { status: TruckStatus.AVAILABLE },
-    });
+    // Recursos externos (subcontratados) não têm registo próprio — nada a
+    // libertar. Só se liberta o que é da empresa (id presente).
+    if (driverId) {
+      await tx.driver.updateMany({
+        where: { id: driverId, status: DriverStatus.ON_TRIP },
+        data: { status: DriverStatus.AVAILABLE },
+      });
+    }
+    if (truckId) {
+      await tx.truck.updateMany({
+        where: { id: truckId, status: TruckStatus.ON_TRIP },
+        data: { status: TruckStatus.AVAILABLE },
+      });
+    }
     if (trailerId) {
       await tx.trailer.updateMany({
         where: { id: trailerId, status: TrailerStatus.ON_TRIP },
@@ -844,6 +895,45 @@ export class TripsRepository {
         ? { arrivalEstimate: new Date(data.arrivalEstimate) }
         : {}),
       ...(data.arrivalDate ? { arrivalDate: new Date(data.arrivalDate) } : {}),
+      ...(data.loadedDate ? { loadedDate: new Date(data.loadedDate) } : {}),
+      ...(data.dischargeDate
+        ? { dischargeDate: new Date(data.dischargeDate) }
+        : {}),
+      ...(data.currentPosition !== undefined
+        ? { currentPosition: data.currentPosition || null }
+        : {}),
+      ...(data.tonnage !== undefined ? { tonnage: data.tonnage } : {}),
+      ...(data.transporterName !== undefined
+        ? { transporterName: data.transporterName || null }
+        : {}),
+      ...(data.isSubcontracted !== undefined
+        ? { isSubcontracted: data.isSubcontracted }
+        : {}),
+      ...(data.dispatchedBy !== undefined
+        ? { dispatchedBy: data.dispatchedBy || null }
+        : {}),
+      ...(data.remarks !== undefined ? { remarks: data.remarks || null } : {}),
+      ...(data.horsePlate !== undefined
+        ? { horsePlate: data.horsePlate || null }
+        : {}),
+      ...(data.trailerPlate !== undefined
+        ? { trailerPlate: data.trailerPlate || null }
+        : {}),
+      ...(data.driverName !== undefined
+        ? { driverName: data.driverName || null }
+        : {}),
+      ...(data.driverPassport !== undefined
+        ? { driverPassport: data.driverPassport || null }
+        : {}),
+      ...(data.driverLicense !== undefined
+        ? { driverLicense: data.driverLicense || null }
+        : {}),
+      ...(data.driverPhone !== undefined
+        ? { driverPhone: data.driverPhone || null }
+        : {}),
+      ...(data.bookingReference !== undefined
+        ? { bookingReference: data.bookingReference || null }
+        : {}),
       ...(data.currentStatus ? { currentStatus: data.currentStatus } : {}),
     } as Prisma.TripUpdateInput & Prisma.TripCreateInput;
   }
@@ -891,6 +981,124 @@ export class TripsRepository {
       ...(query.trailerId ? { trailerId: query.trailerId } : {}),
       ...(query.driverId ? { driverId: query.driverId } : {}),
       ...(query.currentStatus ? { currentStatus: query.currentStatus } : {}),
+      // Filtros de "folha" (cliente + rota + dia de registo).
+      ...(query.clientId || query.origin || query.destination
+        ? {
+            cargo: {
+              ...(query.clientId ? { clientId: query.clientId } : {}),
+              ...(query.origin ? { origin: query.origin } : {}),
+              ...(query.destination ? { destination: query.destination } : {}),
+            },
+          }
+        : {}),
+      ...(query.day
+        ? {
+            createdAt: {
+              gte: new Date(`${query.day}T00:00:00.000Z`),
+              lt: new Date(`${query.day}T23:59:59.999Z`),
+            },
+          }
+        : {}),
     };
+  }
+
+  /**
+   * Matrículas de Horse/trailer e cartas de motorista atualmente numa viagem
+   * ATIVA (em trânsito). Serve o quadro para avisar, ao digitar, que um
+   * recurso já está a ser usado — tanto recursos próprios (registados) como
+   * externos (snapshot). Comparação normalizada (sem espaços, maiúsculas).
+   */
+  async listResourcesInUse(): Promise<{
+    horses: string[];
+    trailers: string[];
+    drivers: string[];
+  }> {
+    const trips = await this.prisma.trip.findMany({
+      where: {
+        deletedAt: null,
+        currentStatus: { in: this.stateMachine.occupyingStatuses() },
+      },
+      select: {
+        horsePlate: true,
+        trailerPlate: true,
+        driverLicense: true,
+        truck: { select: { plateNumber: true } },
+        trailer: { select: { plateNumber: true } },
+        driver: { select: { licenseNumber: true } },
+      },
+    });
+
+    const norm = (v?: string | null) =>
+      v ? v.replace(/\s+/g, '').toUpperCase() : '';
+    const horses = new Set<string>();
+    const trailers = new Set<string>();
+    const drivers = new Set<string>();
+    for (const t of trips) {
+      const h = norm(t.horsePlate ?? t.truck?.plateNumber);
+      if (h) horses.add(h);
+      const tr = norm(t.trailerPlate ?? t.trailer?.plateNumber);
+      if (tr) trailers.add(tr);
+      const d = norm(t.driverLicense ?? t.driver?.licenseNumber);
+      if (d) drivers.add(d);
+    }
+    return {
+      horses: [...horses],
+      trailers: [...trailers],
+      drivers: [...drivers],
+    };
+  }
+
+  /**
+   * "Folhas" de atividades: viagens agrupadas por cliente + rota + dia de
+   * registo, com contagem total e quantas já foram entregues. É a lista que
+   * a página de acompanhamento mostra (cada folha é uma tabela operacional).
+   */
+  async listActivities(): Promise<
+    Array<{
+      clientId: string;
+      clientName: string;
+      origin: string;
+      destination: string;
+      day: string;
+      total: number;
+      delivered: number;
+    }>
+  > {
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        clientId: string;
+        clientName: string;
+        origin: string;
+        destination: string;
+        day: string;
+        total: bigint;
+        delivered: bigint;
+      }>
+    >`
+      SELECT
+        c.clientId AS clientId,
+        cl.companyName AS clientName,
+        c.origin AS origin,
+        c.destination AS destination,
+        DATE_FORMAT(t.createdAt, '%Y-%m-%d') AS day,
+        COUNT(*) AS total,
+        SUM(t.currentStatus IN ('DISCHARGED', 'CONTAINER_RETURNED')) AS delivered
+      FROM trips t
+      JOIN cargos c ON c.id = t.cargoId
+      JOIN clients cl ON cl.id = c.clientId
+      WHERE t.deletedAt IS NULL
+      GROUP BY c.clientId, cl.companyName, c.origin, c.destination, DATE_FORMAT(t.createdAt, '%Y-%m-%d')
+      ORDER BY day DESC, cl.companyName ASC
+    `;
+
+    return rows.map((row) => ({
+      clientId: row.clientId,
+      clientName: row.clientName,
+      origin: row.origin,
+      destination: row.destination,
+      day: row.day,
+      total: Number(row.total),
+      delivered: Number(row.delivered),
+    }));
   }
 }

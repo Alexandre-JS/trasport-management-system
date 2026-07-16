@@ -95,7 +95,7 @@ export function CargoFormModal({
       origin: form.origin.trim(),
       destination: form.destination.trim(),
       description: form.description.trim() || undefined,
-      type: form.type as "CONTAINER" | "GRANEL",
+      type: form.type as "CONTAINER" | "GRANEL" | "GERAL",
       containerNumber:
         form.type === "CONTAINER"
           ? form.containerNumber.trim() || undefined
@@ -222,6 +222,7 @@ export function CargoFormModal({
               >
                 <option value="GRANEL">Granel</option>
                 <option value="CONTAINER">Container</option>
+                <option value="GERAL">Carga Geral</option>
               </select>
             </label>
             {form.type === "CONTAINER" ? (

@@ -7,8 +7,23 @@ import { PageLoader } from "@/src/shared/components/page-loader";
 import { StatusBadge } from "@/src/shared/components/status-badge";
 import { useAuth } from "@/src/shared/hooks/use-auth";
 import { useMyShipments } from "@/hooks/use-portal";
+import type { PortalShipment } from "@/types/portal";
 import { formatDate } from "@/utils/format";
 import { tripStatusBadgeTone, tripStatusMeta } from "@/utils/trip-status";
+
+// Alinhado ao Quadro Operacional: mostra os dados na linguagem da folha do
+// cliente (Horse, Motorista, Border), sem documentos internos do motorista.
+function horseOf(s: PortalShipment) {
+  return s.horsePlate ?? s.truck?.plateNumber ?? "—";
+}
+function driverOf(s: PortalShipment) {
+  return s.driverName ?? s.driver?.fullName ?? "—";
+}
+function bordersOf(s: PortalShipment) {
+  return s.borders.length > 0
+    ? s.borders.map((crossing) => crossing.border.name).join(" › ")
+    : "—";
+}
 
 export function PortalShipmentsView() {
   const { user } = useAuth();
@@ -54,12 +69,16 @@ export function PortalShipmentsView() {
               <thead className="bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
                   {[
-                    "Carga",
+                    "Booking",
                     "Rota",
-                    "Estado",
+                    "Horse",
+                    "Motorista",
+                    "Border",
+                    "Ton",
                     "Posição atual",
-                    "Data de saída",
-                    "Chegada prevista",
+                    "Estado",
+                    "Saída",
+                    "Chegada",
                     "",
                   ].map((header) => (
                     <th key={header || "action"} className="whitespace-nowrap border-b border-r border-slate-300 px-3 py-2.5 last:border-r-0 dark:border-slate-700">
@@ -82,19 +101,31 @@ export function PortalShipmentsView() {
                     <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
                       {shipment.cargo.origin} → {shipment.cargo.destination}
                     </td>
+                    <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 font-mono text-xs text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                      {horseOf(shipment)}
+                    </td>
+                    <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                      {driverOf(shipment)}
+                    </td>
+                    <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                      {bordersOf(shipment)}
+                    </td>
+                    <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                      {shipment.tonnage ? `${shipment.tonnage} t` : "—"}
+                    </td>
+                    <td className="max-w-48 truncate border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300" title={shipment.currentPosition ?? ""}>
+                      {shipment.currentPosition ?? "—"}
+                    </td>
                     <td className="border-b border-r border-slate-200 px-3 py-3 dark:border-slate-800">
                       <StatusBadge tone={tripStatusBadgeTone[shipment.currentStatus]}>
                         {tripStatusMeta[shipment.currentStatus].label}
                       </StatusBadge>
                     </td>
-                    <td className="max-w-48 truncate border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300" title={shipment.currentPosition ?? ""}>
-                      {shipment.currentPosition ?? "—"}
-                    </td>
                     <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
                       {formatDate(shipment.departureDate)}
                     </td>
                     <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-3 text-slate-600 dark:border-slate-800 dark:text-slate-300">
-                      {formatDate(shipment.arrivalEstimate)}
+                      {formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate)}
                     </td>
                     <td className="border-b border-slate-200 px-3 py-3 text-right dark:border-slate-800">
                       <Link href={`/portal/${shipment.id}`} className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline dark:text-brand-400">
@@ -133,6 +164,13 @@ export function PortalShipmentsView() {
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 {shipment.cargo.origin} → {shipment.cargo.destination}
               </p>
+
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                <div><dt className="inline font-medium">Horse: </dt><dd className="inline font-mono">{horseOf(shipment)}</dd></div>
+                <div><dt className="inline font-medium">Motorista: </dt><dd className="inline">{driverOf(shipment)}</dd></div>
+                <div><dt className="inline font-medium">Border: </dt><dd className="inline">{bordersOf(shipment)}</dd></div>
+                <div><dt className="inline font-medium">Ton: </dt><dd className="inline">{shipment.tonnage ? `${shipment.tonnage} t` : "—"}</dd></div>
+              </dl>
 
               {shipment.currentPosition ? (
                 <p className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">

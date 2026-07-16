@@ -196,11 +196,9 @@ export class DriverMobileService {
       orderBy: [{ departureDate: 'desc' }, { createdAt: 'desc' }],
     });
 
-    if (!trip) {
-      throw new NotFoundException('No active trip assigned to this driver');
-    }
-
-    return trip;
+    // Não ter uma viagem ativa é um estado normal depois do login e entre
+    // operações. Retornar null evita transformar a tela vazia num erro 404.
+    return trip ?? null;
   }
 
   async getTrip(user: AuthenticatedUser, tripId: string) {

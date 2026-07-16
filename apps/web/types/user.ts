@@ -35,6 +35,24 @@ export type CreateUserPayload = {
 
 export type UpdateUserPayload = Partial<Omit<CreateUserPayload, "password">>;
 
+export type CreateDriverAccountPayload = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  licenseNumber: string;
+  email?: string;
+  passportNumber?: string;
+};
+
+export type DriverAccountResult = User & { accessCode: string };
+
+export type AccessCodeResult = { accessCode: string };
+
+export type ProvisionDriverAccessPayload = {
+  phone: string;
+  email?: string;
+};
+
 export type UserSortBy = "createdAt" | "email" | "firstName" | "lastName";
 
 export type ListUsersParams = {

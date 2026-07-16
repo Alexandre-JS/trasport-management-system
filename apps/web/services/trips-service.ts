@@ -10,6 +10,9 @@ import type {
   RecordTripEventPayload,
   Trip,
   UpdateTripStatusPayload,
+  UpdateTripPayload,
+  ActivitySheet,
+  ResourcesInUse,
 } from "@/types/trip";
 import { cleanParams } from "@/utils/query-params";
 
@@ -35,6 +38,14 @@ export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
   return data;
 }
 
+export async function updateTrip(
+  id: string,
+  payload: UpdateTripPayload,
+): Promise<Trip> {
+  const { data } = await http.patch<Trip>(`/trips/${id}`, payload);
+  return data;
+}
+
 export async function cancelTrip(id: string): Promise<Trip> {
   const { data } = await http.patch<Trip>(`/trips/${id}/cancel`);
 
@@ -51,7 +62,10 @@ export async function assignDriver(
   id: string,
   payload: AssignDriverPayload,
 ): Promise<Trip> {
-  const { data } = await http.patch<Trip>(`/trips/${id}/assign-driver`, payload);
+  const { data } = await http.patch<Trip>(
+    `/trips/${id}/assign-driver`,
+    payload,
+  );
 
   return data;
 }
@@ -100,6 +114,18 @@ export async function recordTripEvent(
   payload: RecordTripEventPayload,
 ): Promise<Trip> {
   const { data } = await http.post<Trip>(`/trips/${id}/events`, payload);
+
+  return data;
+}
+
+export async function listActivities(): Promise<ActivitySheet[]> {
+  const { data } = await http.get<ActivitySheet[]>("/trips/activities");
+
+  return data;
+}
+
+export async function listResourcesInUse(): Promise<ResourcesInUse> {
+  const { data } = await http.get<ResourcesInUse>("/trips/resources-in-use");
 
   return data;
 }

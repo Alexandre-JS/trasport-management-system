@@ -30,6 +30,7 @@ import type { Cargo, CargoSortBy, CargoStatus, ListCargoParams } from "@/types/c
 import { cargoStatusMeta, cargoStatusOptions } from "@/utils/cargo-status";
 import { exportToCsv } from "@/utils/export-csv";
 import { formatDate, formatDateTime, formatWeight } from "@/utils/format";
+import { cargoTypeLabel } from "@/utils/cargo-type";
 
 type StatusFilter = "all" | CargoStatus;
 
@@ -137,7 +138,7 @@ export function CargoView() {
       { header: "Origem", value: (row) => row.origin },
       { header: "Destino", value: (row) => row.destination },
       { header: "Peso (t)", value: (row) => row.weightTonnes ?? "" },
-      { header: "Tipo", value: (row) => (row.type === "CONTAINER" ? "Container" : "Granel") },
+      { header: "Tipo", value: (row) => cargoTypeLabel(row.type) },
       { header: "Nº container", value: (row) => row.containerNumber ?? "" },
       { header: "Estado", value: (row) => cargoStatusMeta[row.status].label },
       { header: "Data Recolha", value: (row) => formatDate(row.pickupDate) },
@@ -410,7 +411,7 @@ export function CargoView() {
             <DetailRow label="Origem" value={detailsCargo.origin} />
             <DetailRow label="Destino" value={detailsCargo.destination} />
             <DetailRow label="Peso" value={formatWeight(detailsCargo.weightTonnes)} />
-            <DetailRow label="Tipo" value={detailsCargo.type === "CONTAINER" ? "Container" : "Granel"} />
+            <DetailRow label="Tipo" value={cargoTypeLabel(detailsCargo.type)} />
             <DetailRow label="Nº container" value={detailsCargo.containerNumber ?? "—"} />
             <DetailRow
               label="Estado"

@@ -19,19 +19,32 @@ export type TripBorderEntity = {
 export type TripEntity = {
   id: string;
   cargoId: string;
-  truckId: string;
+  truckId: string | null;
   trailerId: string | null;
-  driverId: string;
+  driverId: string | null;
   departureDate: Date | null;
   arrivalEstimate: Date | null;
   arrivalDate: Date | null;
   loadedDate: Date | null;
+  dischargeDate: Date | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
   borders: TripBorderEntity[];
   tonnage: Prisma.Decimal | null;
+  transporterName: string | null;
+  isSubcontracted: boolean;
+  dispatchedBy: string | null;
+  remarks: string | null;
+  horsePlate: string | null;
+  trailerPlate: string | null;
+  driverName: string | null;
+  driverPassport: string | null;
+  driverLicense: string | null;
+  driverPhone: string | null;
+  bookingReference: string | null;
   cargo: {
     id: string;
+    clientId: string;
     code: string;
     origin: string;
     destination: string;
@@ -41,11 +54,11 @@ export type TripEntity = {
     fullName: string;
     licenseNumber: string;
     passportNumber: string | null;
-  };
+  } | null;
   truck: {
     id: string;
     plateNumber: string;
-  };
+  } | null;
   trailer: {
     id: string;
     plateNumber: string;

@@ -40,11 +40,11 @@ export type CargoEntity = {
     driver: {
       id: string;
       fullName: string;
-    };
+    } | null;
     truck: {
       id: string;
       plateNumber: string;
-    };
+    } | null;
     trailer: {
       id: string;
       plateNumber: string;

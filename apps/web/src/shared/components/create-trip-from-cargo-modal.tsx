@@ -103,15 +103,15 @@ export function CreateTripFromCargoModal({
     (driver) => driver.id === driverId,
   );
   const previousDriverTrip =
-    driverHistory.data?.data.find((trip) => trip.driver.id === driverId) ?? null;
+    driverHistory.data?.data.find((trip) => trip.driver?.id === driverId) ?? null;
   const suggestedTruckId = (trucks.data?.data ?? []).some(
-    (truck) => truck.id === previousDriverTrip?.truck.id,
+    (truck) => truck.id === previousDriverTrip?.truck?.id,
   )
-    ? (previousDriverTrip?.truck.id ?? "")
+    ? (previousDriverTrip?.truck?.id ?? "")
     : "";
   const effectiveTruckId = truckId || suggestedTruckId;
   const suggestedTrailerId =
-    previousDriverTrip?.truck.id === effectiveTruckId &&
+    previousDriverTrip?.truck?.id === effectiveTruckId &&
     (trailers.data?.data ?? []).some(
       (trailer) => trailer.id === previousDriverTrip.trailer?.id,
     )

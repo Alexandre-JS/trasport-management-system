@@ -363,7 +363,7 @@ export function CargasView({
                             {trip.id.slice(0, 8).toUpperCase()}
                           </button>
                           <span className="text-xs">
-                            {trip.truck.plateNumber} · {trip.driver.fullName}
+                            {trip.truck?.plateNumber ?? "—"} · {trip.driver?.fullName ?? "—"}
                           </span>
                           {trip.trailer ? (
                             <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -539,11 +539,11 @@ export function CargasView({
                       <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                         <DetailRow
                           label="Motorista"
-                          value={trip.driver.fullName}
+                          value={trip.driver?.fullName ?? "—"}
                         />
                         <DetailRow
                           label="Horse"
-                          value={trip.truck.plateNumber}
+                          value={trip.truck?.plateNumber ?? "—"}
                         />
                         <DetailRow
                           label="Trailer"

@@ -128,8 +128,8 @@ export function TripsView() {
     exportToCsv("viagens.csv", rows, [
       { header: "Código", value: (row) => shortCode(row.id) },
       { header: "Carga", value: (row) => row.cargo.code },
-      { header: "Motorista", value: (row) => row.driver.fullName },
-      { header: "Horse", value: (row) => row.truck.plateNumber },
+      { header: "Motorista", value: (row) => row.driverName ?? row.driver?.fullName ?? "—" },
+      { header: "Horse", value: (row) => row.horsePlate ?? row.truck?.plateNumber ?? "—" },
       { header: "Origem", value: (row) => row.cargo.origin },
       { header: "Destino", value: (row) => row.cargo.destination },
       { header: "Estado", value: (row) => tripStatusMeta[row.currentStatus].label },
@@ -208,14 +208,14 @@ export function TripsView() {
     {
       id: "driver",
       header: "Motorista",
-      cell: (trip) => trip.driver.fullName,
+      cell: (trip) => trip.driverName ?? trip.driver?.fullName ?? "—",
     },
     {
       id: "truck",
       header: "Horse",
       cell: (trip) => (
         <span className="font-mono text-xs text-slate-600 dark:text-slate-300">
-          {trip.truck.plateNumber}
+          {trip.horsePlate ?? trip.truck?.plateNumber ?? "—"}
         </span>
       ),
     },
@@ -419,8 +419,8 @@ export function TripsView() {
         {detailsTrip ? (
           <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow label="Carga" value={detailsTrip.cargo.code} />
-            <DetailRow label="Motorista" value={detailsTrip.driver.fullName} />
-            <DetailRow label="Horse" value={detailsTrip.truck.plateNumber} />
+            <DetailRow label="Motorista" value={detailsTrip.driverName ?? detailsTrip.driver?.fullName ?? "—"} />
+            <DetailRow label="Horse" value={detailsTrip.horsePlate ?? detailsTrip.truck?.plateNumber ?? "—"} />
             <DetailRow
               label="Estado"
               value={tripStatusMeta[detailsTrip.currentStatus].label}

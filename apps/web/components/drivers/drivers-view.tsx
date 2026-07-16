@@ -31,7 +31,7 @@ import {
   useDrivers,
 } from "@/hooks/use-drivers";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useUser } from "@/hooks/use-users";
+import { useSetUserActive, useUser } from "@/hooks/use-users";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { SortOrder } from "@/types/api";
@@ -70,6 +70,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
   const [formDriver, setFormDriver] = useState<Driver | null>(null);
   const [accountDriver, setAccountDriver] = useState<Driver | null>(null);
   const linkedAccount = useUser(detailsDriver?.userId ?? null);
+  const setUserActive = useSetUserActive();
   const [formOpen, setFormOpen] = useState(false);
 
   function openCreate() {
@@ -169,7 +170,10 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       { header: "Passaporte", value: (row) => row.passportNumber ?? "" },
       { header: "Telefone", value: (row) => row.phone ?? "" },
       { header: "Email", value: (row) => row.email ?? "" },
-      { header: "Disponibilidade", value: (row) => driverStatusMeta[row.status].label },
+      {
+        header: "Disponibilidade",
+        value: (row) => driverStatusMeta[row.status].label,
+      },
       {
         header: "Estado",
         value: (row) => (row.status === "INACTIVE" ? "Inativo" : "Ativo"),
@@ -284,9 +288,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
     {
       id: "lastTrip",
       header: "Última Viagem",
-      cell: () => (
-        <span className="text-slate-400 dark:text-slate-500">—</span>
-      ),
+      cell: () => <span className="text-slate-400 dark:text-slate-500">—</span>,
     },
     {
       id: "updatedAt",
@@ -341,8 +343,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
         label: "Marcar offline",
         icon: CircleSlash,
         tone: "muted",
-        onSelect: () =>
-          runStatusAction(driver, "offline", "Motorista offline"),
+        onSelect: () => runStatusAction(driver, "offline", "Motorista offline"),
       });
     }
 
@@ -523,7 +524,9 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               />
             ) : null
           }
-          renderActions={(driver) => <ActionMenu items={buildActions(driver)} />}
+          renderActions={(driver) => (
+            <ActionMenu items={buildActions(driver)} />
+          )}
         />
       </div>
 
@@ -536,8 +539,14 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       >
         {detailsDriver ? (
           <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <DetailRow label="Carta de condução" value={detailsDriver.licenseNumber} />
-            <DetailRow label="Passaporte" value={detailsDriver.passportNumber} />
+            <DetailRow
+              label="Carta de condução"
+              value={detailsDriver.licenseNumber}
+            />
+            <DetailRow
+              label="Passaporte"
+              value={detailsDriver.passportNumber}
+            />
             <DetailRow label="Telefone" value={detailsDriver.phone} />
             <DetailRow label="Email" value={detailsDriver.email} />
             <DetailRow
@@ -577,6 +586,51 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               }}
             >
               Dar acesso mobile
+            </Button>
+          </div>
+        ) : null}
+        {detailsDriver?.userId && linkedAccount.data ? (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+            <div>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                Acesso mobile{" "}
+                {linkedAccount.data.isActive ? "ativo" : "desativado"}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {linkedAccount.data.email}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant={linkedAccount.data.isActive ? "outline" : "primary"}
+              loading={setUserActive.isPending}
+              onClick={() =>
+                setUserActive.mutate(
+                  {
+                    id: linkedAccount.data.id,
+                    active: !linkedAccount.data.isActive,
+                  },
+                  {
+                    onSuccess: () =>
+                      toast({
+                        title: linkedAccount.data.isActive
+                          ? "Acesso mobile desativado"
+                          : "Acesso mobile ativado",
+                        type: "success",
+                      }),
+                    onError: (error) =>
+                      toast({
+                        title: "Não foi possível alterar o acesso",
+                        description: extractErrorMessage(error),
+                        type: "error",
+                      }),
+                  },
+                )
+              }
+            >
+              {linkedAccount.data.isActive
+                ? "Desativar acesso"
+                : "Ativar acesso"}
             </Button>
           </div>
         ) : null}

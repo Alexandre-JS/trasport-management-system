@@ -259,6 +259,7 @@ model Trailer {
 enum CargoType {
   CONTAINER
   GRANEL
+  GERAL
 }
 
 model Cargo {
@@ -293,21 +294,33 @@ model Cargo {
 model Trip {
   id              String          @id @default(uuid()) @db.Char(36)
   cargoId         String          @db.Char(36)
-  truckId         String          @db.Char(36)
+  truckId         String?         @db.Char(36)
   trailerId       String?         @db.Char(36)
-  driverId        String          @db.Char(36)
+  driverId        String?         @db.Char(36)
   departureDate   DateTime?
   arrivalEstimate DateTime?
   arrivalDate     DateTime?
   loadedDate      DateTime?
+  dischargeDate   DateTime?
   currentStatus   TripStatus      @default(WAITING_APPOINTMENT)
   currentPosition String?         @db.VarChar(150)
   tonnage         Decimal?        @db.Decimal(12, 3)
+  transporterName String?         @db.VarChar(150)
+  isSubcontracted Boolean         @default(false)
+  dispatchedBy    String?         @db.VarChar(150)
+  remarks         String?         @db.Text
+  horsePlate      String?         @db.VarChar(30)
+  trailerPlate    String?         @db.VarChar(30)
+  driverName      String?         @db.VarChar(150)
+  driverPassport  String?         @db.VarChar(30)
+  driverLicense   String?         @db.VarChar(80)
+  driverPhone     String?         @db.VarChar(30)
+  bookingReference String?        @db.VarChar(80)
   trackingToken   String          @unique @default(uuid()) @db.Char(36)
   cargo           Cargo           @relation(fields: [cargoId], references: [id], onDelete: Restrict)
-  truck           Truck           @relation(fields: [truckId], references: [id], onDelete: Restrict)
+  truck           Truck?          @relation(fields: [truckId], references: [id], onDelete: Restrict)
   trailer         Trailer?        @relation(fields: [trailerId], references: [id], onDelete: Restrict)
-  driver          Driver          @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  driver          Driver?         @relation(fields: [driverId], references: [id], onDelete: Restrict)
   trackingPoints  TrackingPoint[]
   deliveries      Delivery[]
   incidents       Incident[]

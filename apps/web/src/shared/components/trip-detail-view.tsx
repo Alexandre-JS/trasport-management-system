@@ -234,12 +234,12 @@ export function TripDetailView({ id }: { id: string }) {
         />
         <SummaryItem
           label="Motorista"
-          value={trip.driver.fullName}
+          value={trip.driverName ?? trip.driver?.fullName ?? "—"}
           icon={<UserRound className="size-4" aria-hidden />}
         />
         <SummaryItem
           label="Equipamento"
-          value={`${trip.truck.plateNumber}${trip.trailer ? ` · ${trip.trailer.plateNumber}` : ""}`}
+          value={`${trip.horsePlate ?? trip.truck?.plateNumber ?? "—"}${(trip.trailerPlate ?? trip.trailer?.plateNumber) ? ` · ${trip.trailerPlate ?? trip.trailer?.plateNumber}` : ""}`}
           icon={<Truck className="size-4" aria-hidden />}
         />
       </section>
@@ -288,15 +288,15 @@ export function TripDetailView({ id }: { id: string }) {
                   value={trip.tonnage ? `${trip.tonnage} t` : "—"}
                 />
                 <TableGroup>Recursos atribuídos</TableGroup>
-                <DetailRow label="Horse" value={trip.truck.plateNumber} />
+                <DetailRow label="Horse" value={trip.horsePlate ?? trip.truck?.plateNumber ?? "—"} />
                 <DetailRow
                   label="Trailer"
                   value={trip.trailer?.plateNumber ?? "—"}
                 />
-                <DetailRow label="Motorista" value={trip.driver.fullName} />
+                <DetailRow label="Motorista" value={trip.driverName ?? trip.driver?.fullName ?? "—"} />
                 <DetailRow
                   label="Passaporte"
-                  value={trip.driver.passportNumber ?? "—"}
+                  value={trip.driverPassport ?? trip.driver?.passportNumber ?? "—"}
                 />
                 <TableGroup>Localização e percurso</TableGroup>
                 <DetailRow
@@ -413,7 +413,7 @@ export function TripDetailView({ id }: { id: string }) {
                   <div className="flex flex-col gap-4">
                     <AssignRow
                       label="Motorista"
-                      current={trip.driver.fullName}
+                      current={trip.driverName ?? trip.driver?.fullName ?? "—"}
                       value={driverId}
                       onChange={setDriverId}
                       options={(drivers.data?.data ?? []).map((d) => ({
@@ -433,7 +433,7 @@ export function TripDetailView({ id }: { id: string }) {
                     />
                     <AssignRow
                       label="Horse"
-                      current={trip.truck.plateNumber}
+                      current={trip.horsePlate ?? trip.truck?.plateNumber ?? "—"}
                       value={truckId}
                       onChange={setTruckId}
                       options={(trucks.data?.data ?? []).map((t) => ({
@@ -611,10 +611,10 @@ export function TripDetailView({ id }: { id: string }) {
             rows: [
               { label: "Carga", value: trip.cargo.code },
               { label: "Tonelagem", value: trip.tonnage ? `${trip.tonnage} t` : "—" },
-              { label: "Horse", value: trip.truck.plateNumber },
+              { label: "Horse", value: trip.horsePlate ?? trip.truck?.plateNumber ?? "—" },
               { label: "Trailer", value: trip.trailer?.plateNumber ?? "—" },
-              { label: "Motorista", value: trip.driver.fullName },
-              { label: "Passaporte", value: trip.driver.passportNumber ?? "—" },
+              { label: "Motorista", value: trip.driverName ?? trip.driver?.fullName ?? "—" },
+              { label: "Passaporte", value: trip.driverPassport ?? trip.driver?.passportNumber ?? "—" },
             ],
           },
           {

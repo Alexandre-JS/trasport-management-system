@@ -14,7 +14,7 @@ export type IncidentEntity = {
   trip: {
     id: string;
     cargo: { code: string };
-    driver: { fullName: string };
+    driver: { fullName: string } | null;
   };
   createdAt: Date;
   updatedAt: Date;

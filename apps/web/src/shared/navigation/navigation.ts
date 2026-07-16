@@ -1,13 +1,10 @@
 import {
+  ClipboardList,
   AlertTriangle,
   Gauge,
   Landmark,
   MapPin,
-  Package,
-  Route,
-  Truck,
   UserCog,
-  Users,
   Warehouse,
 } from "lucide-react";
 import type {
@@ -24,27 +21,9 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       {
         href: "/",
-        label: "Dashboard",
-        description: "Visão geral da operação",
+        label: "Quadro operacional",
+        description: "Registo de viagens em grelha",
         icon: Gauge,
-      },
-    ],
-  },
-  {
-    id: "operacoes",
-    label: "Operações",
-    items: [
-      {
-        href: "/cargas",
-        label: "Cargas",
-        description: "Pedidos, volumes e estado operacional",
-        icon: Package,
-      },
-      {
-        href: "/viagens",
-        label: "Viagens",
-        description: "Planeamento e acompanhamento",
-        icon: Route,
       },
     ],
   },
@@ -52,18 +31,6 @@ export const navigationGroups: NavigationGroup[] = [
     id: "cadastros",
     label: "Cadastros",
     items: [
-      {
-        href: "/contas-cliente",
-        label: "Contas e clientes",
-        description: "Clientes, acessos ao portal e motoristas",
-        icon: Users,
-      },
-      {
-        href: "/frota",
-        label: "Frota",
-        description: "Horses, trailers e disponibilidade",
-        icon: Truck,
-      },
       {
         href: "/fronteiras",
         label: "Fronteiras",
@@ -76,6 +43,12 @@ export const navigationGroups: NavigationGroup[] = [
     id: "monitorizacao",
     label: "Monitorização",
     items: [
+      {
+        href: "/viagens",
+        label: "Atividades",
+        description: "Folhas por cliente/rota e acompanhamento das cargas",
+        icon: ClipboardList,
+      },
       {
         href: "/rastreamento",
         label: "Rastreamento",
@@ -163,10 +136,7 @@ export function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     return [{ label: item.label, href: item.href }];
   }
 
-  return [
-    { label: group.label },
-    { label: item.label, href: item.href },
-  ];
+  return [{ label: group.label }, { label: item.label, href: item.href }];
 }
 
 export const companyIdentity = {

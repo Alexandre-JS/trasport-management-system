@@ -20,7 +20,7 @@ export type Incident = {
   trip: {
     id: string;
     cargo: { code: string };
-    driver: { fullName: string };
+    driver: { fullName: string } | null;
   };
   createdAt: string;
   updatedAt: string;

@@ -6,7 +6,7 @@ const TEXT_MUTED: [number, number, number] = [71, 85, 105];
 
 // Margem lateral partilhada por cabeçalho, rodapé e tabelas — mantém tudo
 // alinhado à mesma coluna, em retrato (210mm) ou paisagem (297mm).
-export const PDF_MARGIN = 18;
+export const PDF_MARGIN = 14;
 
 export async function addPdfHeader(
   pdf: jsPDF,
@@ -26,12 +26,18 @@ export async function addPdfHeader(
   pdf.setTextColor(...BRAND_BLUE);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(16);
-  pdf.text(title, right, 20, { align: "right", maxWidth: pageW * 0.55 });
+  const textWidth = pageW * 0.52;
+  const titleLines = pdf.splitTextToSize(title, textWidth) as string[];
+  pdf.text(titleLines.slice(0, 2), right, 20, { align: "right" });
   if (subtitle) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(...TEXT_MUTED);
-    pdf.text(subtitle, right, 28, { align: "right", maxWidth: pageW * 0.55 });
+    const subtitleLines = pdf.splitTextToSize(subtitle, textWidth) as string[];
+    pdf.text(subtitleLines.slice(0, 2), right, 28, {
+      align: "right",
+      lineHeightFactor: 1.15,
+    });
   }
   pdf.setDrawColor(...BRAND_BLUE);
   pdf.setLineWidth(0.7);

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/src/shared/components/page-header";
+import { PrintOperationalTableDocument } from "@/src/shared/components/print-operational-table-document";
 import { ActionButton } from "@/src/shared/components/action-button";
 import { StatusBadge } from "@/src/shared/components/status-badge";
 import { CargoShareCell } from "@/src/shared/components/cargo-share-cell";
@@ -86,7 +87,7 @@ function ActivitiesList({ onOpen }: { onOpen: (s: ActivitySheet) => void }) {
       ) : (
         <div className="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-0 text-sm">
+            <table className="min-w-full border-separate border-spacing-0 text-[13px] leading-4 tabular-nums [&_td]:!px-2.5 [&_td]:!py-1.5 [&_th]:!px-2.5 [&_th]:!py-2">
               <thead className="bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
                   {[
@@ -276,15 +277,15 @@ function SheetTracking({
       true, true, true, true, false, true,
     ];
 
-    const padH = 1.6;
-    const padV = 1.5;
-    const lineH = 3.2;
+    const padH = 1.2;
+    const padV = 1;
+    const lineH = 2.8;
     const maxLines = 2;
     const top = 44;
     const bottom = pageH - 28;
     let y = top;
 
-    pdf.setFontSize(7);
+    pdf.setFontSize(6.5);
 
     const wrap = (cell: string, i: number): string[] => {
       const lines = pdf.splitTextToSize(
@@ -297,19 +298,19 @@ function SheetTracking({
       return clipped;
     };
 
-    const drawRow = (cells: string[], head: boolean, zebra: boolean) => {
+    const drawRow = (cells: string[], head: boolean) => {
       const wrapped = cells.map((c, i) => wrap(c, i));
       const nLines = Math.max(1, ...wrapped.map((l) => l.length));
       const h = nLines * lineH + padV * 2;
       const rowTop = y;
 
-      if (head) pdf.setFillColor(15, 23, 42);
-      else if (zebra) pdf.setFillColor(241, 245, 249);
-      if (head || zebra) pdf.rect(left, rowTop, usableW, h, "F");
+      if (head) {
+        pdf.setFillColor(241, 245, 249);
+        pdf.rect(left, rowTop, usableW, h, "F");
+      }
 
       pdf.setFont("helvetica", head ? "bold" : "normal");
-      if (head) pdf.setTextColor(255, 255, 255);
-      else pdf.setTextColor(30, 41, 59);
+      pdf.setTextColor(head ? 51 : 30, head ? 65 : 41, head ? 85 : 59);
 
       let x = left;
       wrapped.forEach((lines, i) => {
@@ -324,24 +325,15 @@ function SheetTracking({
         x += widths[i];
       });
 
-      // Grelha fina (só no corpo — no cabeçalho escuro fica limpa).
-      if (!head) {
-        pdf.setDrawColor(226, 232, 240);
-        pdf.setLineWidth(0.1);
-        let vx = left;
-        widths.forEach((w) => {
-          pdf.line(vx, rowTop, vx, rowTop + h);
-          vx += w;
-        });
-        pdf.line(vx, rowTop, vx, rowTop + h);
-        pdf.line(left, rowTop + h, left + usableW, rowTop + h);
-      }
+      pdf.setDrawColor(head ? 100 : 226, head ? 116 : 232, head ? 139 : 240);
+      pdf.setLineWidth(head ? 0.2 : 0.1);
+      pdf.line(left, rowTop + h, left + usableW, rowTop + h);
 
       y += h;
     };
 
-    drawRow(columns, true, false);
-    rows.forEach((row, idx) => {
+    drawRow(columns, true);
+    rows.forEach((row) => {
       const probe = row.map((c, i) =>
         (pdf.splitTextToSize(String(c ?? ""), widths[i] - padH * 2) as string[])
           .slice(0, maxLines),
@@ -351,9 +343,9 @@ function SheetTracking({
       if (y + h > bottom) {
         pdf.addPage();
         y = top;
-        drawRow(columns, true, false);
+        drawRow(columns, true);
       }
-      drawRow(row, false, idx % 2 === 1);
+      drawRow(row, false);
     });
 
     // Moldura à volta de toda a tabela.
@@ -400,6 +392,7 @@ function SheetTracking({
       <PageHeader
         title={`${sheet.clientName} · ${sheet.origin} → ${sheet.destination}`}
         description={`Folha de ${formatDate(sheet.day)} · ${sheet.total} cargas · acompanhamento (só o estado é editável)`}
+        showIdentity
         secondaryActions={
           <div className="flex flex-wrap gap-2" data-print-hide>
             <ActionButton
@@ -425,7 +418,7 @@ function SheetTracking({
       />
 
       <div className="max-h-[calc(100vh-16rem)] overflow-auto rounded-md border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <table className="min-w-[1800px] border-separate border-spacing-0 text-xs">
+        <table className="min-w-[1650px] border-separate border-spacing-0 text-[11px] leading-4 tabular-nums [&_td]:!px-1.5 [&_td]:!py-1 [&_th]:!px-1.5 [&_th]:!py-1.5">
           <thead className="sticky top-0 z-20 bg-slate-100 text-left font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <tr>
               {HEADERS.map((h, i) => (
@@ -498,6 +491,12 @@ function SheetTracking({
           </tbody>
         </table>
       </div>
+      <PrintOperationalTableDocument
+        title="Quadro operacional"
+        subtitle={sheetTitle}
+        columns={columns}
+        rows={rows}
+      />
     </div>
   );
 }

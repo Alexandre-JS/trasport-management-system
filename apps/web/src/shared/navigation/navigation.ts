@@ -1,9 +1,9 @@
 import {
   ClipboardList,
   AlertTriangle,
-  Gauge,
-  Landmark,
   MapPin,
+  Signpost,
+  Table2,
   UserCog,
   Warehouse,
 } from "lucide-react";
@@ -16,39 +16,27 @@ import { APP_VERSION } from "@/version";
 
 export const navigationGroups: NavigationGroup[] = [
   {
-    id: "dashboard",
-    label: "Dashboard",
+    id: "operacao",
+    label: "Operações",
     items: [
       {
         href: "/",
         label: "Quadro operacional",
         description: "Registo de viagens em grelha",
-        icon: Gauge,
+        icon: Table2,
       },
-    ],
-  },
-  {
-    id: "cadastros",
-    label: "Cadastros",
-    items: [
-      {
-        href: "/fronteiras",
-        label: "Fronteiras",
-        description: "Postos fronteiriços das rotas",
-        icon: Landmark,
-      },
-    ],
-  },
-  {
-    id: "monitorizacao",
-    label: "Monitorização",
-    items: [
       {
         href: "/viagens",
         label: "Atividades",
         description: "Folhas por cliente/rota e acompanhamento das cargas",
         icon: ClipboardList,
       },
+    ],
+  },
+  {
+    id: "acompanhamento",
+    label: "Acompanhamento",
+    items: [
       {
         href: "/rastreamento",
         label: "Rastreamento",
@@ -64,6 +52,18 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
+    id: "dados-apoio",
+    label: "Dados de apoio",
+    items: [
+      {
+        href: "/fronteiras",
+        label: "Fronteiras",
+        description: "Postos fronteiriços das rotas",
+        icon: Signpost,
+      },
+    ],
+  },
+  {
     id: "administracao",
     label: "Administração",
     items: [
@@ -72,7 +72,7 @@ export const navigationGroups: NavigationGroup[] = [
       // avatar (canto superior direito).
       {
         href: "/utilizadores",
-        label: "Gestão de Usuários",
+        label: "Gestão de utilizadores",
         description: "Contas de acesso e perfis de permissões",
         icon: UserCog,
         roles: ["ADMIN"],
@@ -131,10 +131,6 @@ export function getNavigationGroup(pathname: string) {
 export function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
   const item = getNavigationItem(pathname);
   const group = getNavigationGroup(pathname);
-
-  if (item.href === "/") {
-    return [{ label: item.label, href: item.href }];
-  }
 
   return [{ label: group.label }, { label: item.label, href: item.href }];
 }

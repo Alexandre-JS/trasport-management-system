@@ -52,10 +52,11 @@ export function PrintShipmentDocument({
           <h2>{section.title}</h2>
           <table>
             <tbody>
-              {section.rows.map((row) => (
-                <tr key={`${section.title}-${row.label}`}>
-                  <th>{row.label}</th>
-                  <td>{row.value}</td>
+              {pairRows(section.rows).map(([left, right]) => (
+                <tr key={`${section.title}-${left.label}`}>
+                  <th>{left.label}</th>
+                  <td>{left.value}</td>
+                  {right ? <><th>{right.label}</th><td>{right.value}</td></> : <td colSpan={2} />}
                 </tr>
               ))}
             </tbody>
@@ -99,4 +100,13 @@ export function PrintShipmentDocument({
       </footer>
     </article>
   );
+}
+
+function pairRows(rows: PrintRow[]): Array<[PrintRow, PrintRow?]> {
+  const pairs: Array<[PrintRow, PrintRow?]> = [];
+  for (let index = 0; index < rows.length; index += 2) {
+    const left = rows[index];
+    if (left) pairs.push([left, rows[index + 1]]);
+  }
+  return pairs;
 }

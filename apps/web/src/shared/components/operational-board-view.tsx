@@ -12,12 +12,10 @@ import { useBorders } from "@/hooks/use-borders";
 import { useClients, useCreateClient } from "@/hooks/use-clients";
 import { useDrivers } from "@/hooks/use-drivers";
 import { useTrailers } from "@/hooks/use-trailers";
-import { useTrips } from "@/hooks/use-trips";
 import { useTrucks } from "@/hooks/use-trucks";
 import { useToast } from "@/providers/toast-provider";
-import { createCargo, updateCargo } from "@/services/cargo-service";
-import { createTrip, updateTrip } from "@/services/trips-service";
-import type { Trip } from "@/types/trip";
+import { createCargo } from "@/services/cargo-service";
+import { createTrip } from "@/services/trips-service";
 import { exportToCsv } from "@/utils/export-csv";
 
 type BoardRow = {
@@ -52,12 +50,6 @@ const EMPTY_ROWS = 5;
 export function OperationalBoardView() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const tripsQuery = useTrips({
-    page: 1,
-    limit: 100,
-    sortBy: "createdAt",
-    sortOrder: "desc",
-  });
   const clientsQuery = useClients({ limit: 100, isActive: true });
   const driversQuery = useDrivers({ limit: 100 });
   const trucksQuery = useTrucks({ limit: 100 });
@@ -97,22 +89,17 @@ export function OperationalBoardView() {
     [bordersQuery.data],
   );
 
+  // O quadro é só para INSERÇÃO: arranca com 5 linhas em branco. As viagens
+  // já registadas vivem na página de Atividades, não aqui.
   useEffect(() => {
-    if (!tripsQuery.data || initialized.current) return;
+    if (initialized.current) return;
     initialized.current = true;
-    const persisted = tripsQuery.data.data.map(toBoardRow);
-    // A grelha mantém linhas vazias prontas para digitação, como uma folha Excel.
-    setRows([
-      ...persisted,
-      ...Array.from({ length: EMPTY_ROWS }, () =>
-        blankRow({
-          clientId: clients[0]?.id ?? "",
-          origin: "Beira",
-          destination: "",
-        }),
+    setRows(
+      Array.from({ length: EMPTY_ROWS }, () =>
+        blankRow({ clientId: "", origin: "Beira", destination: "" }),
       ),
-    ]);
-  }, [clients, tripsQuery.data]);
+    );
+  }, []);
 
   const sheetCtx = () => ({
     clientId: sheetClientId || clients[0]?.id || "",
@@ -170,63 +157,71 @@ export function OperationalBoardView() {
   }
 
   async function saveAll() {
-    const pending = rows.filter((row) => row.dirty && hasContent(row));
+    const ctx = sheetCtx();
+    if (!ctx.clientId || !ctx.origin || !ctx.destination) {
+      toast({
+        title: "Defina o cliente e a rota no topo da folha",
+        type: "warning",
+      });
+      return;
+    }
+    const pending = rows.filter(hasContent);
     if (!pending.length) return;
+
     setSaving(true);
-    let saved = 0;
+    const savedKeys = new Set<string>();
     const errors: string[] = [];
     for (const row of pending) {
       try {
-        validateRow(row);
-        const savedTrip = row.tripId
-          ? await saveExisting(row)
-          : await createFromRow(row);
-        setRows((current) =>
-          current.map((item) =>
-            item.key === row.key
-              ? {
-                  ...item,
-                  tripId: savedTrip.id,
-                  booking: savedTrip.bookingReference ?? savedTrip.cargo.code,
-                  dirty: false,
-                }
-              : item,
-          ),
-        );
-        saved += 1;
+        if (!row.horse.trim() || !row.driver.trim()) {
+          throw new Error("preencha pelo menos o Horse e o motorista");
+        }
+        await createFromRow(row, ctx);
+        savedKeys.add(row.key);
       } catch (error) {
         errors.push(
-          `${row.booking || "Nova linha"}: ${error instanceof Error ? error.message : "erro ao guardar"}`,
+          `Linha ${pending.indexOf(row) + 1}: ${error instanceof Error ? error.message : "erro ao guardar"}`,
         );
       }
     }
-    await queryClient.invalidateQueries({ queryKey: ["trips"] });
-    setSaving(false);
-    toast({
-      title: `${saved} linha${saved === 1 ? "" : "s"} guardada${saved === 1 ? "" : "s"}`,
-      description: errors.length
-        ? errors.slice(0, 3).join(" · ")
-        : "O quadro operacional está atualizado.",
-      type: errors.length ? "warning" : "success",
+
+    // As linhas guardadas SAEM do quadro (passam a estar em Atividades).
+    // Ficam apenas as que falharam; repõe-se sempre 5 linhas de entrada.
+    setRows((current) => {
+      const failed = current.filter(
+        (row) => hasContent(row) && !savedKeys.has(row.key),
+      );
+      const blanksNeeded = Math.max(EMPTY_ROWS - failed.length, 1);
+      return [
+        ...failed,
+        ...Array.from({ length: blanksNeeded }, () => blankRow(ctx)),
+      ];
     });
+
+    await queryClient.invalidateQueries({ queryKey: ["trips"] });
+    await queryClient.invalidateQueries({ queryKey: ["activities"] });
+    setSaving(false);
+
+    const savedCount = savedKeys.size;
+    if (errors.length === 0) {
+      toast({
+        title: `${savedCount} viagem${savedCount === 1 ? "" : "s"} guardada${savedCount === 1 ? "" : "s"}`,
+        description: "Já aparecem na página de Atividades.",
+        type: "success",
+      });
+    } else {
+      toast({
+        title: `${savedCount} guardada(s), ${errors.length} por corrigir`,
+        description: errors.slice(0, 3).join(" · "),
+        type: "warning",
+      });
+    }
   }
 
-  async function saveExisting(row: BoardRow) {
-    const [trip] = await Promise.all([
-      updateTrip(row.tripId as string, operationalPayload(row)),
-      row.cargoId
-        ? updateCargo(row.cargoId, {
-            clientId: row.clientId,
-            origin: row.origin.trim(),
-            destination: row.destination.trim(),
-            weightTonnes: numberOrUndefined(row.tonnage),
-          })
-        : Promise.resolve(null),
-    ]);
-    return trip;
-  }
-
-  async function createFromRow(row: BoardRow) {
+  async function createFromRow(
+    row: BoardRow,
+    ctx: { clientId: string; origin: string; destination: string },
+  ) {
     // Recursos EXTERNOS (subcontratados) não geram cadastro: os dados vivem
     // nos campos snapshot da viagem. Só se LIGA a um registo próprio quando a
     // matrícula/carta já existe na frota — sem nunca criar registos novos.
@@ -241,9 +236,9 @@ export function OperationalBoardView() {
     );
 
     const cargo = await createCargo({
-      clientId: row.clientId,
-      origin: row.origin.trim(),
-      destination: row.destination.trim(),
+      clientId: ctx.clientId,
+      origin: ctx.origin,
+      destination: ctx.destination,
       description: row.booking.trim() || undefined,
       weightTonnes: numberOrUndefined(row.tonnage),
     });
@@ -264,7 +259,7 @@ export function OperationalBoardView() {
     );
   }
 
-  const dirtyCount = rows.filter((row) => row.dirty && hasContent(row)).length;
+  const pendingCount = rows.filter(hasContent).length;
 
   async function addClient() {
     const name = newClientName.trim();
@@ -328,9 +323,9 @@ export function OperationalBoardView() {
               icon={<Save className="size-4" />}
               onClick={() => void saveAll()}
               loading={saving}
-              disabled={!dirtyCount}
+              disabled={!pendingCount}
             >
-              Guardar {dirtyCount || ""}
+              Guardar{pendingCount ? ` ${pendingCount}` : ""}
             </PrimaryButton>
           </div>
         }
@@ -665,35 +660,6 @@ function operationalPayload(row: BoardRow, subcontracted?: boolean) {
   };
 }
 
-function toBoardRow(trip: Trip): BoardRow {
-  return {
-    key: trip.id,
-    tripId: trip.id,
-    cargoId: trip.cargo.id,
-    clientId: trip.cargo.clientId,
-    booking: trip.bookingReference ?? trip.cargo.code,
-    origin: trip.cargo.origin,
-    destination: trip.cargo.destination,
-    transporter: trip.transporterName ?? "",
-    subcontracted: trip.isSubcontracted,
-    horse: trip.horsePlate ?? trip.truck?.plateNumber ?? "",
-    trailer: trip.trailerPlate ?? trip.trailer?.plateNumber ?? "",
-    driver: trip.driverName ?? trip.driver?.fullName ?? "",
-    passport: trip.driverPassport ?? trip.driver?.passportNumber ?? "",
-    license: trip.driverLicense ?? trip.driver?.licenseNumber ?? "",
-    phone: trip.driverPhone ?? "",
-    borderId: trip.borders[0]?.border.id ?? "",
-    tonnage: trip.tonnage ?? "",
-    dispatchedBy: trip.dispatchedBy ?? "",
-    departureDate: dateInput(trip.departureDate),
-    arrivalDate: dateInput(trip.arrivalDate),
-    dischargeDate: dateInput(trip.dischargeDate),
-    currentPosition: trip.currentPosition ?? "",
-    remarks: trip.remarks ?? "",
-    dirty: false,
-  };
-}
-
 function blankRow(ctx: {
   clientId: string;
   origin: string;
@@ -736,23 +702,12 @@ function hasContent(row: BoardRow) {
       row.currentPosition.trim(),
   );
 }
-function validateRow(row: BoardRow) {
-  if (!row.clientId || !row.origin.trim() || !row.destination.trim()) {
-    throw new Error("defina o cliente e a rota no topo da folha");
-  }
-  if (!row.horse.trim() || !row.driver.trim()) {
-    throw new Error("preencha pelo menos o Horse e o motorista");
-  }
-}
 function normalize(value: string) {
   return value.replace(/\s+/g, "").toUpperCase();
 }
 function numberOrUndefined(value: string) {
   const number = Number(value);
   return value && Number.isFinite(number) ? number : undefined;
-}
-function dateInput(value: string | null) {
-  return value ? value.slice(0, 10) : "";
 }
 
 function Cell({

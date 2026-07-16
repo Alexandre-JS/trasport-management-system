@@ -44,6 +44,7 @@ const tripSelect = {
   driverLicense: true,
   driverPhone: true,
   bookingReference: true,
+  trackingToken: true,
   borders: {
     select: {
       id: true,

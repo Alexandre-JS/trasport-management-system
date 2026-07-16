@@ -14,6 +14,7 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "@/src/shared/components/page-header";
 import { ActionButton } from "@/src/shared/components/action-button";
 import { StatusBadge } from "@/src/shared/components/status-badge";
+import { CargoShareCell } from "@/src/shared/components/cargo-share-cell";
 import { useActivities } from "@/hooks/use-activities";
 import { useTrips, useUpdateTripStatus } from "@/hooks/use-trips";
 import { useAuth } from "@/src/shared/hooks/use-auth";
@@ -177,6 +178,7 @@ const HEADERS = [
   "Discharge Date",
   "Current Position",
   "Estado",
+  "Partilhar",
 ];
 
 function SheetTracking({
@@ -415,6 +417,12 @@ function SheetTracking({
                           </button>
                         ) : null}
                       </div>
+                    </td>
+                    <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-2 dark:border-slate-800">
+                      <CargoShareCell
+                        token={trip.trackingToken}
+                        label={trip.bookingReference ?? trip.cargo.code}
+                      />
                     </td>
                   </tr>
                 );

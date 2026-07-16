@@ -1002,6 +1002,52 @@ export class TripsRepository {
   }
 
   /**
+   * Matrículas de Horse/trailer e cartas de motorista atualmente numa viagem
+   * ATIVA (em trânsito). Serve o quadro para avisar, ao digitar, que um
+   * recurso já está a ser usado — tanto recursos próprios (registados) como
+   * externos (snapshot). Comparação normalizada (sem espaços, maiúsculas).
+   */
+  async listResourcesInUse(): Promise<{
+    horses: string[];
+    trailers: string[];
+    drivers: string[];
+  }> {
+    const trips = await this.prisma.trip.findMany({
+      where: {
+        deletedAt: null,
+        currentStatus: { in: this.stateMachine.occupyingStatuses() },
+      },
+      select: {
+        horsePlate: true,
+        trailerPlate: true,
+        driverLicense: true,
+        truck: { select: { plateNumber: true } },
+        trailer: { select: { plateNumber: true } },
+        driver: { select: { licenseNumber: true } },
+      },
+    });
+
+    const norm = (v?: string | null) =>
+      v ? v.replace(/\s+/g, '').toUpperCase() : '';
+    const horses = new Set<string>();
+    const trailers = new Set<string>();
+    const drivers = new Set<string>();
+    for (const t of trips) {
+      const h = norm(t.horsePlate ?? t.truck?.plateNumber);
+      if (h) horses.add(h);
+      const tr = norm(t.trailerPlate ?? t.trailer?.plateNumber);
+      if (tr) trailers.add(tr);
+      const d = norm(t.driverLicense ?? t.driver?.licenseNumber);
+      if (d) drivers.add(d);
+    }
+    return {
+      horses: [...horses],
+      trailers: [...trailers],
+      drivers: [...drivers],
+    };
+  }
+
+  /**
    * "Folhas" de atividades: viagens agrupadas por cliente + rota + dia de
    * registo, com contagem total e quantas já foram entregues. É a lista que
    * a página de acompanhamento mostra (cada folha é uma tabela operacional).

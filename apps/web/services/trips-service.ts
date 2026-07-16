@@ -12,6 +12,7 @@ import type {
   UpdateTripStatusPayload,
   UpdateTripPayload,
   ActivitySheet,
+  ResourcesInUse,
 } from "@/types/trip";
 import { cleanParams } from "@/utils/query-params";
 
@@ -119,6 +120,12 @@ export async function recordTripEvent(
 
 export async function listActivities(): Promise<ActivitySheet[]> {
   const { data } = await http.get<ActivitySheet[]>("/trips/activities");
+
+  return data;
+}
+
+export async function listResourcesInUse(): Promise<ResourcesInUse> {
+  const { data } = await http.get<ResourcesInUse>("/trips/resources-in-use");
 
   return data;
 }

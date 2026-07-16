@@ -27,6 +27,10 @@ export class TripsService {
     return this.tripsRepository.listActivities();
   }
 
+  listResourcesInUse() {
+    return this.tripsRepository.listResourcesInUse();
+  }
+
   async findAll(query: ListTripsQueryDto) {
     const { data, total } = await this.tripsRepository.findMany(query);
 

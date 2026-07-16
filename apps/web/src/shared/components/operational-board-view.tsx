@@ -1,6 +1,13 @@
 "use client";
 
-import { FileSpreadsheet, Plus, Save, Sheet, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  FileSpreadsheet,
+  Plus,
+  Save,
+  Sheet,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +18,7 @@ import { PageHeader } from "@/src/shared/components/page-header";
 import { useBorders } from "@/hooks/use-borders";
 import { useClients, useCreateClient } from "@/hooks/use-clients";
 import { useDrivers } from "@/hooks/use-drivers";
+import { useResourcesInUse } from "@/hooks/use-resources-in-use";
 import { useTrailers } from "@/hooks/use-trailers";
 import { useTrucks } from "@/hooks/use-trucks";
 import { useToast } from "@/providers/toast-provider";
@@ -52,6 +60,7 @@ export function OperationalBoardView() {
   const queryClient = useQueryClient();
   const clientsQuery = useClients({ limit: 100, isActive: true });
   const driversQuery = useDrivers({ limit: 100 });
+  const resourcesInUseQuery = useResourcesInUse();
   const trucksQuery = useTrucks({ limit: 100 });
   const trailersQuery = useTrailers({ limit: 100 });
   const bordersQuery = useBorders({ limit: 100, active: true });
@@ -100,6 +109,47 @@ export function OperationalBoardView() {
       ),
     );
   }, []);
+
+  const inUse = useMemo(
+    () => ({
+      horses: new Set(resourcesInUseQuery.data?.horses ?? []),
+      trailers: new Set(resourcesInUseQuery.data?.trailers ?? []),
+      drivers: new Set(resourcesInUseQuery.data?.drivers ?? []),
+    }),
+    [resourcesInUseQuery.data],
+  );
+
+  // Problemas de uma linha: campos obrigatórios em falta, recurso já numa
+  // viagem ativa, ou recurso repetido noutra linha da própria folha.
+  function rowProblems(row: BoardRow): string[] {
+    const out: string[] = [];
+    if (!row.horse.trim()) out.push("Falta o Horse");
+    if (!row.trailer.trim()) out.push("Falta o Trailer");
+    if (!row.driver.trim()) out.push("Falta o motorista");
+    if (!row.license.trim()) out.push("Falta a carta");
+
+    const nh = normalize(row.horse);
+    const nt = normalize(row.trailer);
+    const nl = normalize(row.license);
+    if (nh && inUse.horses.has(nh))
+      out.push(`Horse ${row.horse} já está numa viagem ativa`);
+    if (nt && inUse.trailers.has(nt))
+      out.push(`Trailer ${row.trailer} já está numa viagem ativa`);
+    if (nl && inUse.drivers.has(nl))
+      out.push(`Motorista (carta ${row.license}) já está numa viagem ativa`);
+
+    const dup = (get: (r: BoardRow) => string, value: string) =>
+      value &&
+      rows.filter((r) => hasContent(r) && normalize(get(r)) === value).length >
+        1;
+    if (dup((r) => r.horse, nh))
+      out.push(`Horse ${row.horse} repetido em várias linhas`);
+    if (dup((r) => r.trailer, nt))
+      out.push(`Trailer ${row.trailer} repetido em várias linhas`);
+    if (dup((r) => r.license, nl))
+      out.push(`Carta ${row.license} repetida em várias linhas`);
+    return out;
+  }
 
   const sheetCtx = () => ({
     clientId: sheetClientId || clients[0]?.id || "",
@@ -172,18 +222,24 @@ export function OperationalBoardView() {
     const savedKeys = new Set<string>();
     const errors: string[] = [];
     for (const row of pending) {
+      const lineNo = pending.indexOf(row) + 1;
+      const problems = rowProblems(row);
+      if (problems.length > 0) {
+        errors.push(`Linha ${lineNo}: ${problems.join("; ")}`);
+        continue;
+      }
       try {
-        if (!row.horse.trim() || !row.driver.trim()) {
-          throw new Error("preencha pelo menos o Horse e o motorista");
-        }
         await createFromRow(row, ctx);
         savedKeys.add(row.key);
       } catch (error) {
+        // Rede de segurança: se o backend recusar (recurso ocupado entretanto),
+        // dá uma mensagem clara em vez do 409 cru.
         errors.push(
-          `Linha ${pending.indexOf(row) + 1}: ${error instanceof Error ? error.message : "erro ao guardar"}`,
+          `Linha ${lineNo}: ${translateSaveError(error, row)}`,
         );
       }
     }
+    void resourcesInUseQuery.refetch();
 
     // As linhas guardadas SAEM do quadro (passam a estar em Atividades).
     // Ficam apenas as que falharam; repõe-se sempre 5 linhas de entrada.
@@ -461,13 +517,17 @@ export function OperationalBoardView() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
+            {rows.map((row, index) => {
+              const problems = hasContent(row) ? rowProblems(row) : [];
+              return (
               <tr
                 key={row.key}
                 className={
-                  row.dirty
-                    ? "bg-brand-50/70 dark:bg-brand-950/20"
-                    : "odd:bg-white even:bg-slate-50/60 dark:odd:bg-slate-900 dark:even:bg-slate-900/70"
+                  problems.length > 0
+                    ? "bg-rose-50/70 dark:bg-rose-950/20"
+                    : row.dirty
+                      ? "bg-brand-50/70 dark:bg-brand-950/20"
+                      : "odd:bg-white even:bg-slate-50/60 dark:odd:bg-slate-900 dark:even:bg-slate-900/70"
                 }
               >
                 <Cell
@@ -576,20 +636,24 @@ export function OperationalBoardView() {
                   />
                 </Cell>
                 <Cell className="text-center">
-                  {!row.tripId ? (
+                  <div className="flex items-center justify-center gap-1">
+                    {problems.length > 0 ? (
+                      <span title={problems.join("\n")}>
+                        <AlertTriangle className="size-4 text-rose-500" />
+                      </span>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => removeBlank(row.key)}
                       title="Remover linha"
                     >
-                      <Trash2 className="mx-auto size-4 text-slate-400 hover:text-rose-600" />
+                      <Trash2 className="size-4 text-slate-400 hover:text-rose-600" />
                     </button>
-                  ) : (
-                    <span className="text-emerald-600">Guardado</span>
-                  )}
+                  </div>
                 </Cell>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -702,6 +766,15 @@ function hasContent(row: BoardRow) {
       row.currentPosition.trim(),
   );
 }
+function translateSaveError(error: unknown, row: BoardRow): string {
+  const status = (error as { response?: { status?: number } })?.response
+    ?.status;
+  if (status === 409) {
+    return `um recurso (Horse ${row.horse || "?"} / motorista ${row.driver || "?"}) já está numa viagem ativa`;
+  }
+  return error instanceof Error ? error.message : "erro ao guardar";
+}
+
 function normalize(value: string) {
   return value.replace(/\s+/g, "").toUpperCase();
 }

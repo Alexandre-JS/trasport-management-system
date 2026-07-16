@@ -140,6 +140,12 @@ export type ListTripsParams = {
   sortOrder?: SortOrder;
 };
 
+export type ResourcesInUse = {
+  horses: string[];
+  trailers: string[];
+  drivers: string[];
+};
+
 export type ActivitySheet = {
   clientId: string;
   clientName: string;

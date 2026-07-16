@@ -21,7 +21,11 @@ import { useAuth } from "@/src/shared/hooks/use-auth";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import { exportToCsv } from "@/utils/export-csv";
-import { addPdfFooter, addPdfHeader } from "@/src/shared/utils/pdf-branding";
+import {
+  addPdfFooter,
+  addPdfHeader,
+  PDF_MARGIN,
+} from "@/src/shared/utils/pdf-branding";
 import type { ActivitySheet, Trip } from "@/types/trip";
 import { formatDate } from "@/utils/format";
 import {
@@ -257,42 +261,105 @@ function SheetTracking({
     const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
     await addPdfHeader(pdf, "Quadro Operacional", sheetTitle);
 
-    // Larguras (mm) por coluna — somam < 273 (usável em paisagem A4).
-    const widths = [8, 24, 20, 20, 32, 22, 10, 18, 18, 18, 30, 25];
-    const startX = 12;
-    let y = 46;
-    const rowH = 6;
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const left = PDF_MARGIN;
+    const usableW = pageW - PDF_MARGIN * 2;
 
-    const drawRow = (cells: string[], bold: boolean) => {
-      let x = startX;
-      pdf.setFont("helvetica", bold ? "bold" : "normal");
-      pdf.setFontSize(7);
-      if (bold) {
-        pdf.setFillColor(15, 23, 42);
-        pdf.setTextColor(255, 255, 255);
-        pdf.rect(startX, y - 4, widths.reduce((a, b) => a + b, 0), rowH, "F");
-      } else {
-        pdf.setTextColor(30, 41, 59);
-      }
-      cells.forEach((cell, i) => {
-        const maxChars = Math.floor(widths[i] / 1.5);
-        const text =
-          cell.length > maxChars ? `${cell.slice(0, maxChars - 1)}…` : cell;
-        pdf.text(text, x + 1, y);
-        x += widths[i];
-      });
-      y += rowH;
+    // Pesos relativos por coluna → a tabela preenche toda a largura útil.
+    const weights = [3.5, 9, 8, 8, 13, 8.5, 4.5, 7.5, 7.5, 7.5, 15, 8];
+    const totalW = weights.reduce((a, b) => a + b, 0);
+    const widths = weights.map((w) => (w / totalW) * usableW);
+    // Nº, Ton, datas e Estado centrados; texto alinhado à esquerda.
+    const centered = [
+      true, false, false, false, false, false,
+      true, true, true, true, false, true,
+    ];
+
+    const padH = 1.6;
+    const padV = 1.5;
+    const lineH = 3.2;
+    const maxLines = 2;
+    const top = 44;
+    const bottom = pageH - 28;
+    let y = top;
+
+    pdf.setFontSize(7);
+
+    const wrap = (cell: string, i: number): string[] => {
+      const lines = pdf.splitTextToSize(
+        String(cell ?? ""),
+        widths[i] - padH * 2,
+      ) as string[];
+      if (lines.length <= maxLines) return lines.length ? lines : [""];
+      const clipped = lines.slice(0, maxLines);
+      clipped[maxLines - 1] = `${clipped[maxLines - 1].replace(/\s*\S*$/, "")}…`;
+      return clipped;
     };
 
-    drawRow(columns, true);
-    rows.forEach((row) => {
-      if (y > 195) {
-        pdf.addPage();
-        y = 20;
-        drawRow(columns, true);
+    const drawRow = (cells: string[], head: boolean, zebra: boolean) => {
+      const wrapped = cells.map((c, i) => wrap(c, i));
+      const nLines = Math.max(1, ...wrapped.map((l) => l.length));
+      const h = nLines * lineH + padV * 2;
+      const rowTop = y;
+
+      if (head) pdf.setFillColor(15, 23, 42);
+      else if (zebra) pdf.setFillColor(241, 245, 249);
+      if (head || zebra) pdf.rect(left, rowTop, usableW, h, "F");
+
+      pdf.setFont("helvetica", head ? "bold" : "normal");
+      if (head) pdf.setTextColor(255, 255, 255);
+      else pdf.setTextColor(30, 41, 59);
+
+      let x = left;
+      wrapped.forEach((lines, i) => {
+        lines.forEach((ln, li) => {
+          const ty = rowTop + padV + lineH * (li + 1) - 0.9;
+          if (centered[i]) {
+            pdf.text(ln, x + widths[i] / 2, ty, { align: "center" });
+          } else {
+            pdf.text(ln, x + padH, ty, { align: "left" });
+          }
+        });
+        x += widths[i];
+      });
+
+      // Grelha fina (só no corpo — no cabeçalho escuro fica limpa).
+      if (!head) {
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.1);
+        let vx = left;
+        widths.forEach((w) => {
+          pdf.line(vx, rowTop, vx, rowTop + h);
+          vx += w;
+        });
+        pdf.line(vx, rowTop, vx, rowTop + h);
+        pdf.line(left, rowTop + h, left + usableW, rowTop + h);
       }
-      drawRow(row, false);
+
+      y += h;
+    };
+
+    drawRow(columns, true, false);
+    rows.forEach((row, idx) => {
+      const probe = row.map((c, i) =>
+        (pdf.splitTextToSize(String(c ?? ""), widths[i] - padH * 2) as string[])
+          .slice(0, maxLines),
+      );
+      const nLines = Math.max(1, ...probe.map((l) => l.length));
+      const h = nLines * lineH + padV * 2;
+      if (y + h > bottom) {
+        pdf.addPage();
+        y = top;
+        drawRow(columns, true, false);
+      }
+      drawRow(row, false, idx % 2 === 1);
     });
+
+    // Moldura à volta de toda a tabela.
+    pdf.setDrawColor(203, 213, 225);
+    pdf.setLineWidth(0.3);
+    pdf.line(left, top, left + usableW, top);
 
     addPdfFooter(pdf, `${sheet.total} cargas · gerado pelo SGRTC`);
     pdf.save(`folha-${sheet.clientName}-${sheet.day}.pdf`);

@@ -5,6 +5,9 @@ import {
   ArrowRight,
   ChevronRight,
   ClipboardList,
+  FileDown,
+  FileSpreadsheet,
+  Printer,
   RefreshCw,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -16,6 +19,8 @@ import { useTrips, useUpdateTripStatus } from "@/hooks/use-trips";
 import { useAuth } from "@/src/shared/hooks/use-auth";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
+import { exportToCsv } from "@/utils/export-csv";
+import { addPdfFooter, addPdfHeader } from "@/src/shared/utils/pdf-branding";
 import type { ActivitySheet, Trip } from "@/types/trip";
 import { formatDate } from "@/utils/format";
 import {
@@ -197,6 +202,100 @@ function SheetTracking({
   });
   const trips = useMemo(() => data?.data ?? [], [data]);
 
+  const sheetTitle = `${sheet.clientName} · ${sheet.origin} → ${sheet.destination} · ${formatDate(sheet.day)}`;
+
+  // Linhas na linguagem da folha, partilhadas por CSV e PDF.
+  const rows = useMemo(
+    () =>
+      trips.map((trip, index) => [
+        String(index + 1),
+        trip.bookingReference ?? trip.cargo.code,
+        trip.horsePlate ?? trip.truck?.plateNumber ?? "—",
+        trip.trailerPlate ?? trip.trailer?.plateNumber ?? "—",
+        trip.driverName ?? trip.driver?.fullName ?? "—",
+        trip.borders.map((b) => b.border.name).join(" › ") || "—",
+        trip.tonnage ? `${trip.tonnage} t` : "—",
+        formatDate(trip.departureDate),
+        formatDate(trip.arrivalDate),
+        formatDate(trip.dischargeDate),
+        trip.currentPosition ?? "—",
+        tripStatusMeta[trip.currentStatus].label,
+      ]),
+    [trips],
+  );
+
+  const columns = [
+    "Nu.",
+    "Booking",
+    "Horse",
+    "Trailer",
+    "Driver Name",
+    "Border",
+    "Ton",
+    "Dispatch",
+    "Arrive",
+    "Discharge",
+    "Current Position",
+    "Estado",
+  ];
+
+  function exportExcel() {
+    exportToCsv(
+      `folha-${sheet.clientName}-${sheet.day}.csv`,
+      rows,
+      columns.map((header, index) => ({
+        header,
+        value: (row: string[]) => row[index],
+      })),
+    );
+  }
+
+  async function exportPdf() {
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+    await addPdfHeader(pdf, "Quadro Operacional", sheetTitle);
+
+    // Larguras (mm) por coluna — somam < 273 (usável em paisagem A4).
+    const widths = [8, 24, 20, 20, 32, 22, 10, 18, 18, 18, 30, 25];
+    const startX = 12;
+    let y = 46;
+    const rowH = 6;
+
+    const drawRow = (cells: string[], bold: boolean) => {
+      let x = startX;
+      pdf.setFont("helvetica", bold ? "bold" : "normal");
+      pdf.setFontSize(7);
+      if (bold) {
+        pdf.setFillColor(15, 23, 42);
+        pdf.setTextColor(255, 255, 255);
+        pdf.rect(startX, y - 4, widths.reduce((a, b) => a + b, 0), rowH, "F");
+      } else {
+        pdf.setTextColor(30, 41, 59);
+      }
+      cells.forEach((cell, i) => {
+        const maxChars = Math.floor(widths[i] / 1.5);
+        const text =
+          cell.length > maxChars ? `${cell.slice(0, maxChars - 1)}…` : cell;
+        pdf.text(text, x + 1, y);
+        x += widths[i];
+      });
+      y += rowH;
+    };
+
+    drawRow(columns, true);
+    rows.forEach((row) => {
+      if (y > 195) {
+        pdf.addPage();
+        y = 20;
+        drawRow(columns, true);
+      }
+      drawRow(row, false);
+    });
+
+    addPdfFooter(pdf, `${sheet.total} cargas · gerado pelo SGRTC`);
+    pdf.save(`folha-${sheet.clientName}-${sheet.day}.pdf`);
+  }
+
   function advance(trip: Trip) {
     const next = nextTripStatus(trip.currentStatus);
     if (!next) return;
@@ -232,6 +331,28 @@ function SheetTracking({
       <PageHeader
         title={`${sheet.clientName} · ${sheet.origin} → ${sheet.destination}`}
         description={`Folha de ${formatDate(sheet.day)} · ${sheet.total} cargas · acompanhamento (só o estado é editável)`}
+        secondaryActions={
+          <div className="flex flex-wrap gap-2" data-print-hide>
+            <ActionButton
+              icon={<Printer className="size-4" />}
+              onClick={() => window.print()}
+            >
+              Imprimir
+            </ActionButton>
+            <ActionButton
+              icon={<FileSpreadsheet className="size-4" />}
+              onClick={exportExcel}
+            >
+              Excel
+            </ActionButton>
+            <ActionButton
+              icon={<FileDown className="size-4" />}
+              onClick={() => void exportPdf()}
+            >
+              PDF
+            </ActionButton>
+          </div>
+        }
       />
 
       <div className="max-h-[calc(100vh-16rem)] overflow-auto rounded-md border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">

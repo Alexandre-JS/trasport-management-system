@@ -1,12 +1,12 @@
 "use client";
 
-import { MapPin, PackageX } from "lucide-react";
+import { MapPin, Navigation, PackageX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { PageLoader } from "@/src/shared/components/page-loader";
 import { StatusBadge } from "@/src/shared/components/status-badge";
 import { usePublicClientShipments } from "@/hooks/use-public-tracking";
-import { formatDate } from "@/utils/format";
+import { formatDate, formatRelativeTime } from "@/utils/format";
 import { tripStatusBadgeTone, tripStatusMeta } from "@/utils/trip-status";
 
 export function PublicClientTrackView({ token }: { token: string }) {
@@ -99,6 +99,20 @@ export function PublicClientTrackView({ token }: { token: string }) {
                         </span>
                       ) : null}
                     </div>
+                    {shipment.lastLocation ? (
+                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        <Navigation className="size-3.5 text-brand-500" aria-hidden />
+                        GPS {formatRelativeTime(shipment.lastLocation.recordedAt)}
+                        <a
+                          href={`https://www.openstreetmap.org/?mlat=${shipment.lastLocation.latitude}&mlon=${shipment.lastLocation.longitude}#map=12/${shipment.lastLocation.latitude}/${shipment.lastLocation.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+                        >
+                          Ver no mapa
+                        </a>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>

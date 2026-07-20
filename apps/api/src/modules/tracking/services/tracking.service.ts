@@ -4,6 +4,7 @@ import { AppLoggerService } from '../../../core/logger/app-logger.service';
 import { CreateTrackingPointDto } from '../dto/create-tracking-point.dto';
 import { ListTrackingQueryDto } from '../dto/list-tracking-query.dto';
 import { TrackingRepository } from '../repository/tracking.repository';
+import { describePosition } from '../geo/reverse-geocode';
 
 @Injectable()
 export class TrackingService {
@@ -34,6 +35,11 @@ export class TrackingService {
 
     this.gateway.publishToTrip(tripId, 'tracking:update', payload);
     this.gateway.publish('cargo:locationUpdated', payload);
+
+    // Converte a coordenada na localidade mais próxima e preenche o texto
+    // "Posição atual" automaticamente (só grava quando a localidade muda).
+    const position = describePosition(dto.latitude, dto.longitude);
+    await this.trackingRepository.updateTripPositionIfChanged(tripId, position);
 
     this.logger.log(
       `Tracking point recorded for trip ${tripId}`,

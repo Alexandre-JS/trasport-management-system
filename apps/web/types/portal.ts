@@ -38,7 +38,14 @@ export type PortalShipment = {
   createdAt: string;
 };
 
+export type PortalLastLocation = {
+  latitude: number;
+  longitude: number;
+  recordedAt: string;
+};
+
 export type PortalShipmentDetail = PortalShipment & {
   trackingToken: string;
   events: PortalEvent[];
+  lastLocation: PortalLastLocation | null;
 };

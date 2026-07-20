@@ -8,11 +8,18 @@ export type PublicTrackEvent = {
   note: string | null;
 };
 
+export type LastLocation = {
+  latitude: number;
+  longitude: number;
+  recordedAt: string;
+};
+
 export type PublicShipment = {
   currentStatus: TripStatus;
   currentPosition: string | null;
   borders: TripBorderRef[];
   arrivalEstimate: string | null;
+  lastLocation: LastLocation | null;
   cargo: {
     code: string;
     origin: string;

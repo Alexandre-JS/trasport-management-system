@@ -13,6 +13,7 @@ describe('TrackingService', () => {
     findLast: jest.fn(),
     findMany: jest.fn(),
     findRoute: jest.fn(),
+    updateTripPositionIfChanged: jest.fn(),
   } as unknown as jest.Mocked<TrackingRepository>;
   const gateway = {
     publish: jest.fn(),

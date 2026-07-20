@@ -39,17 +39,42 @@ const publicTrackSelect = {
     },
     orderBy: { occurredAt: 'asc' as const },
   },
+  // Última posição GPS reportada pelo motorista (para o mini-mapa público).
+  trackingPoints: {
+    select: { latitude: true, longitude: true, recordedAt: true },
+    orderBy: { recordedAt: 'desc' as const },
+    take: 1,
+  },
 } satisfies Prisma.TripSelect;
+
+type RawPublicTrip = Prisma.TripGetPayload<{ select: typeof publicTrackSelect }>;
+
+/** Extrai a última posição GPS como números e remove o array cru. */
+function withLastLocation({ trackingPoints, ...trip }: RawPublicTrip) {
+  const last = trackingPoints[0];
+  return {
+    ...trip,
+    lastLocation: last
+      ? {
+          latitude: Number(last.latitude),
+          longitude: Number(last.longitude),
+          recordedAt: last.recordedAt,
+        }
+      : null,
+  };
+}
 
 @Injectable()
 export class PublicTrackingRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByToken(token: string) {
-    return this.prisma.trip.findFirst({
+  async findByToken(token: string) {
+    const trip = await this.prisma.trip.findFirst({
       where: { trackingToken: token, deletedAt: null },
       select: publicTrackSelect,
     });
+
+    return trip ? withLastLocation(trip) : null;
   }
 
   /**
@@ -77,6 +102,9 @@ export class PublicTrackingRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return { clientName: client.companyName, shipments };
+    return {
+      clientName: client.companyName,
+      shipments: shipments.map(withLastLocation),
+    };
   }
 }

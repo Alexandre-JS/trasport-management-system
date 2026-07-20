@@ -17,6 +17,7 @@ export type LastLocation = {
 export type PublicShipment = {
   currentStatus: TripStatus;
   currentPosition: string | null;
+  departureDate: string | null;
   borders: TripBorderRef[];
   arrivalEstimate: string | null;
   lastLocation: LastLocation | null;

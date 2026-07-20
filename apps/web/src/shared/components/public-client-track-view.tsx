@@ -79,6 +79,9 @@ export function PublicClientTrackView({ token }: { token: string }) {
                           Posição atual
                         </th>
                         <th className="whitespace-nowrap px-4 py-3">
+                          Data de saída
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3">
                           Chegada prevista
                         </th>
                       </tr>
@@ -129,6 +132,9 @@ export function PublicClientTrackView({ token }: { token: string }) {
                                 </a>
                               </div>
                             ) : null}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {formatDate(shipment.departureDate)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                             {formatDate(shipment.arrivalEstimate)}

@@ -7,6 +7,7 @@ import { PrismaService } from '../../../core/database/prisma.service';
 const publicTrackSelect = {
   currentStatus: true,
   currentPosition: true,
+  departureDate: true,
   borders: {
     select: {
       sequence: true,

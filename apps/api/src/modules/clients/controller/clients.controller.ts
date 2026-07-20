@@ -63,6 +63,20 @@ export class ClientsController {
     return this.clientsService.history(id);
   }
 
+  @Get(':id/share-token')
+  @ApiOperation({ summary: 'Get the client public share token' })
+  shareToken(@Param('id') id: string) {
+    return this.clientsService.shareToken(id);
+  }
+
+  @Post(':id/share-token/regenerate')
+  @ApiOperation({
+    summary: 'Regenerate the client public share token (revokes the old link)',
+  })
+  regenerateShareToken(@Param('id') id: string) {
+    return this.clientsService.regenerateShareToken(id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create client' })
   @ApiCreatedResponse({ type: ClientResponseDto })

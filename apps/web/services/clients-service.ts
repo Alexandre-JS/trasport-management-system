@@ -9,6 +9,22 @@ export async function createClient(payload: ClientInput): Promise<Client> {
   return data;
 }
 
+export async function getClientShareToken(id: string): Promise<string> {
+  const { data } = await http.get<{ shareToken: string }>(
+    `/clients/${id}/share-token`,
+  );
+
+  return data.shareToken;
+}
+
+export async function regenerateClientShareToken(id: string): Promise<string> {
+  const { data } = await http.post<{ shareToken: string }>(
+    `/clients/${id}/share-token/regenerate`,
+  );
+
+  return data.shareToken;
+}
+
 export async function updateClient(
   id: string,
   payload: ClientInput,

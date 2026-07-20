@@ -181,6 +181,9 @@ model Client {
   province    String?   @db.VarChar(100)
   country     String    @default("Moçambique") @db.VarChar(100)
   isActive    Boolean   @default(true)
+  // Token público, persistente e opaco para partilhar TODAS as cargas do
+  // cliente num único link (/track/client/:token). Regenerável para revogar.
+  publicShareToken String @unique @default(uuid()) @db.Char(36)
   cargos      Cargo[]
   users       User[]
   createdAt   DateTime  @default(now())

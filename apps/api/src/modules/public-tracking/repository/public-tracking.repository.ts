@@ -51,4 +51,32 @@ export class PublicTrackingRepository {
       select: publicTrackSelect,
     });
   }
+
+  /**
+   * Todas as cargas (viagens) de um cliente, pelo token público persistente do
+   * cliente. Exclui viagens eliminadas e canceladas — o cliente vê o que está
+   * em curso e o histórico entregue, nunca as canceladas. Mesma projeção segura.
+   */
+  async findClientByToken(token: string) {
+    const client = await this.prisma.client.findFirst({
+      where: { publicShareToken: token, deletedAt: null },
+      select: { id: true, companyName: true },
+    });
+
+    if (!client) {
+      return null;
+    }
+
+    const shipments = await this.prisma.trip.findMany({
+      where: {
+        deletedAt: null,
+        currentStatus: { not: 'CANCELLED' },
+        cargo: { clientId: client.id, deletedAt: null },
+      },
+      select: publicTrackSelect,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return { clientName: client.companyName, shipments };
+  }
 }

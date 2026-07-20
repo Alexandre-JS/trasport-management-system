@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { CreateClientDto } from '../dto/create-client.dto';
 import { ListClientsQueryDto } from '../dto/list-clients-query.dto';
@@ -58,6 +59,21 @@ export class ClientsRepository {
         deletedAt: null,
       },
       select: clientSelect,
+    });
+  }
+
+  getShareToken(id: string): Promise<{ publicShareToken: string } | null> {
+    return this.prisma.client.findFirst({
+      where: { id, deletedAt: null },
+      select: { publicShareToken: true },
+    });
+  }
+
+  regenerateShareToken(id: string): Promise<{ publicShareToken: string }> {
+    return this.prisma.client.update({
+      where: { id },
+      data: { publicShareToken: randomUUID() },
+      select: { publicShareToken: true },
     });
   }
 

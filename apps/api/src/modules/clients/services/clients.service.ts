@@ -84,6 +84,30 @@ export class ClientsService {
     return client;
   }
 
+  /** Token público para partilhar todas as cargas do cliente num único link. */
+  async shareToken(id: string) {
+    const row = await this.clientsRepository.getShareToken(id);
+
+    if (!row) {
+      throw new NotFoundException('Client not found');
+    }
+
+    return { shareToken: row.publicShareToken };
+  }
+
+  /** Gera um novo token, invalidando o link partilhado anteriormente. */
+  async regenerateShareToken(id: string) {
+    await this.ensureClientExists(id);
+    const row = await this.clientsRepository.regenerateShareToken(id);
+
+    this.logger.log(
+      `Client share token regenerated: ${id}`,
+      ClientsService.name,
+    );
+
+    return { shareToken: row.publicShareToken };
+  }
+
   async history(id: string) {
     const client = await this.clientsRepository.getHistory(id);
 

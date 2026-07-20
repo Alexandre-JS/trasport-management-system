@@ -7,8 +7,10 @@ import {
   ClipboardList,
   FileDown,
   FileSpreadsheet,
+  Pencil,
   Printer,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/src/shared/components/page-header";
@@ -16,8 +18,15 @@ import { PrintOperationalTableDocument } from "@/src/shared/components/print-ope
 import { ActionButton } from "@/src/shared/components/action-button";
 import { StatusBadge } from "@/src/shared/components/status-badge";
 import { CargoShareCell } from "@/src/shared/components/cargo-share-cell";
+import { ClientShareCell } from "@/src/shared/components/client-share-cell";
+import { EditTripModal } from "@/src/shared/components/edit-trip-modal";
+import { ConfirmDialog } from "@/src/shared/components/confirm-dialog";
 import { useActivities } from "@/hooks/use-activities";
-import { useTrips, useUpdateTripStatus } from "@/hooks/use-trips";
+import {
+  useDeleteTrip,
+  useTrips,
+  useUpdateTripStatus,
+} from "@/hooks/use-trips";
 import { useAuth } from "@/src/shared/hooks/use-auth";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
@@ -97,6 +106,7 @@ function ActivitiesList({ onOpen }: { onOpen: (s: ActivitySheet) => void }) {
                     "Cargas",
                     "Entregues",
                     "Progresso",
+                    "Partilhar",
                     "",
                   ].map((header) => (
                     <th
@@ -148,6 +158,16 @@ function ActivitiesList({ onOpen }: { onOpen: (s: ActivitySheet) => void }) {
                           </span>
                         </div>
                       </td>
+                      <td
+                        className="border-b border-r border-slate-200 px-3 py-3 dark:border-slate-800"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ClientShareCell
+                          clientId={s.clientId}
+                          clientName={s.clientName}
+                          compact
+                        />
+                      </td>
                       <td className="border-b border-slate-200 px-3 py-3 text-right dark:border-slate-800">
                         <span className="inline-flex items-center gap-1 font-medium text-brand-600 dark:text-brand-400">
                           Abrir
@@ -196,7 +216,11 @@ function SheetTracking({
   const { hasPermission } = useAuth();
   const { toast } = useToast();
   const canEditState = hasPermission("trips:manage");
+  const canManage = hasPermission("trips:manage");
   const updateStatus = useUpdateTripStatus();
+  const deleteTrip = useDeleteTrip();
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [deletingTrip, setDeletingTrip] = useState<Trip | null>(null);
 
   const { data, isLoading, refetch } = useTrips({
     clientId: sheet.clientId,
@@ -380,6 +404,28 @@ function SheetTracking({
     );
   }
 
+  function confirmDelete() {
+    if (!deletingTrip) return;
+    deleteTrip.mutate(deletingTrip.id, {
+      onSuccess: () => {
+        toast({ title: "Viagem eliminada", type: "success" });
+        setDeletingTrip(null);
+        void refetch();
+      },
+      onError: (error) => {
+        toast({
+          title: "Não foi possível eliminar",
+          description: extractErrorMessage(error),
+          type: "error",
+        });
+        setDeletingTrip(null);
+      },
+    });
+  }
+
+  // Cabeçalho da tabela: acrescenta "Ações" para quem pode gerir viagens.
+  const headers = canManage ? [...HEADERS, "Ações"] : HEADERS;
+
   return (
     <div className="flex min-h-0 flex-col gap-4">
       <button
@@ -391,10 +437,14 @@ function SheetTracking({
       </button>
       <PageHeader
         title={`${sheet.clientName} · ${sheet.origin} → ${sheet.destination}`}
-        description={`Folha de ${formatDate(sheet.day)} · ${sheet.total} cargas · acompanhamento (só o estado é editável)`}
+        description={`Folha de ${formatDate(sheet.day)} · ${sheet.total} cargas · acompanhamento (estado editável; edite ou elimine cada viagem)`}
         showIdentity
         secondaryActions={
-          <div className="flex flex-wrap gap-2" data-print-hide>
+          <div className="flex flex-wrap items-center gap-2" data-print-hide>
+            <ClientShareCell
+              clientId={sheet.clientId}
+              clientName={sheet.clientName}
+            />
             <ActionButton
               icon={<Printer className="size-4" />}
               onClick={() => window.print()}
@@ -421,9 +471,9 @@ function SheetTracking({
         <table className="min-w-[1650px] border-separate border-spacing-0 text-[11px] leading-4 tabular-nums [&_td]:!px-1.5 [&_td]:!py-1 [&_th]:!px-1.5 [&_th]:!py-1.5">
           <thead className="sticky top-0 z-20 bg-slate-100 text-left font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <tr>
-              {HEADERS.map((h, i) => (
+              {headers.map((h, i) => (
                 <th
-                  key={h}
+                  key={h || "acoes"}
                   className={`whitespace-nowrap border-b border-r border-slate-300 px-3 py-2 dark:border-slate-700 ${i === 0 ? "sticky left-0 z-30 w-12 bg-slate-100 dark:bg-slate-800" : ""}`}
                 >
                   {h}
@@ -434,7 +484,7 @@ function SheetTracking({
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={HEADERS.length} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={headers.length} className="px-3 py-6 text-center text-slate-500">
                   A carregar…
                 </td>
               </tr>
@@ -484,6 +534,30 @@ function SheetTracking({
                         label={trip.bookingReference ?? trip.cargo.code}
                       />
                     </td>
+                    {canManage ? (
+                      <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditingTrip(trip)}
+                            title="Editar viagem"
+                            aria-label="Editar viagem"
+                            className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <Pencil className="size-4" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingTrip(trip)}
+                            title="Eliminar viagem"
+                            aria-label="Eliminar viagem"
+                            className="grid size-7 place-items-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                          >
+                            <Trash2 className="size-4" aria-hidden />
+                          </button>
+                        </div>
+                      </td>
+                    ) : null}
                   </tr>
                 );
               })
@@ -496,6 +570,24 @@ function SheetTracking({
         subtitle={sheetTitle}
         columns={columns}
         rows={rows}
+      />
+      <EditTripModal
+        key={editingTrip?.id ?? "none"}
+        trip={editingTrip}
+        onClose={() => setEditingTrip(null)}
+        onSaved={() => void refetch()}
+      />
+      <ConfirmDialog
+        open={deletingTrip !== null}
+        title="Eliminar viagem?"
+        description={
+          deletingTrip
+            ? `A viagem da carga ${deletingTrip.bookingReference ?? deletingTrip.cargo.code} será cancelada e removida, libertando os recursos associados. Esta ação não pode ser anulada.`
+            : undefined
+        }
+        confirmLabel="Eliminar"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingTrip(null)}
       />
     </div>
   );

@@ -20,3 +20,8 @@ export type PublicShipment = {
   };
   events: PublicTrackEvent[];
 };
+
+export type PublicClientShipments = {
+  clientName: string;
+  shipments: PublicShipment[];
+};

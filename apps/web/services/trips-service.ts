@@ -46,6 +46,10 @@ export async function updateTrip(
   return data;
 }
 
+export async function deleteTrip(id: string): Promise<void> {
+  await http.delete(`/trips/${id}`);
+}
+
 export async function cancelTrip(id: string): Promise<Trip> {
   const { data } = await http.patch<Trip>(`/trips/${id}/cancel`);
 

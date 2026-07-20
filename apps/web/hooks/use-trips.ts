@@ -14,9 +14,11 @@ import {
   cancelTrip,
   closeTrip,
   createTrip,
+  deleteTrip,
   getTrip,
   listTrips,
   recordTripEvent,
+  updateTrip,
   updateTripStatus,
 } from "@/services/trips-service";
 import type {
@@ -27,6 +29,7 @@ import type {
   CreateTripPayload,
   ListTripsParams,
   RecordTripEventPayload,
+  UpdateTripPayload,
   UpdateTripStatusPayload,
 } from "@/types/trip";
 
@@ -135,6 +138,29 @@ export function useAssignCargo() {
       assignCargo(vars.id, vars.payload),
     (vars) => vars.id,
   );
+}
+
+export function useUpdateTrip() {
+  return useTripMutation(
+    (vars: { id: string; payload: UpdateTripPayload }) =>
+      updateTrip(vars.id, vars.payload),
+    (vars) => vars.id,
+  );
+}
+
+export function useDeleteTrip() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteTrip(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
+      void queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      void queryClient.invalidateQueries({ queryKey: ["trucks"] });
+      void queryClient.invalidateQueries({ queryKey: ["trailers"] });
+    },
+  });
 }
 
 export function useUpdateTripStatus() {

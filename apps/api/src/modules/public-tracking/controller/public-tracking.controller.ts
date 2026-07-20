@@ -16,4 +16,13 @@ export class PublicTrackingController {
   track(@Param('token') token: string) {
     return this.publicTrackingService.track(token);
   }
+
+  @Get('client/:token')
+  @Public()
+  @ApiOperation({
+    summary: 'Public, no-login tracking of all a client shipments by token',
+  })
+  trackClient(@Param('token') token: string) {
+    return this.publicTrackingService.trackClient(token);
+  }
 }

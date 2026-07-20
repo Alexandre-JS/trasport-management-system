@@ -3,6 +3,7 @@
 import { MapPin, PackageX } from "lucide-react";
 import Image from "next/image";
 import { ClientSupportCard } from "@/src/shared/components/client-support-card";
+import { GpsLocationCard } from "@/src/shared/components/gps-location-card";
 import { PageLoader } from "@/src/shared/components/page-loader";
 import { PrintButton } from "@/src/shared/components/print-button";
 import { PrintShipmentDocument } from "@/src/shared/components/print-shipment-document";
@@ -102,6 +103,13 @@ export function PublicTrackView({ token }: { token: string }) {
                 />
               </dl>
             </div>
+
+            {shipment.lastLocation ? (
+              <GpsLocationCard
+                location={shipment.lastLocation}
+                label={shipment.cargo.code}
+              />
+            ) : null}
 
             <ClientSupportCard />
             <PrintShipmentDocument

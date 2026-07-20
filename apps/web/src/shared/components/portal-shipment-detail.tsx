@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card } from "@/src/shared/components/card";
 import { ClientSupportCard } from "@/src/shared/components/client-support-card";
 import { ErrorState } from "@/src/shared/components/error-state";
+import { GpsLocationCard } from "@/src/shared/components/gps-location-card";
 import { PageLoader } from "@/src/shared/components/page-loader";
 import { PrintButton } from "@/src/shared/components/print-button";
 import { PrintShipmentDocument } from "@/src/shared/components/print-shipment-document";
@@ -141,7 +142,12 @@ export function PortalShipmentDetail({ id }: { id: string }) {
         </dl>
       </Card>
 
-      {/* TODO: Reativar o mapa quando a API fornecer coordenadas GPS reais. */}
+      {shipment.lastLocation ? (
+        <GpsLocationCard
+          location={shipment.lastLocation}
+          label={shipment.cargo.code}
+        />
+      ) : null}
 
       <Card className="p-5">
         <h2 className="text-base font-semibold text-slate-950 dark:text-white">

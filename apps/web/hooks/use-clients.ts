@@ -9,13 +9,37 @@ import {
 import {
   createClient,
   deleteClient,
+  getClientShareToken,
   listClients,
+  regenerateClientShareToken,
   setClientActive,
   updateClient,
 } from "@/services/clients-service";
 import type { ClientInput, ListClientsParams } from "@/types/client";
 
 const CLIENTS_KEY = "clients";
+
+export function useClientShareToken(id: string | null) {
+  return useQuery({
+    queryKey: [CLIENTS_KEY, "share-token", id],
+    queryFn: () => getClientShareToken(id as string),
+    enabled: id !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useRegenerateClientShareToken() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => regenerateClientShareToken(id),
+    onSuccess: (_token, id) => {
+      void queryClient.invalidateQueries({
+        queryKey: [CLIENTS_KEY, "share-token", id],
+      });
+    },
+  });
+}
 
 export function useCreateClient() {
   const queryClient = useQueryClient();

@@ -63,7 +63,31 @@ const portalTripDetailSelect = {
     },
     orderBy: { occurredAt: 'asc' as const },
   },
+  // Última posição GPS reportada pelo motorista (mapa do portal).
+  trackingPoints: {
+    select: { latitude: true, longitude: true, recordedAt: true },
+    orderBy: { recordedAt: 'desc' as const },
+    take: 1,
+  },
 } satisfies Prisma.TripSelect;
+
+type RawPortalTripDetail = Prisma.TripGetPayload<{
+  select: typeof portalTripDetailSelect;
+}>;
+
+function withLastLocation({ trackingPoints, ...trip }: RawPortalTripDetail) {
+  const last = trackingPoints[0];
+  return {
+    ...trip,
+    lastLocation: last
+      ? {
+          latitude: Number(last.latitude),
+          longitude: Number(last.longitude),
+          recordedAt: last.recordedAt,
+        }
+      : null,
+  };
+}
 
 @Injectable()
 export class PortalRepository {
@@ -84,10 +108,12 @@ export class PortalRepository {
     });
   }
 
-  findClientTrip(clientId: string, tripId: string) {
-    return this.prisma.trip.findFirst({
+  async findClientTrip(clientId: string, tripId: string) {
+    const trip = await this.prisma.trip.findFirst({
       where: { id: tripId, deletedAt: null, cargo: { clientId } },
       select: portalTripDetailSelect,
     });
+
+    return trip ? withLastLocation(trip) : null;
   }
 }

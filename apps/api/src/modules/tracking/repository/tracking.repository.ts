@@ -78,6 +78,24 @@ export class TrackingRepository {
     });
   }
 
+  /**
+   * Atualiza "Posição atual" (texto) só quando muda — evita escritas repetidas.
+   * O ramo `null` é necessário porque em SQL `coluna <> 'x'` é desconhecido
+   * (não-verdadeiro) quando a coluna é NULL, e a linha ficaria de fora.
+   */
+  async updateTripPositionIfChanged(
+    tripId: string,
+    position: string,
+  ): Promise<void> {
+    await this.prisma.trip.updateMany({
+      where: {
+        id: tripId,
+        OR: [{ currentPosition: null }, { currentPosition: { not: position } }],
+      },
+      data: { currentPosition: position },
+    });
+  }
+
   async findMany(
     tripId: string,
     query: ListTrackingQueryDto,

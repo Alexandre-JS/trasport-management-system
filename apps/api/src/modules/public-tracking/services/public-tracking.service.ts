@@ -16,4 +16,14 @@ export class PublicTrackingService {
 
     return shipment;
   }
+
+  async trackClient(token: string) {
+    const result = await this.publicTrackingRepository.findClientByToken(token);
+
+    if (!result) {
+      throw new NotFoundException('Tracking link not found');
+    }
+
+    return result;
+  }
 }

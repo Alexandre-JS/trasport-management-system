@@ -15,7 +15,7 @@ export function PublicClientTrackView({ token }: { token: string }) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           <Image
             src="/lumac-logo.png"
             alt="LUMAC Transportes & Logística"
@@ -30,7 +30,7 @@ export function PublicClientTrackView({ token }: { token: string }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-8">
         {isLoading ? (
           <PageLoader />
         ) : isError || !data ? (
@@ -67,55 +67,78 @@ export function PublicClientTrackView({ token }: { token: string }) {
                 </p>
               </div>
             ) : (
-              <ul className="flex flex-col gap-3">
-                {data.shipments.map((shipment, index) => (
-                  <li
-                    key={`${shipment.cargo.code}-${index}`}
-                    className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-base font-semibold text-slate-950 dark:text-white">
-                        {shipment.cargo.code}
-                      </p>
-                      <StatusBadge
-                        tone={tripStatusBadgeTone[shipment.currentStatus]}
-                      >
-                        {tripStatusMeta[shipment.currentStatus].label}
-                      </StatusBadge>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                      {shipment.cargo.origin} → {shipment.cargo.destination}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-                      {shipment.currentPosition ? (
-                        <span className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                          <MapPin className="size-4 text-brand-500" aria-hidden />
-                          {shipment.currentPosition}
-                        </span>
-                      ) : null}
-                      {shipment.arrivalEstimate ? (
-                        <span className="text-slate-500 dark:text-slate-400">
-                          Chegada prevista: {formatDate(shipment.arrivalEstimate)}
-                        </span>
-                      ) : null}
-                    </div>
-                    {shipment.lastLocation ? (
-                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                        <Navigation className="size-3.5 text-brand-500" aria-hidden />
-                        GPS {formatRelativeTime(shipment.lastLocation.recordedAt)}
-                        <a
-                          href={`https://www.openstreetmap.org/?mlat=${shipment.lastLocation.latitude}&mlon=${shipment.lastLocation.longitude}#map=12/${shipment.lastLocation.latitude}/${shipment.lastLocation.longitude}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                      <tr>
+                        <th className="whitespace-nowrap px-4 py-3">Carga</th>
+                        <th className="whitespace-nowrap px-4 py-3">Rota</th>
+                        <th className="whitespace-nowrap px-4 py-3">Estado</th>
+                        <th className="whitespace-nowrap px-4 py-3">
+                          Posição atual
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3">
+                          Chegada prevista
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {data.shipments.map((shipment, index) => (
+                        <tr
+                          key={`${shipment.cargo.code}-${index}`}
+                          className="align-top"
                         >
-                          Ver no mapa
-                        </a>
-                      </div>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
+                          <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950 dark:text-white">
+                            {shipment.cargo.code}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {shipment.cargo.origin} → {shipment.cargo.destination}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <StatusBadge
+                              tone={tripStatusBadgeTone[shipment.currentStatus]}
+                            >
+                              {tripStatusMeta[shipment.currentStatus].label}
+                            </StatusBadge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                              <MapPin
+                                className="size-4 shrink-0 text-brand-500"
+                                aria-hidden
+                              />
+                              {shipment.currentPosition ?? "—"}
+                            </div>
+                            {shipment.lastLocation ? (
+                              <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-400 dark:text-slate-500">
+                                <span className="inline-flex items-center gap-1">
+                                  <Navigation className="size-3" aria-hidden />
+                                  GPS{" "}
+                                  {formatRelativeTime(
+                                    shipment.lastLocation.recordedAt,
+                                  )}
+                                </span>
+                                <a
+                                  href={`https://www.openstreetmap.org/?mlat=${shipment.lastLocation.latitude}&mlon=${shipment.lastLocation.longitude}#map=12/${shipment.lastLocation.latitude}/${shipment.lastLocation.longitude}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+                                >
+                                  Ver no mapa
+                                </a>
+                              </div>
+                            ) : null}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {formatDate(shipment.arrivalEstimate)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
 
             <p className="text-center text-xs text-slate-400 dark:text-slate-500">

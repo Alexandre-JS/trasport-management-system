@@ -18,8 +18,15 @@
 >   O `package.json` do zip acrescenta `postinstall: prisma generate` e o build
 >   corre `nest build && prisma migrate deploy && node deploy-postbuild.js`
 >   (sem seed — ver a secção de CI/CD).
-> - O zip do web inclui `.env` com
->   `NEXT_PUBLIC_API_URL=https://api.lumactraspots.com/api/v1` (inlined no build).
+> - **Web: pré-compilado no CI** (desde 2026-07-21). O `stage-zip.sh web` corre
+>   `next build` (output standalone) dentro de uma cópia isolada de `apps/web`
+>   — que, sem o pnpm-workspace, gera o standalone "flat"
+>   (`.next/standalone/server.js`, com o seu próprio `node_modules`). O zip leva
+>   o standalone já construído, com `dependencies` vazias e `build` no-op, por
+>   isso o servidor **não instala nem compila** — só arranca
+>   `node .next/standalone/server.js`. Elimina os picos de CPU/RAM do
+>   `next build` no alojamento partilhado. O `NEXT_PUBLIC_API_URL` é embutido no
+>   build do CI (não no servidor).
 > - **Desde 2026-07-13 o deploy é automático via GitHub Actions** — ver a
 >   secção "Deploy automático (CI/CD)" abaixo.
 

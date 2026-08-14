@@ -12,9 +12,9 @@ import {
 } from "@/src/shared/utils/auth-session";
 import type { AuthResponse } from "@/src/shared/types/auth";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_URL ??
-  `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"}/api/v1`;
+// O browser usa sempre a origem da Web. O servidor Next encaminha /api/* para
+// API_ORIGIN, permitindo executar o mesmo build em qualquer infraestrutura.
+const apiBaseUrl = "/api/v1";
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;

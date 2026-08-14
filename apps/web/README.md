@@ -18,7 +18,7 @@ cp .env.example .env.local
 Ajuste a URL da API, se necessario:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+API_ORIGIN=http://localhost:3000
 ```
 
 Instale dependencias e rode o servidor:
@@ -47,4 +47,7 @@ PORT=3001 npm run start:prod
 
 Este projeto usa `output: "standalone"` no `next.config.ts`. Depois de `npm run build`, o script `postbuild` copia automaticamente `public` e `.next/static` para `.next/standalone`, deixando o pacote pronto para iniciar com `npm start`.
 
-Defina `NEXT_PUBLIC_API_URL` com a URL publica final da API antes de rodar `npm run build`, porque variaveis `NEXT_PUBLIC_*` sao embutidas no bundle do navegador durante o build.
+`API_ORIGIN` fica apenas no servidor. A URL usada pelo browser é sempre relativa
+(`/api/v1`), e o servidor Next encaminha os pedidos para a API. Assim, o mesmo
+build pode ser executado em VPS, Docker, serviços geridos ou hospedagem Node sem
+expor a origem interna da API nem depender de CORS no browser.

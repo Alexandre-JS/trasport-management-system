@@ -19,7 +19,6 @@ Ajuste a origem da API, se necessario:
 
 ```env
 API_ORIGIN=http://localhost:3000
-NEXT_PUBLIC_API_URL=/api/v1
 ```
 
 Instale dependencias e rode o servidor:
@@ -73,6 +72,6 @@ Rodar o servidor Next em produção:
 PORT=3001 npm run start:prod
 ```
 
-`API_ORIGIN` fica apenas no servidor. A URL pública usada pelo browser permanece
-relativa (`/api/v1`) e, por isso, não precisa ser reconstruída quando o domínio
-do frontend muda.
+`API_ORIGIN` fica apenas no servidor. A URL usada pelo browser é sempre relativa
+(`/api/v1`); variáveis `NEXT_PUBLIC_API_URL` antigas são ignoradas para impedir
+que o browser contorne o proxy do Vercel.

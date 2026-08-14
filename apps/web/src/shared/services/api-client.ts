@@ -12,9 +12,9 @@ import {
 } from "@/src/shared/utils/auth-session";
 import type { AuthResponse } from "@/src/shared/types/auth";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_URL ??
-  `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api"}/v1`;
+// A Web usa sempre o proxy same-origin do Next/Vercel. Isto impede que uma
+// variável NEXT_PUBLIC antiga faça o browser contornar o proxy e o CORS.
+const apiBaseUrl = "/api/v1";
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;

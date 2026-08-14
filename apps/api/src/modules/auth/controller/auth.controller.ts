@@ -7,6 +7,10 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import {
+  loginAccountTracker,
+  refreshSessionTracker,
+} from '../../../common/throttling/rate-limit-trackers';
 import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 import { Permissions } from '../../../core/auth/decorators/permissions.decorator';
 import { Public } from '../../../core/auth/decorators/public.decorator';
@@ -33,7 +37,9 @@ export class AuthController {
 
   @Post('login')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({
+    default: { limit: 5, ttl: 60000, getTracker: loginAccountTracker },
+  })
   @ApiOperation({ summary: 'Authenticate user and issue JWT tokens' })
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
@@ -43,7 +49,9 @@ export class AuthController {
 
   @Post('refresh')
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({
+    default: { limit: 10, ttl: 60000, getTracker: refreshSessionTracker },
+  })
   @ApiOperation({ summary: 'Refresh access and refresh tokens' })
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ description: 'Invalid refresh token' })

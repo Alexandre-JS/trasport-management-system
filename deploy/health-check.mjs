@@ -13,6 +13,12 @@ const targets = [
     expected: 'ready',
   },
   {
+    name: 'Web → API proxy',
+    url: process.env.WEB_API_HEALTH_URL ||
+      'https://lumactraspots.com/api/v1/auth/health',
+    expected: 'ready',
+  },
+  {
     name: 'Web',
     url: process.env.WEB_HEALTH_URL || 'https://lumactraspots.com/login',
   },

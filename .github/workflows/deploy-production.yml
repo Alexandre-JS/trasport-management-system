@@ -120,6 +120,7 @@ jobs:
       - name: Montar Web pré-compilada
         if: steps.scope.outputs.deploy_web == 'true'
         env:
+          API_ORIGIN: https://api.lumactraspots.com
           NEXT_PUBLIC_API_URL: https://api.lumactraspots.com/api/v1
         run: bash deploy/stage-zip.sh web "$RUNNER_TEMP/web.zip"
 

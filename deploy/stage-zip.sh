@@ -101,9 +101,13 @@ else
     "$STAGE/public/vercel.svg" \
     "$STAGE/public/window.svg"
 
-  # NEXT_PUBLIC_* é embutido no next build — tem de existir ANTES de compilar.
-  printf 'NEXT_PUBLIC_API_URL=%s\n' \
-    "${NEXT_PUBLIC_API_URL:-https://api.lumactraspots.com/api/v1}" > "$STAGE/.env"
+  # O rewrite same-origin /api/* é gerado durante o next build. Sem API_ORIGIN,
+  # o standalone ficaria preso ao fallback local 127.0.0.1:3000 e devolveria
+  # HTTP 500 no login da produção.
+  printf 'API_ORIGIN=%s\nNEXT_PUBLIC_API_URL=%s\n' \
+    "${API_ORIGIN:-https://api.lumactraspots.com}" \
+    "${NEXT_PUBLIC_API_URL:-https://api.lumactraspots.com/api/v1}" \
+    > "$STAGE/.env"
 
   # Pré-compilação no CI (não no servidor). Esta cópia isolada de apps/web não
   # tem o pnpm-workspace, por isso o Next produz o standalone "flat"

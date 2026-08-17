@@ -27,6 +27,11 @@ export class ContainerReturnRepository {
         id: true,
         currentStatus: true,
         cargo: { select: { type: true, containerNumber: true } },
+        deliveries: {
+          select: { podDocument: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
         containerReturn: { select: returnSelect },
       },
     });
@@ -97,7 +102,7 @@ export class ContainerReturnRepository {
         data: {
           returnedTo: dto.returnedTo ?? null,
           receiverName: dto.receiverName ?? null,
-          podDocument: dto.podDocument ?? null,
+          podDocument: dto.podDocument,
           observations: dto.observations ?? null,
           returnedAt: new Date(),
         },

@@ -35,6 +35,11 @@ export class ContainerReturnService {
         'A devolução só pode iniciar depois de a carga estar descarregada.',
       );
     }
+    if (!ctx.deliveries[0]?.podDocument) {
+      throw new BadRequestException(
+        'Attach the delivery POD before starting the container return.',
+      );
+    }
     if (ctx.containerReturn) {
       throw new BadRequestException('A devolução já foi iniciada.');
     }

@@ -336,12 +336,13 @@ export function TripDetailView({ id }: { id: string }) {
             </Section>
           </Card>
 
+          <DeliveryPodPanel tripId={trip.id} status={trip.currentStatus} />
+
           <ContainerReturnPanel
             tripId={trip.id}
             status={trip.currentStatus}
+            cargoType={trip.cargo.type}
           />
-
-          <DeliveryPodPanel tripId={trip.id} status={trip.currentStatus} />
 
           <Card className="p-5">
             <Section

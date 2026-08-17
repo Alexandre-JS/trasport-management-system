@@ -1,5 +1,5 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ConfirmContainerReturnDto {
   @ApiPropertyOptional({
@@ -14,12 +14,12 @@ export class ConfirmContainerReturnDto {
   @IsString()
   receiverName?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Documento POD que comprova a devolução (base64: foto/PDF)',
   })
-  @IsOptional()
   @IsString()
-  podDocument?: string;
+  @IsNotEmpty()
+  podDocument!: string;
 
   @ApiPropertyOptional({ description: 'Observações da devolução' })
   @IsOptional()

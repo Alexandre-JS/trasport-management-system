@@ -69,6 +69,8 @@ const tripSelect = {
       id: true,
       clientId: true,
       code: true,
+      type: true,
+      containerNumber: true,
       origin: true,
       destination: true,
     },

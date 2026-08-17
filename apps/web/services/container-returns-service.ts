@@ -15,9 +15,18 @@ export type ContainerReturn = {
 export type ConfirmContainerReturnPayload = {
   returnedTo?: string;
   receiverName?: string;
-  podDocument?: string;
+  podDocument: string;
   observations?: string;
 };
+
+export async function startContainerReturn(
+  tripId: string,
+): Promise<ContainerReturn> {
+  const { data } = await http.post<ContainerReturn>(
+    `/container-returns/${tripId}/start`,
+  );
+  return data;
+}
 
 export async function getContainerReturn(
   tripId: string,

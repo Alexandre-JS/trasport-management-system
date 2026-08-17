@@ -91,6 +91,8 @@ export type Trip = {
     id: string;
     clientId: string;
     code: string;
+    type: "CONTAINER" | "GRANEL" | "GERAL";
+    containerNumber: string | null;
     origin: string;
     destination: string;
   };

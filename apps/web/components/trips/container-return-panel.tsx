@@ -14,6 +14,7 @@ import { PrimaryButton } from "@/src/shared/components/action-button";
 import {
   confirmContainerReturn,
   getContainerReturn,
+  startContainerReturn,
 } from "@/services/container-returns-service";
 import { extractErrorMessage } from "@/services/http";
 import { useToast } from "@/providers/toast-provider";
@@ -22,6 +23,7 @@ import { formatDateTime } from "@/utils/format";
 import { openAttachment } from "@/src/shared/utils/open-attachment";
 
 const RETURN_STATUSES: TripStatus[] = [
+  "DISCHARGED",
   "CONTAINER_RETURN_PENDING",
   "CONTAINER_RETURNED",
 ];
@@ -35,9 +37,11 @@ const MAX_FILE_SIZE = 1024 * 1024;
 export function ContainerReturnPanel({
   tripId,
   status,
+  cargoType,
 }: {
   tripId: string;
   status: TripStatus;
+  cargoType: "CONTAINER" | "GRANEL" | "GERAL";
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,7 +50,7 @@ export function ContainerReturnPanel({
   const [observations, setObservations] = useState("");
   const [podDocument, setPodDocument] = useState("");
   const [fileName, setFileName] = useState("");
-  const enabled = RETURN_STATUSES.includes(status);
+  const enabled = cargoType === "CONTAINER" && RETURN_STATUSES.includes(status);
 
   const { data, isLoading } = useQuery({
     queryKey: ["container-return", tripId],
@@ -59,7 +63,7 @@ export function ContainerReturnPanel({
         returnedTo: returnedTo.trim() || undefined,
         receiverName: receiverName.trim() || undefined,
         observations: observations.trim() || undefined,
-        podDocument: podDocument || undefined,
+        podDocument,
       }),
     onSuccess: () => {
       toast({ title: "Devolução confirmada e POD registado", type: "success" });
@@ -69,6 +73,21 @@ export function ContainerReturnPanel({
     onError: (error) =>
       toast({
         title: "Não foi possível confirmar a devolução",
+        description: extractErrorMessage(error),
+        type: "error",
+      }),
+  });
+  const startReturn = useMutation({
+    mutationFn: () => startContainerReturn(tripId),
+    onSuccess: () => {
+      toast({ title: "Container return started", type: "success" });
+      void queryClient.invalidateQueries({ queryKey: ["container-return", tripId] });
+      void queryClient.invalidateQueries({ queryKey: ["trips"] });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
+    },
+    onError: (error) =>
+      toast({
+        title: "Unable to start the container return",
         description: extractErrorMessage(error),
         type: "error",
       }),
@@ -108,6 +127,27 @@ export function ContainerReturnPanel({
 
   if (!enabled) {
     return null;
+  }
+
+  if (status === "DISCHARGED") {
+    return (
+      <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+        <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+          Empty container return
+        </h3>
+        <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+          This container cargo has been discharged. Attach the Delivery POD,
+          then start the empty container return process.
+        </p>
+        <PrimaryButton
+          onClick={() => startReturn.mutate()}
+          loading={startReturn.isPending}
+          className="mt-3"
+        >
+          Start container return
+        </PrimaryButton>
+      </section>
+    );
   }
 
   return (

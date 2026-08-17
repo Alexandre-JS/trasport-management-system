@@ -31,16 +31,28 @@ export class HttpExceptionFilter implements ExceptionFilter {
       'message' in exceptionResponse
         ? (exceptionResponse as { message: string | string[] }).message
         : exceptionResponse;
+    const rateLimited = status === HttpStatus.TOO_MANY_REQUESTS;
+    const retryAfterHeader = response.getHeader('Retry-After');
+    const retryAfterSeconds = rateLimited
+      ? Math.max(1, Number(retryAfterHeader) || 60)
+      : undefined;
 
-    this.logger.error(
-      'Request failed',
-      exception instanceof Error ? exception.stack : undefined,
-      HttpExceptionFilter.name,
-    );
+    if (rateLimited) {
+      this.logger.warn('Request temporarily rate limited', HttpExceptionFilter.name);
+    } else {
+      this.logger.error(
+        'Request failed',
+        exception instanceof Error ? exception.stack : undefined,
+        HttpExceptionFilter.name,
+      );
+    }
 
     response.status(status).json({
       statusCode: status,
-      message,
+      message: rateLimited
+        ? 'Please wait before trying again.'
+        : message,
+      ...(retryAfterSeconds ? { retryAfterSeconds } : {}),
       path: request.url,
       timestamp: new Date().toISOString(),
     });

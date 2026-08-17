@@ -4,11 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { PrimaryButton } from "@/src/shared/components/action-button";
 import { useAuth } from "@/src/shared/hooks/use-auth";
-import { extractErrorMessage } from "@/src/shared/services/api-client";
+import {
+  extractErrorMessage,
+  getRateLimitWaitSeconds,
+} from "@/src/shared/services/api-client";
 import { useToast } from "@/providers/toast-provider";
 
 const loginSchema = z.object({
@@ -21,6 +24,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -40,7 +44,23 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    if (cooldownSeconds <= 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setCooldownSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [cooldownSeconds]);
+
   async function onSubmit(values: LoginFormValues) {
+    if (cooldownSeconds > 0) {
+      return;
+    }
+
     try {
       const user = await login(values);
       toast({ title: "Signed in successfully", type: "success" });
@@ -49,6 +69,13 @@ export function LoginForm() {
       const destination = user.role === "CLIENT" ? "/portal" : next;
       router.replace(destination);
     } catch (error) {
+      const waitSeconds = getRateLimitWaitSeconds(error);
+
+      if (waitSeconds !== null) {
+        setCooldownSeconds(waitSeconds);
+        return;
+      }
+
       const message = extractErrorMessage(error, "Invalid credentials.");
 
       setError("root", { message });
@@ -155,14 +182,29 @@ export function LoginForm() {
         </span>
       </div>
 
-      {errors.root ? (
+      {cooldownSeconds > 0 ? (
+        <p
+          role="status"
+          className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+        >
+          For your security, sign-in is temporarily paused. You can try again
+          in {cooldownSeconds} second{cooldownSeconds === 1 ? "" : "s"}.
+        </p>
+      ) : errors.root ? (
         <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           {errors.root.message}
         </p>
       ) : null}
 
-      <PrimaryButton type="submit" loading={isSubmitting} className="mt-6 w-full">
-        Sign in
+      <PrimaryButton
+        type="submit"
+        loading={isSubmitting}
+        disabled={cooldownSeconds > 0}
+        className="mt-6 w-full"
+      >
+        {cooldownSeconds > 0
+          ? `Try again in ${cooldownSeconds}s`
+          : "Sign in"}
       </PrimaryButton>
     </form>
   );

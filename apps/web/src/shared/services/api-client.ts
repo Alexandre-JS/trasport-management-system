@@ -267,6 +267,7 @@ function isAuthEndpoint(url?: string) {
 type ApiErrorBody = {
   message?: string | string[] | { message?: string | string[] };
   error?: string;
+  retryAfterSeconds?: number;
 };
 
 // Friendly messages for common API errors.
@@ -290,6 +291,19 @@ const statusMessages: Record<number, string> = {
   422: "Invalid data. Review the fields and try again.",
   429: "Too many attempts. Wait a moment and try again.",
 };
+
+export function getRateLimitWaitSeconds(error: unknown): number | null {
+  if (!(error instanceof AxiosError) || error.response?.status !== 429) {
+    return null;
+  }
+
+  const headerValue = error.response.headers["retry-after"];
+  const bodyValue = (error.response.data as ApiErrorBody | undefined)
+    ?.retryAfterSeconds;
+  const seconds = Number(headerValue ?? bodyValue);
+
+  return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : 60;
+}
 
 function serverMessage(data: ApiErrorBody | undefined): string | null {
   // O filtro da API pode devolver message como string, lista de validações

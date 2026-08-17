@@ -10,7 +10,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 30_000,
-            retry: 1,
+            // Evita duplicar tráfego quando a API responde 429. O utilizador
+            // pode repetir a ação depois do intervalo indicado pelo servidor.
+            retry: false,
             refetchOnWindowFocus: false,
           },
         },

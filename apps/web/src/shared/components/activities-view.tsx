@@ -41,7 +41,7 @@ import type { ActivitySheet, Trip } from "@/types/trip";
 import { formatDate } from "@/utils/format";
 import {
   isTerminalTripStatus,
-  nextTripStatus,
+  nextTripStatusForRoute,
   tripStatusBadgeTone,
   tripStatusMeta,
 } from "@/utils/trip-status";
@@ -378,7 +378,7 @@ function SheetTracking({
   }
 
   function advance(trip: Trip) {
-    const next = nextTripStatus(trip.currentStatus);
+    const next = nextTripStatusForRoute(trip.currentStatus, trip.borders);
     if (!next) return;
     updateStatus.mutate(
       { id: trip.id, payload: { currentStatus: next } },
@@ -486,7 +486,10 @@ function SheetTracking({
               </tr>
             ) : (
               trips.map((trip, index) => {
-                const next = nextTripStatus(trip.currentStatus);
+                const next = nextTripStatusForRoute(
+                  trip.currentStatus,
+                  trip.borders,
+                );
                 const terminal = isTerminalTripStatus(trip.currentStatus);
                 return (
                   <tr

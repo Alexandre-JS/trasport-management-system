@@ -45,7 +45,7 @@ import type { TripEventType } from "@/types/trip";
 import { formatDate, formatDateTime } from "@/utils/format";
 import {
   isTerminalTripStatus,
-  nextTripStatus,
+  nextTripStatusForRoute,
   tripEventTypeLabel,
   tripStatusBadgeTone,
   tripStatusMeta,
@@ -156,7 +156,7 @@ export function TripDetailView({ id }: { id: string }) {
   }
 
   const terminal = isTerminalTripStatus(trip.currentStatus);
-  const next = nextTripStatus(trip.currentStatus);
+  const next = nextTripStatusForRoute(trip.currentStatus, trip.borders);
   const events = trip.events ?? [];
 
   return (

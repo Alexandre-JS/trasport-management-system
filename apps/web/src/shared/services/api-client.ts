@@ -278,6 +278,10 @@ const serverMessageTranslations: Record<string, string> = {
   "Email already in use": "An account with this email already exists.",
   "User is already linked to another driver":
     "This account is already linked to another driver.",
+  "Trip has no pending border crossing — assign borders to the trip first":
+    "No pending border is configured for this trip. Open Edit trip, select the route borders in crossing order, save, and then advance the status.",
+  "Cannot change borders after a border crossing has started":
+    "The route can no longer be changed because a border crossing has already started. Review the recorded border events or contact an administrator.",
   "Internal server error":
     "Server error. Try again; if the problem persists, contact an administrator.",
 };

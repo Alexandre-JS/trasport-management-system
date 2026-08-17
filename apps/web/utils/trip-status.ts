@@ -54,6 +54,21 @@ export function nextTripStatus(status: TripStatus): TripStatus | null {
     : null;
 }
 
+/** Skip the border cycle when this route has no crossing left to process. */
+export function nextTripStatusForRoute(
+  status: TripStatus,
+  borders: BorderCrossing[],
+): TripStatus | null {
+  if (
+    (status === "DISPATCHED_ORIGIN" || status === "BORDER_CLEARED") &&
+    !borders.some((crossing) => !crossing.clearedAt)
+  ) {
+    return "ARRIVED";
+  }
+
+  return nextTripStatus(status);
+}
+
 export const tripStatusOptions: { label: string; value: TripStatus | "all" }[] =
   [
     { label: "All statuses", value: "all" },

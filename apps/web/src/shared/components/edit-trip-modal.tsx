@@ -7,6 +7,7 @@ import {
 } from "@/src/shared/components/action-button";
 import { Modal } from "@/components/ui/modal";
 import { useUpdateTrip } from "@/hooks/use-trips";
+import { useBorders } from "@/hooks/use-borders";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { Trip } from "@/types/trip";
@@ -47,6 +48,7 @@ function buildForm(trip: Trip | null) {
     dischargeDate: toDateInput(trip?.dischargeDate ?? null),
     currentPosition: trip?.currentPosition ?? "",
     remarks: trip?.remarks ?? "",
+    borderIds: trip?.borders.map((crossing) => crossing.border.id) ?? [],
   };
 }
 
@@ -56,6 +58,7 @@ function buildForm(trip: Trip | null) {
 export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
   const { toast } = useToast();
   const updateTrip = useUpdateTrip();
+  const bordersQuery = useBorders({ limit: 100, active: true, sortBy: "name" });
 
   const [form, setForm] = useState(() => buildForm(trip));
 
@@ -63,6 +66,12 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
 
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const allBorders = bordersQuery.data?.data ?? [];
+  const borderNameById = new Map(allBorders.map((border) => [border.id, border.name]));
+  const availableBorders = allBorders.filter(
+    (border) => !form.borderIds.includes(border.id),
+  );
 
   const trimmedOrUndefined = (value: string) => {
     const v = value.trim();
@@ -97,6 +106,7 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
           dischargeDate: toIsoDateTime(form.dischargeDate),
           currentPosition: trimmedOrUndefined(form.currentPosition),
           remarks: trimmedOrUndefined(form.remarks),
+          borderIds: form.borderIds,
         },
       },
       {
@@ -233,6 +243,61 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
             value={form.remarks}
             onChange={(e) => set("remarks")(e.target.value)}
           />
+        </Field>
+        <Field label="Route borders (in crossing order)" full>
+          <select
+            value=""
+            onChange={(event) => {
+              const borderId = event.target.value;
+              if (borderId) {
+                setForm((current) => ({
+                  ...current,
+                  borderIds: [...current.borderIds, borderId],
+                }));
+              }
+            }}
+            className={inputClass}
+          >
+            <option value="">Select a border to add…</option>
+            {availableBorders.map((border) => (
+              <option key={border.id} value={border.id}>
+                {border.name} · {border.countryA} — {border.countryB}
+              </option>
+            ))}
+          </select>
+          {form.borderIds.length > 0 ? (
+            <ol className="mt-2 flex flex-wrap gap-2">
+              {form.borderIds.map((borderId, index) => (
+                <li
+                  key={borderId}
+                  className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <span>
+                    {index + 1}. {borderNameById.get(borderId) ?? borderId}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${borderNameById.get(borderId) ?? "border"}`}
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        borderIds: current.borderIds.filter(
+                          (value) => value !== borderId,
+                        ),
+                      }))
+                    }
+                    className="text-slate-400 hover:text-rose-500"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Leave empty only when this route does not cross a border.
+            </p>
+          )}
         </Field>
       </div>
     </Modal>

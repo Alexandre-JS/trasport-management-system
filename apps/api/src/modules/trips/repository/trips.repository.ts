@@ -75,6 +75,14 @@ const tripSelect = {
       destination: true,
     },
   },
+  deliveries: {
+    select: { podDocument: true },
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+  },
+  containerReturn: {
+    select: { podDocument: true, returnedAt: true },
+  },
   driver: {
     select: {
       id: true,

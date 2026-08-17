@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ClipboardList,
   FileDown,
+  FileText,
   FileSpreadsheet,
   Pencil,
   Printer,
@@ -21,6 +22,7 @@ import { CargoShareCell } from "@/src/shared/components/cargo-share-cell";
 import { ClientShareCell } from "@/src/shared/components/client-share-cell";
 import { EditTripModal } from "@/src/shared/components/edit-trip-modal";
 import { ConfirmDialog } from "@/src/shared/components/confirm-dialog";
+import { TripDocumentsModal } from "@/components/trips/trip-documents-modal";
 import { ErrorState } from "@/src/shared/components/error-state";
 import { useActivities } from "@/hooks/use-activities";
 import {
@@ -199,6 +201,8 @@ const HEADERS = [
   "Arrive Date",
   "Discharge Date",
   "Current Position",
+  "Delivery POD",
+  "Container Return",
   "Estado",
   "Partilhar",
 ];
@@ -218,6 +222,7 @@ function SheetTracking({
   const deleteTrip = useDeleteTrip();
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [deletingTrip, setDeletingTrip] = useState<Trip | null>(null);
+  const [documentsTrip, setDocumentsTrip] = useState<Trip | null>(null);
 
   const { data, isLoading, refetch } = useTrips({
     clientId: sheet.clientId,
@@ -247,6 +252,14 @@ function SheetTracking({
         formatDate(trip.arrivalDate),
         formatDate(trip.dischargeDate),
         trip.currentPosition ?? "—",
+        trip.deliveries[0]?.podDocument ? "Attached" : "Missing",
+        trip.cargo.type === "CONTAINER"
+          ? trip.currentStatus === "CONTAINER_RETURNED"
+            ? "Returned"
+            : trip.currentStatus === "CONTAINER_RETURN_PENDING"
+              ? "Pending"
+              : "Not started"
+          : "N/A",
         tripStatusMeta[trip.currentStatus].label,
       ]),
     [trips],
@@ -264,6 +277,8 @@ function SheetTracking({
     "Arrive",
     "Discharge",
     "Current Position",
+    "Delivery POD",
+    "Container Return",
     "Estado",
   ];
 
@@ -465,7 +480,7 @@ function SheetTracking({
       />
 
       <div className="max-h-[calc(100vh-16rem)] overflow-auto rounded-md border border-slate-300 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <table className="min-w-[1650px] border-separate border-spacing-0 text-[11px] leading-4 tabular-nums [&_td]:!px-1.5 [&_td]:!py-1 [&_th]:!px-1.5 [&_th]:!py-1.5">
+        <table className="min-w-[1850px] border-separate border-spacing-0 text-[11px] leading-4 tabular-nums [&_td]:!px-1.5 [&_td]:!py-1 [&_th]:!px-1.5 [&_th]:!py-1.5">
           <thead className="sticky top-0 z-20 bg-slate-100 text-left font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <tr>
               {headers.map((h, i) => (
@@ -511,6 +526,37 @@ function SheetTracking({
                     <Td>{formatDate(trip.arrivalDate)}</Td>
                     <Td>{formatDate(trip.dischargeDate)}</Td>
                     <Td>{trip.currentPosition ?? "—"}</Td>
+                    <Td>
+                      {isPodAvailable(trip) ? (
+                        <button
+                          type="button"
+                          onClick={() => setDocumentsTrip(trip)}
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 font-medium ${trip.deliveries[0]?.podDocument ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300" : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300"}`}
+                        >
+                          <FileText className="size-3" aria-hidden />
+                          {trip.deliveries[0]?.podDocument
+                            ? "View POD"
+                            : "Add POD"}
+                        </button>
+                      ) : (
+                        <span className="text-slate-400">After discharge</span>
+                      )}
+                    </Td>
+                    <Td>
+                      {trip.cargo.type !== "CONTAINER" ? (
+                        <span className="text-slate-400">N/A</span>
+                      ) : isPodAvailable(trip) ? (
+                        <button
+                          type="button"
+                          onClick={() => setDocumentsTrip(trip)}
+                          className="rounded-md border border-brand-200 px-2 py-1 font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300"
+                        >
+                          {containerReturnAction(trip)}
+                        </button>
+                      ) : (
+                        <span className="text-slate-400">After discharge</span>
+                      )}
+                    </Td>
                     <td className="whitespace-nowrap border-b border-r border-slate-200 px-3 py-2 dark:border-slate-800">
                       <div className="flex items-center gap-2">
                         <StatusBadge tone={tripStatusBadgeTone[trip.currentStatus]}>
@@ -579,6 +625,10 @@ function SheetTracking({
         onClose={() => setEditingTrip(null)}
         onSaved={() => void refetch()}
       />
+      <TripDocumentsModal
+        trip={documentsTrip}
+        onClose={() => setDocumentsTrip(null)}
+      />
       <ConfirmDialog
         open={deletingTrip !== null}
         title="Eliminar viagem?"
@@ -593,6 +643,20 @@ function SheetTracking({
       />
     </div>
   );
+}
+
+function isPodAvailable(trip: Trip) {
+  return [
+    "DISCHARGED",
+    "CONTAINER_RETURN_PENDING",
+    "CONTAINER_RETURNED",
+  ].includes(trip.currentStatus);
+}
+
+function containerReturnAction(trip: Trip) {
+  if (trip.currentStatus === "CONTAINER_RETURNED") return "View return";
+  if (trip.currentStatus === "CONTAINER_RETURN_PENDING") return "Add return POD";
+  return "Start return";
 }
 
 function Td({

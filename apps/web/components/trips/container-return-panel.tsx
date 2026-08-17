@@ -50,7 +50,10 @@ export function ContainerReturnPanel({
   const [observations, setObservations] = useState("");
   const [podDocument, setPodDocument] = useState("");
   const [fileName, setFileName] = useState("");
-  const enabled = cargoType === "CONTAINER" && RETURN_STATUSES.includes(status);
+  const [localStatus, setLocalStatus] = useState<TripStatus | null>(null);
+  const effectiveStatus = localStatus ?? status;
+  const enabled =
+    cargoType === "CONTAINER" && RETURN_STATUSES.includes(effectiveStatus);
 
   const { data, isLoading } = useQuery({
     queryKey: ["container-return", tripId],
@@ -66,6 +69,7 @@ export function ContainerReturnPanel({
         podDocument,
       }),
     onSuccess: () => {
+      setLocalStatus("CONTAINER_RETURNED");
       toast({ title: "Devolução confirmada e POD registado", type: "success" });
       void queryClient.invalidateQueries({ queryKey: ["container-return", tripId] });
       void queryClient.invalidateQueries({ queryKey: ["trips"] });
@@ -80,6 +84,7 @@ export function ContainerReturnPanel({
   const startReturn = useMutation({
     mutationFn: () => startContainerReturn(tripId),
     onSuccess: () => {
+      setLocalStatus("CONTAINER_RETURN_PENDING");
       toast({ title: "Container return started", type: "success" });
       void queryClient.invalidateQueries({ queryKey: ["container-return", tripId] });
       void queryClient.invalidateQueries({ queryKey: ["trips"] });
@@ -129,7 +134,7 @@ export function ContainerReturnPanel({
     return null;
   }
 
-  if (status === "DISCHARGED") {
+  if (effectiveStatus === "DISCHARGED") {
     return (
       <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
         <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
@@ -168,21 +173,21 @@ export function ContainerReturnPanel({
         </div>
         <span
           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-            status === "CONTAINER_RETURN_PENDING"
+            effectiveStatus === "CONTAINER_RETURN_PENDING"
               ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
               : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
           }`}
         >
-          {status === "CONTAINER_RETURN_PENDING" ? (
+          {effectiveStatus === "CONTAINER_RETURN_PENDING" ? (
             <Clock3 className="size-3.5" aria-hidden />
           ) : (
             <CheckCircle2 className="size-3.5" aria-hidden />
           )}
-          {status === "CONTAINER_RETURN_PENDING" ? "Pendente" : "Devolvido"}
+          {effectiveStatus === "CONTAINER_RETURN_PENDING" ? "Pendente" : "Devolvido"}
         </span>
       </div>
 
-      {status === "CONTAINER_RETURN_PENDING" ? (
+      {effectiveStatus === "CONTAINER_RETURN_PENDING" ? (
         <div className="flex flex-col gap-5 p-4">
           <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
             O container foi descarregado. Confirme a devolução e anexe o POD quando o depósito receber o container.

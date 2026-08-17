@@ -45,6 +45,8 @@ export function DeliveryPodPanel({
       setDocument("");
       setFileName("");
       void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: ["trips"] });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
     onError: (error) =>
       toast({

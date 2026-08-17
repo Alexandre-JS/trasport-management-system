@@ -96,6 +96,11 @@ export type Trip = {
     origin: string;
     destination: string;
   };
+  deliveries: Array<{ podDocument: string | null }>;
+  containerReturn: {
+    podDocument: string | null;
+    returnedAt: string | null;
+  } | null;
   driver: {
     id: string;
     fullName: string;

@@ -97,7 +97,9 @@ jobs:
           API_ENV_PRODUCTION: ${{ secrets.API_ENV_PRODUCTION }}
         run: |
           [ -n "$HOSTINGER_API_TOKEN" ] || { echo "::error::Secret HOSTINGER_API_TOKEN em falta"; exit 1; }
-          [ -n "$API_ENV_PRODUCTION" ] || { echo "::error::Secret API_ENV_PRODUCTION em falta"; exit 1; }
+          if [ "${{ steps.scope.outputs.deploy_api }}" = "true" ]; then
+            [ -n "$API_ENV_PRODUCTION" ] || { echo "::error::Secret API_ENV_PRODUCTION em falta"; exit 1; }
+          fi
 
       - name: Instalar dependências no GitHub
         run: pnpm install --frozen-lockfile
@@ -136,11 +138,13 @@ jobs:
           if [ "${{ steps.scope.outputs.deploy_web }}" = "true" ]; then
             unzip -t "$RUNNER_TEMP/web.zip"
           fi
-          unzip -t "$RUNNER_TEMP/api.zip"
-          unzip -l "$RUNNER_TEMP/api.zip" | grep -q 'dist/src/main.js'
-          if unzip -l "$RUNNER_TEMP/api.zip" | grep -q 'src/main.ts'; then
-            echo "::error::O ZIP da API contém source TypeScript"
-            exit 1
+          if [ "${{ steps.scope.outputs.deploy_api }}" = "true" ]; then
+            unzip -t "$RUNNER_TEMP/api.zip"
+            unzip -l "$RUNNER_TEMP/api.zip" | grep -q 'dist/src/main.js'
+            if unzip -l "$RUNNER_TEMP/api.zip" | grep -q 'src/main.ts'; then
+              echo "::error::O ZIP da API contém source TypeScript"
+              exit 1
+            fi
           fi
 
       # O subdomínio da API pertence à mesma website Hostinger do domínio

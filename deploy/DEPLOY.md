@@ -1,6 +1,6 @@
 # Guia de Deploy — SGRTC / LUMAC
 
-> ✅ **PRODUÇÃO ACTUAL (2026-07-11): Hostinger Business (hospedagem partilhada).**
+> ✅ **PRODUÇÃO ACTUAL (verificada em 2026-08-17): Hostinger Business (hospedagem partilhada).**
 > Ao contrário do que este guia assumia, a hospedagem Node.js partilhada da
 > Hostinger suporta esta stack (processos persistentes via Passenger/lsnode e
 > WebSocket confirmado a funcionar). O plano VPS abaixo continua válido como
@@ -39,8 +39,9 @@ Cada push para **`main`** (e só para `main`) passa por um único workflow. Outr
 branches não tocam na produção até fazer merge:
 
 - Mudanças só em `apps/api/**` → publica apenas `api.lumactraspots.com`.
-- Mudanças em `apps/web/**` → publica Web e depois API, devido à pasta
-  partilhada atual da Hostinger.
+- Mudanças em `apps/web/**` → publica API e depois Web, porque os dois domínios
+  pertencem à mesma website Hostinger e o Web precisa restaurar por último o
+  entry point do domínio principal.
 - Mudanças em `apps-mobile/**` → **nada** (vai para a Play Store)
 
 O workflow [deploy-production.yml](../.github/workflows/deploy-production.yml)
@@ -50,12 +51,13 @@ instala, valida, testa e compila no GitHub. Só depois monta os ZIPs com
 (upload TUS + ativação do runtime). Os dois serviços são verificados por HTTP
 no fim; deploys concorrentes entram numa fila única.
 
-> ⚠️ **Pegadinha da pasta partilhada**: no servidor, o web instala na raiz de
-> `~/domains/lumactraspots.com/nodejs/` e a API em `nodejs/api/`. O deploy do
-> **web limpa a raiz inteira**, apagando os ficheiros da API (a app pode
-> continuar a servir a partir da memória até ao próximo restart — e aí dá 503).
-> Por isso o workflow do web **redeploya sempre a API no fim**. O deploy da API
-> não afeta o web. Diagnóstico: workflow manual "Debug Hostinger"
+> ⚠️ **Aplicações relacionadas na Hostinger**: `api.lumactraspots.com` está
+> registado como subdomínio da mesma website/conta de `lumactraspots.com`, não
+> como uma segunda website isolada. Em 2026-08-17 ficou comprovado que publicar
+> a API por último fazia o domínio principal arrancar o NestJS: `/login`
+> devolvia `Cannot GET /login`. Por isso, quando ambos mudam, o workflow publica
+> **API primeiro e Web por último** e só termina se API direta, proxy `/api` e
+> `/login` passarem nos testes externos. Diagnóstico: workflow manual "Debug Hostinger"
 > ([hostinger-debug.yml](../.github/workflows/hostinger-debug.yml)) lê logs de
 > build e corre comandos de leitura no servidor via cron temporário.
 
@@ -69,17 +71,18 @@ no fim; deploys concorrentes entram numa fila única.
 **Deploy manual** (sem CI), a partir da raiz do repo:
 
 ```bash
-# Web primeiro
-bash deploy/stage-zip.sh web
-HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs lumactraspots.com deploy/dist-zips/web.zip
-
-# API sempre por último, pois o deploy Web limpa a pasta Node partilhada
+# API primeiro
 bash deploy/stage-zip.sh api
 HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs api.lumactraspots.com deploy/dist-zips/api.zip
+
+# Web sempre por último para restaurar o entry point do domínio principal
+bash deploy/stage-zip.sh web
+HOSTINGER_API_TOKEN=… HOSTINGER_ENTRY_FILE=server.js \
+  node deploy/hostinger-deploy.mjs lumactraspots.com deploy/dist-zips/web.zip
 ```
 
 Também dá para disparar o workflow à mão no GitHub
-(Actions → Deploy Production → *Run workflow*) e escolher `all` ou `api`. A API corre
+(Actions → Deploy Production → *Run workflow*) e escolher `all`, `api` ou `web`. A API corre
 `prisma migrate deploy` no servidor — migrations novas são aplicadas
 automaticamente (nunca apaga dados; cuidado apenas ao escrever migrations
 destrutivas). O `prisma db seed` **não** corre no deploy desde 2026-07-13:

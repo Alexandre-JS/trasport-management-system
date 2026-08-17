@@ -57,7 +57,7 @@ function notifyConnection(status: ConnectionStatus) {
 
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 25000,
+  timeout: 45000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -65,7 +65,7 @@ export const apiClient = axios.create({
 
 const refreshClient = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 25000,
+  timeout: 60000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -77,6 +77,19 @@ export function onSessionExpired(handler: () => void) {
 
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
+  const method = config.method?.toUpperCase() ?? "GET";
+  const readOnly = method === "GET" || method === "HEAD";
+  const slowConnection = hasSlowConnection();
+
+  // Writes get more time because a client-side timeout does not prove that the
+  // server cancelled the operation. This reduces uncertain/duplicate submits.
+  config.timeout = readOnly
+    ? slowConnection
+      ? 60_000
+      : 45_000
+    : slowConnection
+      ? 90_000
+      : 75_000;
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -84,6 +97,24 @@ apiClient.interceptors.request.use((config) => {
 
   return config;
 });
+
+function hasSlowConnection() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  const connection = (
+    navigator as Navigator & {
+      connection?: { effectiveType?: string; saveData?: boolean };
+    }
+  ).connection;
+
+  return (
+    connection?.saveData === true ||
+    connection?.effectiveType === "slow-2g" ||
+    connection?.effectiveType === "2g"
+  );
+}
 
 apiClient.interceptors.response.use(
   (response) => {
@@ -306,6 +337,10 @@ export function extractErrorMessage(
     }
 
     if (error.code === "ECONNABORTED") {
+      const method = error.config?.method?.toUpperCase();
+      if (method && method !== "GET" && method !== "HEAD") {
+        return "The connection is slow. Check whether the change was saved before submitting it again.";
+      }
       return "We couldn't complete the request right now. Please try again.";
     }
 

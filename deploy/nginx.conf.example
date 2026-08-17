@@ -14,6 +14,10 @@ server {
     listen 80;
     server_name api.SEU-DOMINIO.com;
 
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types application/json text/plain text/css application/javascript;
+
     # Corpo até 2MB (fotos base64 de incidentes — casa com o limite do main.ts).
     client_max_body_size 2m;
 
@@ -30,7 +34,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        proxy_read_timeout 60s;
+        proxy_connect_timeout 15s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
     }
 }
 
@@ -38,6 +44,10 @@ server {
 server {
     listen 80;
     server_name app.SEU-DOMINIO.com;
+
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types application/json text/plain text/css application/javascript;
 
     # Same-origin API. This avoids browser CORS and bypasses an unnecessary
     # Next.js hop when both processes run behind this reverse proxy.
@@ -52,7 +62,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        proxy_read_timeout 60s;
+        proxy_connect_timeout 15s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
     }
 
     location / {
@@ -66,5 +78,9 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_connect_timeout 15s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
     }
 }

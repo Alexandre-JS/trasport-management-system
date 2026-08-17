@@ -21,6 +21,7 @@ import { CargoShareCell } from "@/src/shared/components/cargo-share-cell";
 import { ClientShareCell } from "@/src/shared/components/client-share-cell";
 import { EditTripModal } from "@/src/shared/components/edit-trip-modal";
 import { ConfirmDialog } from "@/src/shared/components/confirm-dialog";
+import { ErrorState } from "@/src/shared/components/error-state";
 import { useActivities } from "@/hooks/use-activities";
 import {
   useDeleteTrip,
@@ -59,7 +60,7 @@ export function ActivitiesView() {
 }
 
 function ActivitiesList({ onOpen }: { onOpen: (s: ActivitySheet) => void }) {
-  const { data, isLoading, isError, refetch, isFetching } = useActivities();
+  const { data, isLoading, isError, error, refetch, isFetching } = useActivities();
   const sheets = data ?? [];
 
   return (
@@ -80,12 +81,7 @@ function ActivitiesList({ onOpen }: { onOpen: (s: ActivitySheet) => void }) {
       {isLoading ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">A carregar…</p>
       ) : isError ? (
-        <div className="flex flex-col items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950/40">
-          <p className="text-sm text-rose-700 dark:text-rose-300">
-            Não foi possível carregar as atividades.
-          </p>
-          <ActionButton onClick={() => void refetch()}>Tentar de novo</ActionButton>
-        </div>
+        <ErrorState error={error} onAction={() => void refetch()} />
       ) : sheets.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 bg-white px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900">
           <ClipboardList className="mx-auto size-8 text-slate-400" aria-hidden />

@@ -34,13 +34,13 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 export function PortalShipmentDetail({ id }: { id: string }) {
-  const { data: shipment, isLoading, isError, refetch } = useMyShipment(id);
+  const { data: shipment, isLoading, isError, error, refetch } = useMyShipment(id);
 
   if (isLoading) return <PageLoader />;
   if (isError || !shipment) {
     return (
       <ErrorState
-        title="Não foi possível carregar esta carga"
+        error={error}
         onAction={() => void refetch()}
       />
     );

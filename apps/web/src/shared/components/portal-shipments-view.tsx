@@ -27,7 +27,7 @@ function bordersOf(s: PortalShipment) {
 
 export function PortalShipmentsView() {
   const { user } = useAuth();
-  const { data, isLoading, isError, refetch } = useMyShipments();
+  const { data, isLoading, isError, error, refetch } = useMyShipments();
   const shipments = data ?? [];
 
   return (
@@ -48,7 +48,7 @@ export function PortalShipmentsView() {
         <PageLoader />
       ) : isError ? (
         <ErrorState
-          title="Não foi possível carregar as suas cargas"
+          error={error}
           onAction={() => void refetch()}
         />
       ) : shipments.length === 0 ? (

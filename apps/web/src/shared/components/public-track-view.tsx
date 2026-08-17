@@ -1,9 +1,10 @@
 "use client";
 
-import { MapPin, Navigation, PackageX } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { ClientSupportCard } from "@/src/shared/components/client-support-card";
+import { ErrorState } from "@/src/shared/components/error-state";
 import { GpsLocationCard } from "@/src/shared/components/gps-location-card";
 import { PageLoader } from "@/src/shared/components/page-loader";
 import { PrintButton } from "@/src/shared/components/print-button";
@@ -102,7 +103,7 @@ const columns: TrackingColumn[] = [
 ];
 
 export function PublicTrackView({ token }: { token: string }) {
-  const { data, isLoading, isError } = usePublicTracking(token);
+  const { data, isLoading, isError, error, refetch } = usePublicTracking(token);
   const shipments = data?.shipments ?? [];
   const visibleColumns = columns.filter((column) => column.visible(shipments));
   const singleShipment = shipments.length === 1 ? shipments[0] : undefined;
@@ -129,7 +130,7 @@ export function PublicTrackView({ token }: { token: string }) {
         {isLoading ? (
           <PageLoader />
         ) : isError || !data ? (
-          <InvalidTracking />
+          <ErrorState error={error} onAction={() => void refetch()} />
         ) : (
           <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -322,20 +323,6 @@ function SingleShipmentDetails({ shipment }: { shipment: PublicShipment }) {
         )}
       </div>
     </>
-  );
-}
-
-function InvalidTracking() {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white px-6 py-14 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <PackageX className="mx-auto size-8 text-slate-400" aria-hidden />
-      <h1 className="mt-3 text-base font-semibold text-slate-900 dark:text-slate-100">
-        Invalid tracking link
-      </h1>
-      <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
-        This link does not match any shipment. Check the address or contact LUMAC.
-      </p>
-    </div>
   );
 }
 

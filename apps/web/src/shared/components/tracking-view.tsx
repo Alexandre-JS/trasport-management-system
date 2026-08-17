@@ -49,7 +49,7 @@ const statusColor: Record<TripStatus, string> = {
 
 export function TrackingView() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data, isLoading, isError, refetch } = useTrips({
+  const { data, isLoading, isError, error, refetch } = useTrips({
     page: 1,
     limit: 100,
     sortBy: "createdAt",
@@ -110,7 +110,7 @@ export function TrackingView() {
         <PageLoader />
       ) : isError ? (
         <ErrorState
-          title="Não foi possível carregar o rastreamento"
+          error={error}
           onAction={() => void refetch()}
         />
       ) : (

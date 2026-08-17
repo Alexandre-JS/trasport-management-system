@@ -78,7 +78,7 @@ export function TripsListView({
     [page, search, status],
   );
 
-  const { data, isLoading, isError, refetch, isFetching } = useTrips(params);
+  const { data, isLoading, isError, error, refetch, isFetching } = useTrips(params);
 
   const trips = data?.data ?? [];
   const meta = data?.meta;
@@ -181,8 +181,7 @@ export function TripsListView({
         <PageLoader />
       ) : isError ? (
         <ErrorState
-          title="Não foi possível carregar as viagens"
-          description="Verifique a ligação à API e tente novamente."
+          error={error}
           onAction={() => void refetch()}
         />
       ) : (

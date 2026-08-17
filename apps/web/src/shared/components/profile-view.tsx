@@ -88,8 +88,7 @@ export function ProfileView() {
   if (profileQuery.isError || !profileQuery.data) {
     return (
       <ErrorState
-        title="Não foi possível carregar o perfil"
-        description={extractErrorMessage(profileQuery.error)}
+        error={profileQuery.error}
         onAction={() => void profileQuery.refetch()}
       />
     );

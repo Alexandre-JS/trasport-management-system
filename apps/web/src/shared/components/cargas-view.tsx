@@ -112,7 +112,7 @@ export function CargasView({
     [page, search, clientId, status],
   );
 
-  const { data, isLoading, isError, refetch, isFetching } = useCargo(params);
+  const { data, isLoading, isError, error, refetch, isFetching } = useCargo(params);
   const cargos = data?.data ?? [];
   const meta = data?.meta;
 
@@ -294,7 +294,7 @@ export function CargasView({
         <PageLoader />
       ) : isError ? (
         <ErrorState
-          title="Não foi possível carregar as cargas"
+          error={error}
           onAction={() => void refetch()}
         />
       ) : (

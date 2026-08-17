@@ -109,7 +109,7 @@ function SummaryItem({
 
 export function TripDetailView({ id }: { id: string }) {
   const { toast } = useToast();
-  const { data: trip, isLoading, isError, refetch } = useTrip(id);
+  const { data: trip, isLoading, isError, error, refetch } = useTrip(id);
 
   const [driverId, setDriverId] = useState("");
   const [truckId, setTruckId] = useState("");
@@ -149,7 +149,7 @@ export function TripDetailView({ id }: { id: string }) {
   if (isError || !trip) {
     return (
       <ErrorState
-        title="Não foi possível carregar a viagem"
+        error={error}
         onAction={() => void refetch()}
       />
     );

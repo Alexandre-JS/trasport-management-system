@@ -305,6 +305,113 @@ export function getRateLimitWaitSeconds(error: unknown): number | null {
   return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : 60;
 }
 
+export type ErrorPresentation = {
+  title: string;
+  description: string;
+  code?: string;
+};
+
+/** One user-facing error language for pages, forms and support reports. */
+export function getErrorPresentation(error: unknown): ErrorPresentation {
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    const code = status ? `HTTP ${status}` : error.code;
+
+    if (!error.response) {
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        return {
+          title: "No internet connection",
+          description:
+            "Check Wi-Fi or mobile data. The system will reconnect when your connection returns.",
+          code,
+        };
+      }
+      if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+        return {
+          title: "The connection is taking longer than expected",
+          description:
+            "Your internet may be slow. Wait a moment and try again; before repeating a saved action, check whether it was completed.",
+          code,
+        };
+      }
+      return {
+        title: "Unable to reach the server",
+        description:
+          "Check your connection and try again. If other pages also fail, contact the system administrator.",
+        code,
+      };
+    }
+
+    if (status === 401) {
+      return {
+        title: "Your session has expired",
+        description: "Sign in again to continue safely.",
+        code,
+      };
+    }
+    if (status === 403) {
+      return {
+        title: "Access not permitted",
+        description:
+          "Your account does not have permission for this area. Contact an administrator if you need access.",
+        code,
+      };
+    }
+    if (status === 404) {
+      return {
+        title: "Information not found",
+        description:
+          "This record may have been removed or changed. Return to the list and refresh it.",
+        code,
+      };
+    }
+    if (status === 409) {
+      return {
+        title: "The information has changed",
+        description:
+          "Refresh the page, review the latest data and submit the action again.",
+        code,
+      };
+    }
+    if (status === 429) {
+      const seconds = getRateLimitWaitSeconds(error) ?? 60;
+      return {
+        title: "Please wait before trying again",
+        description: `The system will accept another attempt in approximately ${seconds} seconds.`,
+        code,
+      };
+    }
+    if (status && [502, 503, 504].includes(status)) {
+      return {
+        title: "The service is temporarily unavailable",
+        description:
+          "The system is reconnecting. Wait a moment and try again; if this continues, report the error code to the administrator.",
+        code,
+      };
+    }
+    if (status && status >= 500) {
+      return {
+        title: "The server could not complete this request",
+        description:
+          "Try again once. If the problem continues, contact the administrator and provide the error code below.",
+        code,
+      };
+    }
+
+    return {
+      title: "The request could not be completed",
+      description: extractErrorMessage(error),
+      code,
+    };
+  }
+
+  return {
+    title: "Something went wrong",
+    description:
+      "Try again. If the problem continues, contact the system administrator.",
+  };
+}
+
 function serverMessage(data: ApiErrorBody | undefined): string | null {
   // O filtro da API pode devolver message como string, lista de validações
   // ou objeto aninhado ({ message, error, statusCode }).
@@ -318,6 +425,10 @@ function serverMessage(data: ApiErrorBody | undefined): string | null {
   }
 
   if (typeof raw === "string" && raw.trim()) {
+    // Framework/class names are useful in server logs, never as user guidance.
+    if (/\b(exception|stack|traceback)\b/i.test(raw)) {
+      return null;
+    }
     return serverMessageTranslations[raw] ?? raw;
   }
 
@@ -332,6 +443,11 @@ export function extractErrorMessage(
     if (error.response) {
       const status = error.response.status;
       const message = serverMessage(error.response.data as ApiErrorBody);
+
+      if (status === 429) {
+        const seconds = getRateLimitWaitSeconds(error) ?? 60;
+        return `Please wait ${seconds} seconds before trying again.`;
+      }
 
       if (status >= 500) {
         // Em erros do servidor a mensagem técnica não ajuda o utilizador.

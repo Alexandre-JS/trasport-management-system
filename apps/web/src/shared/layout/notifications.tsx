@@ -23,6 +23,7 @@ import {
 import type { NotificationType } from "@/types/notification";
 import { formatDateTime } from "@/utils/format";
 import { cn } from "@/src/shared/utils/cn";
+import { getErrorPresentation } from "@/src/shared/services/api-client";
 
 const TYPE_META: Record<
   NotificationType,
@@ -52,6 +53,7 @@ export function Notifications() {
     () => notificationsQuery.data?.data ?? [],
     [notificationsQuery.data],
   );
+  const notificationsError = getErrorPresentation(notificationsQuery.error);
 
   return (
     <div ref={containerRef} className="relative">
@@ -103,7 +105,10 @@ export function Notifications() {
                   aria-hidden
                 />
                 <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Unable to load notifications.
+                  {notificationsError.title}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  {notificationsError.description}
                 </p>
                 <button
                   type="button"

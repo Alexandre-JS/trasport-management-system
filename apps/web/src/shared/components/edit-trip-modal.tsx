@@ -69,9 +69,18 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const allBorders = bordersQuery.data?.data ?? [];
-  const borderNameById = new Map(allBorders.map((border) => [border.id, border.name]));
+  const borderNameById = new Map([
+    ...trip.borders.map((crossing) => [
+      crossing.border.id,
+      crossing.border.name,
+    ] as const),
+    ...allBorders.map((border) => [border.id, border.name] as const),
+  ]);
   const availableBorders = allBorders.filter(
     (border) => !form.borderIds.includes(border.id),
+  );
+  const borderRouteStarted = trip.borders.some(
+    (crossing) => crossing.arrivedAt !== null,
   );
 
   const trimmedOrUndefined = (value: string) => {
@@ -88,6 +97,12 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
       toast({ title: "Tonelagem inválida", type: "error" });
       return;
     }
+    const originalBorderIds = trip.borders.map(
+      (crossing) => crossing.border.id,
+    );
+    const bordersChanged =
+      originalBorderIds.length !== form.borderIds.length ||
+      originalBorderIds.some((id, index) => id !== form.borderIds[index]);
 
     updateTrip.mutate(
       {
@@ -107,7 +122,7 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
           dischargeDate: toIsoDateTime(form.dischargeDate),
           currentPosition: trimmedOrUndefined(form.currentPosition),
           remarks: trimmedOrUndefined(form.remarks),
-          borderIds: form.borderIds,
+          ...(bordersChanged ? { borderIds: form.borderIds } : {}),
         },
       },
       {
@@ -248,6 +263,7 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
         <Field label="Route borders (in crossing order)" full>
           <select
             value=""
+            disabled={borderRouteStarted}
             onChange={(event) => {
               const borderId = event.target.value;
               if (borderId) {
@@ -257,7 +273,7 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
                 }));
               }
             }}
-            className={inputClass}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
           >
             <option value="">Select a border to add…</option>
             {availableBorders.map((border) => (
@@ -278,6 +294,7 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
                   </span>
                   <button
                     type="button"
+                    disabled={borderRouteStarted}
                     aria-label={`Remove ${borderNameById.get(borderId) ?? "border"}`}
                     onClick={() =>
                       setForm((current) => ({
@@ -287,18 +304,24 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
                         ),
                       }))
                     }
-                    className="text-slate-400 hover:text-rose-500"
+                    className="text-slate-400 hover:text-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     ×
                   </button>
                 </li>
               ))}
             </ol>
-          ) : (
+          ) : !borderRouteStarted ? (
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Leave empty only when this route does not cross a border.
             </p>
-          )}
+          ) : null}
+          {borderRouteStarted ? (
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+              The route is locked because a border crossing has already
+              started. Other trip information can still be edited.
+            </p>
+          ) : null}
         </Field>
       </div>
       <div className="mt-5">

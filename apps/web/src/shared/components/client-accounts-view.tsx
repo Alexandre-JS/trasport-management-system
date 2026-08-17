@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { AccessDeliveryPanel, type AccessDelivery } from "@/src/shared/components/access-delivery-panel";
 import { PrimaryButton } from "@/src/shared/components/action-button";
@@ -48,6 +49,7 @@ export function ClientAccountsView({
   const { toast } = useToast();
   const [form, setForm] = useState(EMPTY);
   const [createdAccess, setCreatedAccess] = useState<AccessDelivery | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const clients = useClients({ limit: 100, isActive: true });
   const createAccount = useCreateClientAccount();
 
@@ -156,17 +158,33 @@ export function ClientAccountsView({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">Palavra-passe inicial</Label>
-            <input
-              id="password"
-              type="text"
-              value={form.password}
-              onChange={(event) => set("password", event.target.value)}
-              placeholder="Mínimo 8 caracteres"
-              className={inputClass}
-            />
+            <Label htmlFor="password">Initial password</Label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={(event) => set("password", event.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                className={`${inputClass} pr-10`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" aria-hidden />
+                ) : (
+                  <Eye className="size-4" aria-hidden />
+                )}
+              </button>
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              O cliente pode alterá-la depois no perfil.
+              The client can change it later from their profile.
             </p>
           </div>
 

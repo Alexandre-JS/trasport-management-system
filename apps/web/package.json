@@ -13,9 +13,6 @@
     "start:prod": "node scripts/start-standalone.mjs",
     "lint": "eslint"
   },
-  "engines": {
-    "node": ">=20.9.0"
-  },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
     "@tanstack/react-query": "^5.101.2",

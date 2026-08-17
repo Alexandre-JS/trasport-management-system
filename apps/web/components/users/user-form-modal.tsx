@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -80,6 +81,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
   const [createdAccess, setCreatedAccess] = useState<AccessDelivery | null>(
     null,
   );
+  const [showPassword, setShowPassword] = useState(false);
 
   const isDriverRole = (roleId: string) =>
     roles?.find((role) => role.id === roleId)?.name === "DRIVER";
@@ -155,6 +157,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
 
   function handleClose() {
     setCreatedAccess(null);
+    setShowPassword(false);
     onClose();
   }
 
@@ -313,10 +316,25 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
               ) : (
                 <Input
                   id="password"
-                  label="Senha provisória *"
-                  type="password"
+                  label="Temporary password *"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   error={errors.password?.message}
+                  endElement={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((visible) => !visible)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                      className="grid size-7 place-items-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-4" aria-hidden />
+                      ) : (
+                        <Eye className="size-4" aria-hidden />
+                      )}
+                    </button>
+                  }
                   {...register("password")}
                 />
               )}

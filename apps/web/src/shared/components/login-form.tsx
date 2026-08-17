@@ -1,9 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { z } from "zod";
 import { PrimaryButton } from "@/src/shared/components/action-button";
 import { useAuth } from "@/src/shared/hooks/use-auth";
@@ -19,6 +20,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -108,7 +110,7 @@ export function LoginForm() {
           <span className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-950">
             <Lock className="size-4 text-slate-400" aria-hidden />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               // Password managers rewrite autocomplete/attributes before React
               // hydrates, causing a benign SSR/client mismatch — suppress it.
@@ -117,6 +119,19 @@ export function LoginForm() {
               placeholder="••••••••"
               {...register("password")}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="grid size-7 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" aria-hidden />
+              ) : (
+                <Eye className="size-4" aria-hidden />
+              )}
+            </button>
           </span>
           {errors.password ? (
             <span className="text-xs text-rose-600 dark:text-rose-400">

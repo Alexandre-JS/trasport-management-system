@@ -7,10 +7,11 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
   error?: string;
   icon?: ReactNode;
+  endElement?: ReactNode;
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, error, icon, className, id, ...props },
+  { label, error, icon, endElement, className, id, ...props },
   ref,
 ) {
   return (
@@ -38,6 +39,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           className={cn(
             "h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100",
             icon ? "pl-9" : null,
+            endElement ? "pr-10" : null,
             error
               ? "border-rose-400 focus:border-rose-400 dark:border-rose-500"
               : null,
@@ -45,6 +47,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           )}
           {...props}
         />
+        {endElement ? (
+          <span className="absolute right-2 top-1/2 -translate-y-1/2">
+            {endElement}
+          </span>
+        ) : null}
       </div>
       {error ? (
         <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>

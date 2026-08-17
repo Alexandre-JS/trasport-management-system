@@ -51,7 +51,9 @@ export function getStoredUser(): AuthUser | null {
     return null;
   }
 
-  const raw = window.sessionStorage.getItem(USER_STORAGE_KEY);
+  const raw =
+    window.localStorage.getItem(USER_STORAGE_KEY) ??
+    window.sessionStorage.getItem(USER_STORAGE_KEY);
 
   if (!raw) {
     return null;
@@ -65,8 +67,17 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function storeUser(user: AuthUser, rememberMe: boolean) {
-  window.sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-  window.sessionStorage.setItem(REMEMBER_STORAGE_KEY, String(rememberMe));
+  const persistentStorage = window.localStorage;
+  const sessionStorage = window.sessionStorage;
+
+  persistentStorage.removeItem(USER_STORAGE_KEY);
+  persistentStorage.removeItem(REMEMBER_STORAGE_KEY);
+  sessionStorage.removeItem(USER_STORAGE_KEY);
+  sessionStorage.removeItem(REMEMBER_STORAGE_KEY);
+
+  const storage = rememberMe ? persistentStorage : sessionStorage;
+  storage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  storage.setItem(REMEMBER_STORAGE_KEY, String(rememberMe));
 }
 
 export function getRememberPreference() {
@@ -74,7 +85,10 @@ export function getRememberPreference() {
     return false;
   }
 
-  return window.sessionStorage.getItem(REMEMBER_STORAGE_KEY) === "true";
+  return (
+    window.localStorage.getItem(REMEMBER_STORAGE_KEY) === "true" ||
+    window.sessionStorage.getItem(REMEMBER_STORAGE_KEY) === "true"
+  );
 }
 
 export function clearStoredUser() {
@@ -84,6 +98,8 @@ export function clearStoredUser() {
 
   window.sessionStorage.removeItem(USER_STORAGE_KEY);
   window.sessionStorage.removeItem(REMEMBER_STORAGE_KEY);
+  window.localStorage.removeItem(USER_STORAGE_KEY);
+  window.localStorage.removeItem(REMEMBER_STORAGE_KEY);
 }
 
 export function setAuthSession(input: {

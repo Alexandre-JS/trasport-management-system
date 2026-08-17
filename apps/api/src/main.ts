@@ -21,6 +21,7 @@ async function bootstrap() {
   const isProduction = configService.get<string>('app.env') === 'production';
 
   app.useLogger(logger);
+  app.enableShutdownHooks();
   // A raiz fica fora do prefixo: serve a página de status (AppRootController).
   app.setGlobalPrefix(prefix, { exclude: ['/'] });
   app.enableCors({
@@ -57,6 +58,13 @@ async function bootstrap() {
   }
 
   await app.listen(port);
+
+  // Keep upstream proxy connections reusable. This avoids needless TCP
+  // reconnects under concurrent traffic and aligns with common Nginx defaults.
+  const server = app.getHttpServer();
+  server.keepAliveTimeout = 65_000;
+  server.headersTimeout = 66_000;
+  server.requestTimeout = 120_000;
   logger.log(`API running on port ${port}`, 'Bootstrap');
 }
 void bootstrap();

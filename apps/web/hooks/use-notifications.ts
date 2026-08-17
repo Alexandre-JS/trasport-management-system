@@ -16,7 +16,7 @@ import type { ListNotificationsParams } from "@/types/notification";
 
 const NOTIFICATIONS_KEY = "notifications";
 const UNREAD_COUNT_KEY = "notifications-unread-count";
-const UNREAD_POLL_INTERVAL = 30_000;
+const UNREAD_POLL_INTERVAL = 2 * 60_000;
 
 function invalidateAll(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY] });
@@ -29,7 +29,8 @@ export function useUnreadNotificationsCount() {
     queryKey: [UNREAD_COUNT_KEY],
     queryFn: getUnreadCount,
     refetchInterval: UNREAD_POLL_INTERVAL,
-    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
   });
 }
 

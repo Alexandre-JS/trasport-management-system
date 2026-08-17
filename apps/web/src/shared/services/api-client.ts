@@ -18,6 +18,7 @@ const apiBaseUrl = "/api/v1";
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
+  _connectionRetryCount?: number;
 };
 
 type PendingRequest = {
@@ -38,6 +39,13 @@ export function onConnectionStatus(
   handler: (status: ConnectionStatus) => void,
 ) {
   connectionHandler = handler;
+  handler(connectionStatus);
+
+  return () => {
+    if (connectionHandler === handler) {
+      connectionHandler = null;
+    }
+  };
 }
 
 function notifyConnection(status: ConnectionStatus) {
@@ -49,7 +57,7 @@ function notifyConnection(status: ConnectionStatus) {
 
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 15000,
+  timeout: 25000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -57,7 +65,7 @@ export const apiClient = axios.create({
 
 const refreshClient = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 15000,
+  timeout: 25000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -83,9 +91,19 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    trackConnection(error);
-
     const originalRequest = error.config as RetryableRequestConfig | undefined;
+
+    // Recover once from a transient infrastructure failure, but only for
+    // idempotent reads. Retrying writes can create duplicate records/actions.
+    if (originalRequest && shouldRetryRead(error, originalRequest)) {
+      originalRequest._connectionRetryCount =
+        (originalRequest._connectionRetryCount ?? 0) + 1;
+      await waitBeforeRetry(originalRequest._connectionRetryCount);
+      return apiClient(originalRequest);
+    }
+
+    // Only expose a connection outage after the safe recovery attempt failed.
+    trackConnection(error);
 
     if (
       error.response?.status !== 401 ||
@@ -116,6 +134,30 @@ apiClient.interceptors.response.use(
     }
   },
 );
+
+function shouldRetryRead(
+  error: AxiosError,
+  request: RetryableRequestConfig,
+) {
+  const method = request.method?.toUpperCase() ?? "GET";
+  const status = error.response?.status;
+  const transientFailure =
+    !error.response || status === 502 || status === 503 || status === 504;
+
+  return (
+    (method === "GET" || method === "HEAD") &&
+    !isAuthEndpoint(request.url) &&
+    transientFailure &&
+    (request._connectionRetryCount ?? 0) < 1
+  );
+}
+
+function waitBeforeRetry(attempt: number) {
+  const jitter = Math.floor(Math.random() * 250);
+  return new Promise((resolve) =>
+    setTimeout(resolve, 600 * 2 ** (attempt - 1) + jitter),
+  );
+}
 
 function trackConnection(error: AxiosError) {
   if (!error.response) {
@@ -264,10 +306,10 @@ export function extractErrorMessage(
     }
 
     if (error.code === "ECONNABORTED") {
-      return "The server took too long to respond. Try again.";
+      return "We couldn't complete the request right now. Please try again.";
     }
 
-    return "Unable to contact the server. It may be temporarily unavailable; try again shortly.";
+    return "We couldn't complete the request right now. Your connection will recover automatically.";
   }
 
   if (error instanceof Error) {

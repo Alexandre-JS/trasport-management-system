@@ -16,7 +16,7 @@ export function ConnectionBanner() {
   const [status, setStatus] = useState<ConnectionStatus>("online");
 
   useEffect(() => {
-    onConnectionStatus(setStatus);
+    const unsubscribe = onConnectionStatus(setStatus);
 
     function handleOffline() {
       setStatus("offline");
@@ -25,6 +25,7 @@ export function ConnectionBanner() {
     window.addEventListener("offline", handleOffline);
 
     return () => {
+      unsubscribe();
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
@@ -49,7 +50,7 @@ export function ConnectionBanner() {
       )}
       {offline
         ? "No internet connection. Check your network; data will reload when the connection is restored."
-        : "The server is temporarily unavailable. Changes are not being saved; please try again shortly."}
+        : "Connection interrupted. The system will reconnect automatically."}
     </div>
   );
 }

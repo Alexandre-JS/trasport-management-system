@@ -9,9 +9,13 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
-            retry: 1,
+            staleTime: 60_000,
+            gcTime: 10 * 60_000,
+            // The HTTP client owns the single safe retry. A second retry layer
+            // multiplies traffic whenever the API is already under pressure.
+            retry: false,
             refetchOnWindowFocus: false,
+            refetchOnReconnect: true,
           },
         },
       }),

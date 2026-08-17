@@ -38,6 +38,7 @@ import {
   addPdfFooter,
   addPdfHeader,
   PDF_MARGIN,
+  pdfSafeText,
 } from "@/src/shared/utils/pdf-branding";
 import type { ActivitySheet, Trip } from "@/types/trip";
 import { formatDate } from "@/utils/format";
@@ -330,7 +331,7 @@ function SheetTracking({
 
     const wrap = (cell: string, i: number): string[] => {
       const lines = pdf.splitTextToSize(
-        String(cell ?? ""),
+        pdfSafeText(String(cell ?? "")),
         widths[i] - padH * 2,
       ) as string[];
       if (lines.length <= maxLines) return lines.length ? lines : [""];
@@ -376,7 +377,10 @@ function SheetTracking({
     drawRow(columns, true);
     rows.forEach((row) => {
       const probe = row.map((c, i) =>
-        (pdf.splitTextToSize(String(c ?? ""), widths[i] - padH * 2) as string[])
+        (pdf.splitTextToSize(
+          pdfSafeText(String(c ?? "")),
+          widths[i] - padH * 2,
+        ) as string[])
           .slice(0, maxLines),
       );
       const nLines = Math.max(1, ...probe.map((l) => l.length));

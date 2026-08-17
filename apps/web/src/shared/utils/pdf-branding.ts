@@ -27,13 +27,19 @@ export async function addPdfHeader(
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(16);
   const textWidth = pageW * 0.52;
-  const titleLines = pdf.splitTextToSize(title, textWidth) as string[];
+  const titleLines = pdf.splitTextToSize(
+    pdfSafeText(title),
+    textWidth,
+  ) as string[];
   pdf.text(titleLines.slice(0, 2), right, 20, { align: "right" });
   if (subtitle) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(...TEXT_MUTED);
-    const subtitleLines = pdf.splitTextToSize(subtitle, textWidth) as string[];
+    const subtitleLines = pdf.splitTextToSize(
+      pdfSafeText(subtitle),
+      textWidth,
+    ) as string[];
     pdf.text(subtitleLines.slice(0, 2), right, 28, {
       align: "right",
       lineHeightFactor: 1.15,
@@ -66,7 +72,9 @@ export function addPdfFooter(pdf: jsPDF, note: string) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
 
-    const noteLine = (pdf.splitTextToSize(note, noteWidth) as string[])[0] ?? "";
+    const noteLine = (
+      pdf.splitTextToSize(pdfSafeText(note), noteWidth) as string[]
+    )[0] ?? "";
     pdf.text(noteLine, PDF_MARGIN, textY, { maxWidth: noteWidth });
     pdf.text("LUMAC Transportes & Logística", right, textY, {
       align: "right",
@@ -75,6 +83,18 @@ export function addPdfFooter(pdf: jsPDF, note: string) {
   }
 
   pdf.setPage(currentPage);
+}
+
+/** Built-in jsPDF fonts use WinAnsi and cannot render several UI symbols. */
+export function pdfSafeText(value: string) {
+  return value
+    .replaceAll("→", " to ")
+    .replaceAll("›", " > ")
+    .replaceAll("—", "-")
+    .replaceAll("–", "-")
+    .replaceAll("“", '"')
+    .replaceAll("”", '"')
+    .replaceAll("’", "'");
 }
 
 type LoadedImage = { dataUrl: string; width: number; height: number };

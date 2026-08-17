@@ -108,8 +108,8 @@ jobs:
         if: steps.scope.outputs.deploy_api == 'true'
         run: |
           pnpm --filter api exec eslint "{src,apps,libs,test}/**/*.ts"
-          pnpm --filter api test -- --runInBand
-          pnpm --filter api run test:e2e --runInBand
+          pnpm --filter api exec jest --runInBand
+          pnpm --filter api exec jest --config ./test/jest-e2e.json --runInBand
 
       - name: Validar Web
         if: steps.scope.outputs.deploy_web == 'true'

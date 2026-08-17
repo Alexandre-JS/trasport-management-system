@@ -40,6 +40,7 @@ import {
 import type { ActivitySheet, Trip } from "@/types/trip";
 import { formatDate } from "@/utils/format";
 import {
+  borderProgressLabel,
   isTerminalTripStatus,
   nextTripStatusForRoute,
   tripStatusBadgeTone,
@@ -240,7 +241,7 @@ function SheetTracking({
         trip.horsePlate ?? trip.truck?.plateNumber ?? "—",
         trip.trailerPlate ?? trip.trailer?.plateNumber ?? "—",
         trip.driverName ?? trip.driver?.fullName ?? "—",
-        trip.borders.map((b) => b.border.name).join(" › ") || "—",
+        borderProgressLabel(trip.currentStatus, trip.borders),
         trip.tonnage ? `${trip.tonnage} t` : "—",
         formatDate(trip.departureDate),
         formatDate(trip.arrivalDate),
@@ -501,7 +502,9 @@ function SheetTracking({
                     <Td mono>{trip.horsePlate ?? trip.truck?.plateNumber ?? "—"}</Td>
                     <Td mono>{trip.trailerPlate ?? trip.trailer?.plateNumber ?? "—"}</Td>
                     <Td>{trip.driverName ?? trip.driver?.fullName ?? "—"}</Td>
-                    <Td>{trip.borders.map((b) => b.border.name).join(" › ") || "—"}</Td>
+                    <Td>
+                      {borderProgressLabel(trip.currentStatus, trip.borders)}
+                    </Td>
                     <Td>{trip.tonnage ? `${trip.tonnage} t` : "—"}</Td>
                     <Td>{trip.dispatchedBy ?? "—"}</Td>
                     <Td>{formatDate(trip.departureDate)}</Td>

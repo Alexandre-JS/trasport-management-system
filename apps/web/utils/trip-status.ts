@@ -118,6 +118,40 @@ export function activeBorder<T extends BorderCrossing>(
   return borders.find((crossing) => !crossing.clearedAt) ?? null;
 }
 
+/** User-facing border progress derived from the stamped crossing history. */
+export function borderProgressLabel(
+  status: TripStatus,
+  borders: BorderCrossing[],
+): string {
+  if (borders.length === 0) {
+    return "No border on route";
+  }
+
+  const atBorder = borders.find(
+    (crossing) => crossing.arrivedAt && !crossing.clearedAt,
+  );
+  if (atBorder) {
+    return `${atBorder.border.name} · At border`;
+  }
+
+  const pending = borders.find((crossing) => !crossing.clearedAt);
+  const lastCleared = [...borders]
+    .reverse()
+    .find((crossing) => crossing.clearedAt);
+
+  if (status === "BORDER_CLEARED" && lastCleared) {
+    return pending
+      ? `${lastCleared.border.name} cleared · Next: ${pending.border.name}`
+      : `${lastCleared.border.name} · Cleared`;
+  }
+
+  if (pending) {
+    return `${pending.border.name} · ${status === "DISPATCHED_ORIGIN" ? "Next" : "Planned"}`;
+  }
+
+  return "All borders cleared";
+}
+
 export const tripEventTypeLabel: Record<TripEventType, string> = {
   DISPATCHED_ORIGIN: "Dispatched from origin",
   AT_BORDER: "Arrived at border",

@@ -87,6 +87,7 @@ function useTripMutation<TArgs>(
     mutationFn,
     onSuccess: (_data, args) => {
       void queryClient.invalidateQueries({ queryKey: tripKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
       void queryClient.invalidateQueries({
         queryKey: tripKeys.detail(getId(args)),
       });

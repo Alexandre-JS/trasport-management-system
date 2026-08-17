@@ -15,6 +15,10 @@ export type LastLocation = {
 };
 
 export type PublicShipment = {
+  clientName: string;
+  truckPlate: string | null;
+  driverName: string | null;
+  trailerPlate: string | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
   departureDate: string | null;
@@ -23,6 +27,7 @@ export type PublicShipment = {
   lastLocation: LastLocation | null;
   cargo: {
     code: string;
+    containerNumber: string | null;
     origin: string;
     destination: string;
   };

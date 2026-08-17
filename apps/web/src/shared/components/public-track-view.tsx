@@ -63,10 +63,10 @@ export function PublicTrackView({ token }: { token: string }) {
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Acompanhamento da carga
+                  Cliente
                 </p>
                 <h1 className="text-xl font-semibold text-slate-950 dark:text-white">
-                  {shipment.cargo.code}
+                  {shipment.clientName}
                 </h1>
               </div>
               <div data-print-hide>
@@ -76,10 +76,13 @@ export function PublicTrackView({ token }: { token: string }) {
 
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="overflow-x-auto">
-                <table className="min-w-[1050px] text-left text-sm">
+                <table className="min-w-[1450px] text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                     <tr>
-                      <th className="whitespace-nowrap px-4 py-3">Carga</th>
+                      <th className="whitespace-nowrap px-4 py-3">Cliente</th>
+                      <th className="whitespace-nowrap px-4 py-3">Camião</th>
+                      <th className="whitespace-nowrap px-4 py-3">Motorista</th>
+                      <th className="whitespace-nowrap px-4 py-3">Contentor</th>
                       <th className="whitespace-nowrap px-4 py-3">Rota</th>
                       <th className="whitespace-nowrap px-4 py-3">Estado</th>
                       <th className="whitespace-nowrap px-4 py-3">Posição atual</th>
@@ -91,7 +94,21 @@ export function PublicTrackView({ token }: { token: string }) {
                   <tbody>
                     <tr className="align-top">
                       <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950 dark:text-white">
-                        {shipment.cargo.code}
+                        {shipment.clientName}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {shipment.truckPlate ?? "—"}
+                        {shipment.trailerPlate ? (
+                          <span className="block text-xs text-slate-400">
+                            Reboque: {shipment.trailerPlate}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {shipment.driverName ?? "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-700 dark:text-slate-200">
+                        {shipment.cargo.containerNumber ?? "—"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {shipment.cargo.origin} → {shipment.cargo.destination}
@@ -131,20 +148,25 @@ export function PublicTrackView({ token }: { token: string }) {
             {shipment.lastLocation ? (
               <GpsLocationCard
                 location={shipment.lastLocation}
-                label={shipment.cargo.code}
+                label={shipment.cargo.containerNumber ?? shipment.truckPlate ?? "Posição atual"}
               />
             ) : null}
 
             <ClientSupportCard />
             <PrintShipmentDocument
               title="Acompanhamento da carga"
-              reference={shipment.cargo.code}
+              reference={shipment.cargo.containerNumber ?? shipment.truckPlate ?? "Carga em acompanhamento"}
               status={tripStatusMeta[shipment.currentStatus].label}
               route={`${shipment.cargo.origin} → ${shipment.cargo.destination}`}
               sections={[
                 {
                   title: "Informação da carga",
                   rows: [
+                    { label: "Cliente", value: shipment.clientName },
+                    { label: "Camião", value: shipment.truckPlate ?? "—" },
+                    { label: "Motorista", value: shipment.driverName ?? "—" },
+                    { label: "Contentor", value: shipment.cargo.containerNumber ?? "—" },
+                    { label: "Reboque", value: shipment.trailerPlate ?? "—" },
                     { label: "Posição informada", value: shipment.currentPosition ?? "—" },
                     { label: "Fronteira", value: borderNames(shipment.borders) ?? "—" },
                     { label: "Data de saída", value: formatDate(departureDate) },

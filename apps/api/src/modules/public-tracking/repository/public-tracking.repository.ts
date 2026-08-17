@@ -2,12 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 
-// Public projection: shipment progress only. No driver, truck, tonnage, or any
-// commercial/personal data — safe to expose via an unauthenticated link.
+// Public projection: shipment progress and the operational identification the
+// client needs (company, driver name, vehicle/trailer plates and container).
+// It deliberately excludes contacts, documents, tonnage and commercial data.
 const publicTrackSelect = {
   currentStatus: true,
   currentPosition: true,
   departureDate: true,
+  horsePlate: true,
+  trailerPlate: true,
+  driverName: true,
   borders: {
     select: {
       sequence: true,
@@ -26,9 +30,22 @@ const publicTrackSelect = {
   cargo: {
     select: {
       code: true,
+      containerNumber: true,
       origin: true,
       destination: true,
+      client: {
+        select: { companyName: true },
+      },
     },
+  },
+  driver: {
+    select: { fullName: true },
+  },
+  truck: {
+    select: { plateNumber: true },
+  },
+  trailer: {
+    select: { plateNumber: true },
   },
   events: {
     select: {
@@ -51,10 +68,30 @@ const publicTrackSelect = {
 type RawPublicTrip = Prisma.TripGetPayload<{ select: typeof publicTrackSelect }>;
 
 /** Extrai a última posição GPS como números e remove o array cru. */
-function withLastLocation({ trackingPoints, ...trip }: RawPublicTrip) {
+function withLastLocation({
+  trackingPoints,
+  horsePlate,
+  trailerPlate,
+  driverName,
+  driver,
+  truck,
+  trailer,
+  cargo,
+  ...trip
+}: RawPublicTrip) {
   const last = trackingPoints[0];
   return {
     ...trip,
+    clientName: cargo.client.companyName,
+    truckPlate: horsePlate ?? truck?.plateNumber ?? null,
+    driverName: driverName ?? driver?.fullName ?? null,
+    trailerPlate: trailerPlate ?? trailer?.plateNumber ?? null,
+    cargo: {
+      code: cargo.code,
+      containerNumber: cargo.containerNumber,
+      origin: cargo.origin,
+      destination: cargo.destination,
+    },
     lastLocation: last
       ? {
           latitude: Number(last.latitude),

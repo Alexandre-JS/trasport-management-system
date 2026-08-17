@@ -72,7 +72,9 @@ export function PublicClientTrackView({ token }: { token: string }) {
                   <table className="min-w-full text-left text-sm">
                     <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                       <tr>
-                        <th className="whitespace-nowrap px-4 py-3">Carga</th>
+                        <th className="whitespace-nowrap px-4 py-3">Camião</th>
+                        <th className="whitespace-nowrap px-4 py-3">Motorista</th>
+                        <th className="whitespace-nowrap px-4 py-3">Contentor</th>
                         <th className="whitespace-nowrap px-4 py-3">Rota</th>
                         <th className="whitespace-nowrap px-4 py-3">Estado</th>
                         <th className="whitespace-nowrap px-4 py-3">
@@ -93,7 +95,18 @@ export function PublicClientTrackView({ token }: { token: string }) {
                           className="align-top"
                         >
                           <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950 dark:text-white">
-                            {shipment.cargo.code}
+                            {shipment.truckPlate ?? "—"}
+                            {shipment.trailerPlate ? (
+                              <span className="block text-xs font-normal text-slate-400">
+                                Reboque: {shipment.trailerPlate}
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {shipment.driverName ?? "—"}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-700 dark:text-slate-200">
+                            {shipment.cargo.containerNumber ?? "—"}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                             {shipment.cargo.origin} → {shipment.cargo.destination}

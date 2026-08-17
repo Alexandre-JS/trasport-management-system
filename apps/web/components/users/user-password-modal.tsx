@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
@@ -20,11 +20,6 @@ export function UserPasswordModal({ user, onClose }: UserPasswordModalProps) {
   const resetPassword = useResetUserPassword();
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setNewPassword("");
-    setError(null);
-  }, [user]);
 
   async function handleSave() {
     if (!user) {

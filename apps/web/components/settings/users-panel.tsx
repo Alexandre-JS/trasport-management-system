@@ -332,8 +332,13 @@ export function UsersPanel() {
         user={formUser}
         onClose={() => setFormOpen(false)}
       />
-      <UserRoleModal user={roleUser} onClose={() => setRoleUser(null)} />
+      <UserRoleModal
+        key={roleUser?.id ?? "no-role-user"}
+        user={roleUser}
+        onClose={() => setRoleUser(null)}
+      />
       <UserPasswordModal
+        key={passwordUser?.id ?? "no-password-user"}
         user={passwordUser}
         onClose={() => setPasswordUser(null)}
       />

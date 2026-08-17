@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
@@ -19,11 +19,7 @@ export function UserRoleModal({ user, onClose }: UserRoleModalProps) {
   const { toast } = useToast();
   const changeRole = useChangeUserRole();
   const { data: roles } = useRoles();
-  const [roleId, setRoleId] = useState("");
-
-  useEffect(() => {
-    setRoleId(user?.roleId ?? "");
-  }, [user]);
+  const [roleId, setRoleId] = useState(user?.roleId ?? "");
 
   // Não é possível transformar uma conta em Motorista por aqui — esse
   // vínculo cria-se em Motoristas → "Dar acesso mobile". A conta atual de

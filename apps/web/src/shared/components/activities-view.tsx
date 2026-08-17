@@ -304,14 +304,18 @@ function SheetTracking({
     const usableW = pageW - PDF_MARGIN * 2;
 
     // Pesos relativos por coluna → a tabela preenche toda a largura útil.
-    const weights = [3.5, 9, 8, 8, 13, 8.5, 4.5, 7.5, 7.5, 7.5, 15, 8];
+    const configuredWeights = [
+      3.5, 8, 7, 7, 11, 10, 4.5, 6.5, 6.5, 6.5, 12, 7, 9, 7,
+    ];
+    // Derive one width per actual column. The fallback prevents future table
+    // additions from producing an undefined width/NaN coordinate in jsPDF.
+    const weights = columns.map(
+      (_, index) => configuredWeights[index] ?? 8,
+    );
     const totalW = weights.reduce((a, b) => a + b, 0);
     const widths = weights.map((w) => (w / totalW) * usableW);
     // Nº, Ton, datas e Estado centrados; texto alinhado à esquerda.
-    const centered = [
-      true, false, false, false, false, false,
-      true, true, true, true, false, true,
-    ];
+    const centeredColumns = new Set([0, 6, 7, 8, 9, 11, 12, 13]);
 
     const padH = 1.2;
     const padV = 1;
@@ -352,7 +356,7 @@ function SheetTracking({
       wrapped.forEach((lines, i) => {
         lines.forEach((ln, li) => {
           const ty = rowTop + padV + lineH * (li + 1) - 0.9;
-          if (centered[i]) {
+          if (centeredColumns.has(i)) {
             pdf.text(ln, x + widths[i] / 2, ty, { align: "center" });
           } else {
             pdf.text(ln, x + padH, ty, { align: "left" });

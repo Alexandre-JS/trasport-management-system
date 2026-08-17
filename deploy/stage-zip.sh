@@ -5,12 +5,12 @@
 #   deploy/stage-zip.sh api [saida.zip]
 #   deploy/stage-zip.sh web [saida.zip]
 #
-# API  — o zip leva o source (sem node_modules/dist), um `.env` de produção
-#        (de $API_ENV_PRODUCTION no CI, ou de deploy/.env.api.production local),
-#        o deploy-postbuild.js e um package.json com `postinstall`/`build`
-#        ajustados para o build no servidor (prisma generate/migrate/seed + shim).
-# WEB  — o zip leva o source e um `.env` com NEXT_PUBLIC_API_URL (inlined no
-#        `next build` que corre no servidor).
+# API  — a compilação NestJS corre aqui (normalmente no GitHub Actions). O zip
+#        leva apenas dist/, Prisma, dependências de runtime e o `.env` de
+#        produção. Na Hostinger só correm npm install, prisma generate/migrate
+#        e o pequeno shim exigido pelo Passenger — nunca TypeScript/Nest build.
+# WEB  — o Next build também corre aqui. O zip leva apenas o standalone já
+#        pronto; o servidor não recebe source nem instala dependências.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -28,7 +28,8 @@ trap 'rm -rf "$STAGE"' EXIT
 
 rsync -a "$ROOT/apps/$APP/" "$STAGE/" \
   --exclude node_modules --exclude dist --exclude .next --exclude .turbo \
-  --exclude coverage --exclude '.env' --exclude '.env.*' --exclude .DS_Store
+  --exclude coverage --exclude '.env' --exclude '.env.*' --exclude .DS_Store \
+  --exclude .git --exclude '.git-*' --exclude '*.zip' --exclude '*.tsbuildinfo'
 
 if [[ "$APP" == "api" ]]; then
   if [[ -n "${API_ENV_PRODUCTION:-}" ]]; then
@@ -42,18 +43,64 @@ if [[ "$APP" == "api" ]]; then
 
   cp "$ROOT/deploy/deploy-postbuild.js" "$STAGE/deploy-postbuild.js"
 
+  command -v pnpm >/dev/null 2>&1 || {
+    echo "ERRO: pnpm é necessário para compilar a API antes de montar o zip" >&2
+    exit 1
+  }
+
+  echo "→ A compilar a API no CI/local (sem build NestJS no servidor)…"
+  ( cd "$ROOT" && pnpm --filter api build )
+  rsync -a "$ROOT/apps/api/dist/" "$STAGE/dist/" \
+    --exclude '*.map' --exclude '*.d.ts' --exclude '*.tsbuildinfo'
+
+  # O runtime não precisa do source TypeScript, testes, ferramentas de lint ou
+  # configurações do compilador. Mantemos prisma/schema.prisma + migrations.
+  rm -rf \
+    "$STAGE/src" \
+    "$STAGE/test" \
+    "$STAGE/node_modules" \
+    "$STAGE/coverage" \
+    "$STAGE/.turbo"
+  rm -f \
+    "$STAGE/eslint.config.mjs" \
+    "$STAGE/nest-cli.json" \
+    "$STAGE/tsconfig.json" \
+    "$STAGE/tsconfig.build.json" \
+    "$STAGE/.prettierrc" \
+    "$STAGE/README.md" \
+    "$STAGE/prisma/seed.ts" \
+    "$STAGE/prisma/demo-seed.ts"
+
   node -e '
     const fs = require("fs");
     const file = process.argv[1] + "/package.json";
     const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
-    pkg.scripts.postinstall = "prisma generate";
-    // sem "prisma db seed": só era preciso no primeiro arranque — com dados
-    // reais na base, o seed recriaria os registos de demonstração apagados
-    pkg.scripts.build =
-      "nest build && prisma migrate deploy && node deploy-postbuild.js";
+    // O CLI Prisma é necessário em runtime apenas para generate/migrate. Todo
+    // o restante conjunto de devDependencies (Nest CLI, TS, ESLint, Jest) sai.
+    pkg.dependencies.prisma = pkg.devDependencies.prisma;
+    pkg.scripts = {
+      postinstall: "prisma generate",
+      build: "prisma migrate deploy && node deploy-postbuild.js",
+      start: "node dist/main.js",
+    };
+    delete pkg.devDependencies;
+    delete pkg.jest;
+    delete pkg.prisma;
     fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
   ' "$STAGE"
 else
+  # Assets antigos sem qualquer referência no Web. Permanecem no repositório
+  # por enquanto, mas não entram no build/runtime publicado na Hostinger.
+  rm -f \
+    "$STAGE/public/Lumac B.png" \
+    "$STAGE/public/file.svg" \
+    "$STAGE/public/globe.svg" \
+    "$STAGE/public/login-bg.jpg" \
+    "$STAGE/public/lumac-logo.jpeg" \
+    "$STAGE/public/next.svg" \
+    "$STAGE/public/vercel.svg" \
+    "$STAGE/public/window.svg"
+
   # NEXT_PUBLIC_* é embutido no next build — tem de existir ANTES de compilar.
   printf 'NEXT_PUBLIC_API_URL=%s\n' \
     "${NEXT_PUBLIC_API_URL:-https://api.lumactraspots.com/api/v1}" > "$STAGE/.env"
@@ -66,10 +113,15 @@ else
   echo "→ A compilar o web (next build standalone) no CI…"
   ( cd "$STAGE" && npm install --no-audit --no-fund --loglevel=error && npm run build )
 
-  # O standalone é auto-suficiente (traz o seu próprio node_modules). Remove-se
-  # o node_modules e a cache de build, e esvaziam-se as deps/scripts para o
-  # servidor NÃO reinstalar nem recompilar — só arranca o standalone.
-  rm -rf "$STAGE/node_modules" "$STAGE/.next/cache"
+  # Cria um pacote novo apenas com o standalone. O source, o node_modules usado
+  # para compilar e a cache nunca chegam ao servidor.
+  RUNTIME_STAGE="$(mktemp -d)"
+  mkdir -p "$RUNTIME_STAGE/.next"
+  rsync -a "$STAGE/.next/standalone/" "$RUNTIME_STAGE/.next/standalone/"
+  cp "$STAGE/package.json" "$RUNTIME_STAGE/package.json"
+  rm -rf "$STAGE"
+  STAGE="$RUNTIME_STAGE"
+
   node -e '
     const fs = require("fs");
     const file = process.argv[1] + "/package.json";

@@ -10,20 +10,19 @@
 > - API: https://api.lumactraspots.com (NestJS, app em `~/domains/lumactraspots.com/nodejs/api`)
 > - BD: MySQL `u901633551_lumac` — o `DATABASE_URL` **tem de usar `127.0.0.1`**
 >   (com `localhost` o Prisma falha com P1000 por resolver para IPv6)
-> - Deploy: zip do source (sem `node_modules`/`dist`) via API/MCP da Hostinger
+> - Deploy: artefactos de runtime via API da Hostinger
 >   (`hosting_deployJsApplication`). O zip da API inclui um `.env` de produção
 >   (cópia em `deploy/.env.api.production`, fora do git) e um
 >   `deploy-postbuild.js` que copia o `.env` para `dist/` e cria um shim
 >   `dist/main.js` (a Hostinger não copia o `.env` para a raiz da app).
->   O `package.json` do zip acrescenta `postinstall: prisma generate` e o build
->   corre `nest build && prisma migrate deploy && node deploy-postbuild.js`
->   (sem seed — ver a secção de CI/CD).
+>   A API é compilada no GitHub; o servidor só instala dependências de runtime,
+>   executa `prisma generate`, `prisma migrate deploy` e cria o shim (sem seed).
 > - **Web: pré-compilado no CI** (desde 2026-07-21). O `stage-zip.sh web` corre
 >   `next build` (output standalone) dentro de uma cópia isolada de `apps/web`
 >   — que, sem o pnpm-workspace, gera o standalone "flat"
 >   (`.next/standalone/server.js`, com o seu próprio `node_modules`). O zip leva
 >   o standalone já construído, com `dependencies` vazias e `build` no-op, por
->   isso o servidor **não instala nem compila** — só arranca
+>   isso o servidor **não instala nem compila o Web** — só arranca
 >   `node .next/standalone/server.js`. Elimina os picos de CPU/RAM do
 >   `next build` no alojamento partilhado. O `NEXT_PUBLIC_API_URL` é embutido no
 >   build do CI (não no servidor).
@@ -36,16 +35,20 @@ aqui** — ele vai para a **Play Store** (ver a secção final). Só a **API** e
 
 ## Deploy automático (CI/CD via GitHub Actions)
 
-Cada push para **`main`** (e só para `main`) faz deploy automático **só do que
-mudou** — trabalhar noutras branches não toca na produção até fazeres merge:
+Cada push para **`main`** (e só para `main`) passa por um único workflow. Outras
+branches não tocam na produção até fazer merge:
 
-- Mudanças em `apps/api/**` → workflow [deploy-api.yml](../.github/workflows/deploy-api.yml) → api.lumactraspots.com
-- Mudanças em `apps/web/**` → workflow [deploy-web.yml](../.github/workflows/deploy-web.yml) → lumactraspots.com
+- Mudanças só em `apps/api/**` → publica apenas `api.lumactraspots.com`.
+- Mudanças em `apps/web/**` → publica Web e depois API, devido à pasta
+  partilhada atual da Hostinger.
 - Mudanças em `apps-mobile/**` → **nada** (vai para a Play Store)
 
-Cada workflow monta o zip com `deploy/stage-zip.sh` e envia com
+O workflow [deploy-production.yml](../.github/workflows/deploy-production.yml)
+instala, valida, testa e compila no GitHub. Só depois monta os ZIPs com
+`deploy/stage-zip.sh` e envia com
 `deploy/hostinger-deploy.mjs`, que replica o fluxo da API da Hostinger
-(upload TUS + trigger do build no servidor) e espera pelo resultado do build.
+(upload TUS + ativação do runtime). Os dois serviços são verificados por HTTP
+no fim; deploys concorrentes entram numa fila única.
 
 > ⚠️ **Pegadinha da pasta partilhada**: no servidor, o web instala na raiz de
 > `~/domains/lumactraspots.com/nodejs/` e a API em `nodejs/api/`. O deploy do
@@ -66,17 +69,17 @@ Cada workflow monta o zip com `deploy/stage-zip.sh` e envia com
 **Deploy manual** (sem CI), a partir da raiz do repo:
 
 ```bash
-# API
-bash deploy/stage-zip.sh api
-HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs api.lumactraspots.com deploy/dist-zips/api.zip
-
-# Web
+# Web primeiro
 bash deploy/stage-zip.sh web
 HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs lumactraspots.com deploy/dist-zips/web.zip
+
+# API sempre por último, pois o deploy Web limpa a pasta Node partilhada
+bash deploy/stage-zip.sh api
+HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs api.lumactraspots.com deploy/dist-zips/api.zip
 ```
 
-Também dá para disparar qualquer um dos workflows à mão no GitHub
-(Actions → workflow → *Run workflow*). O build da API corre
+Também dá para disparar o workflow à mão no GitHub
+(Actions → Deploy Production → *Run workflow*) e escolher `all` ou `api`. A API corre
 `prisma migrate deploy` no servidor — migrations novas são aplicadas
 automaticamente (nunca apaga dados; cuidado apenas ao escrever migrations
 destrutivas). O `prisma db seed` **não** corre no deploy desde 2026-07-13:
@@ -97,22 +100,18 @@ os registos de demonstração apagados. Para o correr de propósito:
 
 ---
 
-## Por que VPS (e não hospedagem partilhada)
+## Alternativa futura: VPS
 
-Esta stack tem **dois processos Node persistentes** e usa **WebSocket** (rastreio
-em tempo real). Hospedagem partilhada (cPanel) costuma bloquear WebSocket e
-dificulta manter processos Node vivos. Num **VPS** (Ubuntu, com SSH) tens controlo
-total: `git pull` + `pm2` + `nginx` + `certbot`. Serve qualquer provedor
-(DigitalOcean, Hetzner, Contabo, Vultr…).
+Esta stack tem **dois processos Node persistentes** e usa **WebSocket**. O plano
+Business atual suporta-os e continua a ser a produção. Um VPS daria mais
+controlo sobre processos e pastas, mas não é necessário para este deploy.
 
 ---
 
 ## 0. Específico do Hostinger
 
-Usa um plano **Hostinger VPS (KVM)** — **não** a hospedagem partilhada "Node.js"
-(esta não suporta processos Node persistentes, portas personalizadas nem
-WebSocket, que esta app precisa). KVM 1 chega para testes; **KVM 2 (2 vCPU / 8 GB)**
-é o recomendado para produção pequena.
+Esta secção fica apenas como referência para uma eventual migração futura para
+um plano **Hostinger VPS (KVM)**. Não se aplica ao servidor Business atual.
 
 Ao criar o VPS no hPanel, escolhe o **template de 1 clique com Node.js**
 (Ubuntu + Node.js): já traz **PM2, Nginx e Certbot instalados** → podes **saltar

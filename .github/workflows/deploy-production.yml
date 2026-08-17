@@ -17,13 +17,14 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: Serviço a publicar (Web implica republicar a API)
+        description: Serviço a publicar
         required: true
         default: all
         type: choice
         options:
           - all
           - api
+          - web
 
 permissions:
   contents: read
@@ -68,8 +69,8 @@ jobs:
           deploy_web=false
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            deploy_api=true
-            [ "$REQUESTED_TARGET" = "all" ] && deploy_web=true
+            [ "$REQUESTED_TARGET" != "web" ] && deploy_api=true
+            [ "$REQUESTED_TARGET" != "api" ] && deploy_web=true
           else
             if [ -n "$BEFORE_SHA" ] && ! printf '%s' "$BEFORE_SHA" | grep -Eq '^0+$'; then
               changed_files="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")"
@@ -142,20 +143,22 @@ jobs:
             exit 1
           fi
 
+      # O subdomínio da API pertence à mesma website Hostinger do domínio
+      # principal. Publicá-lo por último pode substituir o processo/roteamento
+      # do Web e fazer /login responder pelo NestJS. A API é publicada primeiro
+      # e o Web restaura por último o entry point do domínio principal.
+      - name: Publicar API
+        if: steps.scope.outputs.deploy_api == 'true'
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: node deploy/hostinger-deploy.mjs api.lumactraspots.com "$RUNNER_TEMP/api.zip"
+
       - name: Publicar Web
         if: steps.scope.outputs.deploy_web == 'true'
         env:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
           HOSTINGER_ENTRY_FILE: server.js
         run: node deploy/hostinger-deploy.mjs lumactraspots.com "$RUNNER_TEMP/web.zip"
-
-      # Sempre termina com a API: o deploy Web da conta atual limpa a pasta
-      # Node partilhada onde a API também está instalada.
-      - name: Publicar API
-        if: steps.scope.outputs.deploy_api == 'true'
-        env:
-          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
-        run: node deploy/hostinger-deploy.mjs api.lumactraspots.com "$RUNNER_TEMP/api.zip"
 
       - name: Confirmar saúde em produção
         run: node deploy/health-check.mjs

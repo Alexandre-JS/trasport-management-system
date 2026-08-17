@@ -42,7 +42,9 @@ import { UsersModule } from './modules/users/users.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 100,
+        // This bucket is per authenticated session (not per office/proxy IP).
+        // It leaves enough headroom for data-heavy screens and reconnects.
+        limit: 300,
       },
     ]),
     LoggerModule,

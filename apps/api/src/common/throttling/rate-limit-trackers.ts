@@ -41,7 +41,11 @@ export function loginAccountTracker(request: RateLimitRequest): string {
     return fallbackIp(request);
   }
 
-  return `login:${digest(identifier.trim().toLowerCase())}`;
+  // Include the origin so failed attempts from an external address cannot
+  // exhaust the login allowance used by the real employee elsewhere.
+  return `login:${digest(
+    `${identifier.trim().toLowerCase()}:${request.ip ?? 'unknown'}`,
+  )}`;
 }
 
 export function refreshSessionTracker(request: RateLimitRequest): string {

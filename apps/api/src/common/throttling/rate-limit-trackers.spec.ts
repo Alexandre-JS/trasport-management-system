@@ -31,8 +31,29 @@ describe('rate limit trackers', () => {
 
   it('normalizes the login account identifier', () => {
     expect(
-      loginAccountTracker({ body: { identifier: ' User@Example.COM ' } }),
-    ).toBe(loginAccountTracker({ body: { email: 'user@example.com' } }));
+      loginAccountTracker({
+        body: { identifier: ' User@Example.COM ' },
+        ip: '10.0.0.1',
+      }),
+    ).toBe(
+      loginAccountTracker({
+        body: { email: 'user@example.com' },
+        ip: '10.0.0.1',
+      }),
+    );
+  });
+
+  it('does not let another origin consume an account login allowance', () => {
+    const office = loginAccountTracker({
+      body: { identifier: 'user@example.com' },
+      ip: '10.0.0.1',
+    });
+    const external = loginAccountTracker({
+      body: { identifier: 'user@example.com' },
+      ip: '203.0.113.10',
+    });
+
+    expect(office).not.toBe(external);
   });
 
   it('separates refresh sessions without exposing the refresh token', () => {

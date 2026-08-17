@@ -38,7 +38,7 @@ export class AuthController {
   @Post('login')
   @Public()
   @Throttle({
-    default: { limit: 5, ttl: 60000, getTracker: loginAccountTracker },
+    default: { limit: 10, ttl: 60000, getTracker: loginAccountTracker },
   })
   @ApiOperation({ summary: 'Authenticate user and issue JWT tokens' })
   @ApiOkResponse({ type: AuthResponseDto })
@@ -50,7 +50,7 @@ export class AuthController {
   @Post('refresh')
   @Public()
   @Throttle({
-    default: { limit: 10, ttl: 60000, getTracker: refreshSessionTracker },
+    default: { limit: 30, ttl: 60000, getTracker: refreshSessionTracker },
   })
   @ApiOperation({ summary: 'Refresh access and refresh tokens' })
   @ApiOkResponse({ type: AuthResponseDto })

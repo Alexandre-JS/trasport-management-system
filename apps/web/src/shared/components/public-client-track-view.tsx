@@ -74,7 +74,6 @@ export function PublicClientTrackView({ token }: { token: string }) {
                       <tr>
                         <th className="whitespace-nowrap px-4 py-3">Client</th>
                         <th className="whitespace-nowrap px-4 py-3">Transporter</th>
-                        <th className="whitespace-nowrap px-4 py-3">Truck</th>
                         <th className="whitespace-nowrap px-4 py-3">Horse</th>
                         <th className="whitespace-nowrap px-4 py-3">Trailer</th>
                         <th className="whitespace-nowrap px-4 py-3">Driver Name</th>
@@ -104,9 +103,6 @@ export function PublicClientTrackView({ token }: { token: string }) {
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                             {shipment.transporterName ?? "—"}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                            {shipment.truckPlate ?? "—"}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                             {shipment.horsePlate ?? "—"}

@@ -81,7 +81,6 @@ export function PublicTrackView({ token }: { token: string }) {
                     <tr>
                       <th className="whitespace-nowrap px-4 py-3">Client</th>
                       <th className="whitespace-nowrap px-4 py-3">Transporter</th>
-                      <th className="whitespace-nowrap px-4 py-3">Truck</th>
                       <th className="whitespace-nowrap px-4 py-3">Horse</th>
                       <th className="whitespace-nowrap px-4 py-3">Trailer</th>
                       <th className="whitespace-nowrap px-4 py-3">Driver Name</th>
@@ -101,9 +100,6 @@ export function PublicTrackView({ token }: { token: string }) {
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {shipment.transporterName ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {shipment.truckPlate ?? "—"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {shipment.horsePlate ?? "—"}
@@ -155,14 +151,14 @@ export function PublicTrackView({ token }: { token: string }) {
             {shipment.lastLocation ? (
               <GpsLocationCard
                 location={shipment.lastLocation}
-                label={shipment.cargo.containerNumber ?? shipment.horsePlate ?? shipment.truckPlate ?? "Current Position"}
+                label={shipment.cargo.containerNumber ?? shipment.horsePlate ?? "Current Position"}
               />
             ) : null}
 
             <ClientSupportCard />
             <PrintShipmentDocument
               title="Acompanhamento da carga"
-              reference={shipment.cargo.containerNumber ?? shipment.horsePlate ?? shipment.truckPlate ?? "Tracking"}
+              reference={shipment.cargo.containerNumber ?? shipment.horsePlate ?? "Tracking"}
               status={tripStatusMeta[shipment.currentStatus].label}
               route={`${shipment.cargo.origin} → ${shipment.cargo.destination}`}
               sections={[
@@ -171,7 +167,6 @@ export function PublicTrackView({ token }: { token: string }) {
                   rows: [
                     { label: "Client", value: shipment.clientName },
                     { label: "Transporter", value: shipment.transporterName ?? "—" },
-                    { label: "Truck", value: shipment.truckPlate ?? "—" },
                     { label: "Horse", value: shipment.horsePlate ?? "—" },
                     { label: "Trailer", value: shipment.trailerPlate ?? "—" },
                     { label: "Driver Name", value: shipment.driverName ?? "—" },

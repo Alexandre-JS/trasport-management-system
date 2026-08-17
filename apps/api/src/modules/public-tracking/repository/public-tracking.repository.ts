@@ -88,8 +88,7 @@ function withLastLocation({
   return {
     ...trip,
     clientName: cargo.client.companyName,
-    truckPlate: truck?.plateNumber ?? null,
-    horsePlate,
+    horsePlate: horsePlate ?? truck?.plateNumber ?? null,
     driverName: driverName ?? driver?.fullName ?? null,
     trailerPlate: trailerPlate ?? trailer?.plateNumber ?? null,
     cargo: {

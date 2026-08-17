@@ -16,7 +16,6 @@ export type LastLocation = {
 
 export type PublicShipment = {
   clientName: string;
-  truckPlate: string | null;
   horsePlate: string | null;
   driverName: string | null;
   trailerPlate: string | null;

@@ -113,6 +113,38 @@ export class DeliveryRepository {
     });
   }
 
+  findLatestByTrip(tripId: string): Promise<DeliveryEntity | null> {
+    return this.prisma.delivery.findFirst({
+      where: { tripId },
+      select: deliverySelect,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async attachPod(
+    tripId: string,
+    podDocument: string,
+  ): Promise<DeliveryEntity> {
+    const existing = await this.prisma.delivery.findFirst({
+      where: { tripId },
+      select: { id: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existing) {
+      return this.prisma.delivery.update({
+        where: { id: existing.id },
+        data: { podDocument },
+        select: deliverySelect,
+      });
+    }
+
+    return this.prisma.delivery.create({
+      data: { tripId, podDocument, deliveredAt: new Date() },
+      select: deliverySelect,
+    });
+  }
+
   async findMany(query: ListDeliveriesQueryDto): Promise<{
     data: DeliveryEntity[];
     total: number;

@@ -19,6 +19,7 @@ import { Public } from '../../../core/auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../core/auth/guards/permissions.guard';
 import { ConfirmDeliveryDto } from '../dto/confirm-delivery.dto';
+import { AttachDeliveryPodDto } from '../dto/attach-delivery-pod.dto';
 import { ConfirmPickupDto } from '../dto/confirm-pickup.dto';
 import { DeliveryResponseDto } from '../dto/delivery-response.dto';
 import { ListDeliveriesQueryDto } from '../dto/list-deliveries-query.dto';
@@ -62,6 +63,21 @@ export class DeliveryController {
   @ApiOkResponse({ type: DeliveryResponseDto, isArray: true })
   findAll(@Query() query: ListDeliveriesQueryDto) {
     return this.deliveryService.findAll(query);
+  }
+
+  @Get('trips/:tripId')
+  @ApiOperation({ summary: 'Get the latest delivery record for a trip' })
+  findByTrip(@Param('tripId') tripId: string) {
+    return this.deliveryService.findByTrip(tripId);
+  }
+
+  @Post('trips/:tripId/pod')
+  @ApiOperation({ summary: 'Attach or replace the delivery POD after discharge' })
+  attachPod(
+    @Param('tripId') tripId: string,
+    @Body() dto: AttachDeliveryPodDto,
+  ) {
+    return this.deliveryService.attachPod(tripId, dto);
   }
 
   @Get(':id')

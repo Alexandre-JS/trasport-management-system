@@ -11,6 +11,7 @@ import { useBorders } from "@/hooks/use-borders";
 import { useToast } from "@/providers/toast-provider";
 import { extractErrorMessage } from "@/services/http";
 import type { Trip } from "@/types/trip";
+import { DeliveryPodPanel } from "@/components/trips/delivery-pod-panel";
 
 const inputClass =
   "h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
@@ -299,6 +300,9 @@ export function EditTripModal({ trip, onClose, onSaved }: EditTripModalProps) {
             </p>
           )}
         </Field>
+      </div>
+      <div className="mt-5">
+        <DeliveryPodPanel tripId={trip.id} status={trip.currentStatus} />
       </div>
     </Modal>
   );

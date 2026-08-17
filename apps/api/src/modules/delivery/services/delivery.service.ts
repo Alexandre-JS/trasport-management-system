@@ -8,6 +8,7 @@ import { RealtimeGateway } from '../../../core/events/realtime.gateway';
 import { AppLoggerService } from '../../../core/logger/app-logger.service';
 import { NotificationDispatcherService } from '../../../core/notifications/notification-dispatcher.service';
 import { ConfirmDeliveryDto } from '../dto/confirm-delivery.dto';
+import { AttachDeliveryPodDto } from '../dto/attach-delivery-pod.dto';
 import { ConfirmPickupDto } from '../dto/confirm-pickup.dto';
 import { ListDeliveriesQueryDto } from '../dto/list-deliveries-query.dto';
 import {
@@ -123,6 +124,28 @@ export class DeliveryService {
     }
 
     return delivery;
+  }
+
+  async findByTrip(tripId: string) {
+    await this.ensureTrip(tripId);
+    return this.deliveryRepository.findLatestByTrip(tripId);
+  }
+
+  async attachPod(tripId: string, dto: AttachDeliveryPodDto) {
+    const trip = await this.ensureTrip(tripId);
+    const allowedStatuses: TripStatus[] = [
+      TripStatus.DISCHARGED,
+      TripStatus.CONTAINER_RETURN_PENDING,
+      TripStatus.CONTAINER_RETURNED,
+    ];
+
+    if (!allowedStatuses.includes(trip.currentStatus)) {
+      throw new BadRequestException(
+        'Delivery POD can only be attached after the trip is discharged',
+      );
+    }
+
+    return this.deliveryRepository.attachPod(tripId, dto.podDocument);
   }
 
   private async ensureTrip(tripId: string): Promise<TripForDelivery> {

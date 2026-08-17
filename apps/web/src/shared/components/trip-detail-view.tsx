@@ -25,6 +25,7 @@ import { Section } from "@/src/shared/components/section";
 import { ShareLinkButton } from "@/src/shared/components/share-link-button";
 import { StatusBadge } from "@/src/shared/components/status-badge";
 import { ContainerReturnPanel } from "@/components/trips/container-return-panel";
+import { DeliveryPodPanel } from "@/components/trips/delivery-pod-panel";
 import { useCargo } from "@/hooks/use-cargo";
 import { useDrivers } from "@/hooks/use-drivers";
 import { useTrailers } from "@/hooks/use-trailers";
@@ -339,6 +340,8 @@ export function TripDetailView({ id }: { id: string }) {
             tripId={trip.id}
             status={trip.currentStatus}
           />
+
+          <DeliveryPodPanel tripId={trip.id} status={trip.currentStatus} />
 
           <Card className="p-5">
             <Section

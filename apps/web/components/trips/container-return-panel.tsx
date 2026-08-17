@@ -19,6 +19,7 @@ import { extractErrorMessage } from "@/services/http";
 import { useToast } from "@/providers/toast-provider";
 import type { TripStatus } from "@/types/trip";
 import { formatDateTime } from "@/utils/format";
+import { openAttachment } from "@/src/shared/utils/open-attachment";
 
 const RETURN_STATUSES: TripStatus[] = [
   "CONTAINER_RETURN_PENDING",
@@ -234,10 +235,19 @@ export function ContainerReturnPanel({
               </dt>
               <dd className="min-w-0 px-3 py-3 text-sm">
               {data?.podDocument ? (
-                <a
-                  href={data.podDocument}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      openAttachment(data.podDocument as string);
+                    } catch {
+                      toast({
+                        title: "Unable to open the POD",
+                        description: "The stored document is invalid. Replace it and try again.",
+                        type: "error",
+                      });
+                    }
+                  }}
                   className="group flex max-w-md items-center gap-3 rounded-lg border border-brand-100 bg-brand-50/70 p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-brand-900 dark:bg-brand-950/30 dark:hover:border-brand-700 dark:hover:bg-brand-950/50"
                 >
                   <span className="grid size-10 shrink-0 place-items-center rounded-md bg-white text-brand-600 shadow-sm ring-1 ring-brand-100 dark:bg-slate-900 dark:text-brand-300 dark:ring-brand-900">
@@ -252,7 +262,7 @@ export function ContainerReturnPanel({
                     </span>
                   </span>
                   <ExternalLink className="size-4 shrink-0 text-brand-600 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 dark:text-brand-300" aria-hidden />
-                </a>
+                </button>
               ) : (
                 <span className="flex max-w-md items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
                   <span className="grid size-10 shrink-0 place-items-center rounded-md bg-white dark:bg-slate-800">

@@ -11,6 +11,7 @@ import {
 import { extractErrorMessage } from "@/services/http";
 import { useToast } from "@/providers/toast-provider";
 import type { TripStatus } from "@/types/trip";
+import { openAttachment } from "@/src/shared/utils/open-attachment";
 
 const ENABLED_STATUSES: TripStatus[] = [
   "DISCHARGED",
@@ -118,16 +119,25 @@ export function DeliveryPodPanel({
           </p>
         </div>
         {savedPod ? (
-          <a
-            href={savedPod}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                openAttachment(savedPod);
+              } catch {
+                toast({
+                  title: "Unable to open the POD",
+                  description: "The stored document is invalid. Replace the POD and try again.",
+                  type: "error",
+                });
+              }
+            }}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
           >
             <FileText className="size-4" aria-hidden />
             View current POD
             <ExternalLink className="size-3" aria-hidden />
-          </a>
+          </button>
         ) : (
           <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-200">
             POD missing

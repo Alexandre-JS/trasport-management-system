@@ -20,6 +20,10 @@ import path from 'node:path';
 const BASE = process.env.HOSTINGER_API_BASE || 'https://developers.hostinger.com';
 const TOKEN = process.env.HOSTINGER_API_TOKEN;
 const ENTRY_FILE = process.env.HOSTINGER_ENTRY_FILE;
+const configuredUploadTries = Number(process.env.HOSTINGER_UPLOAD_TRIES || 12);
+const UPLOAD_TRIES = Number.isInteger(configuredUploadTries) && configuredUploadTries > 0
+  ? configuredUploadTries
+  : 12;
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const flags = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')));
@@ -43,7 +47,9 @@ async function withRetry(label, fn, tries = 5) {
       return await fn();
     } catch (err) {
       if (i >= tries) throw err;
-      const delay = 30000 * i;
+      // Backoff progressivo com teto: tolera indisponibilidade prolongada sem
+      // deixar uma única tentativa ocupar o workflow por tempo excessivo.
+      const delay = Math.min(15000 * i, 60000);
       console.log(`  (${label}: tentativa ${i} falhou — ${err.message}; retry em ${delay / 1000}s)`);
       await new Promise((r) => setTimeout(r, delay));
     }
@@ -124,7 +130,7 @@ async function uploadZip(username) {
     if (!patch.ok) {
       throw new Error(`Upload TUS falhou: HTTP ${patch.status}: ${(await patch.text()).slice(0, 300)}`);
     }
-  });
+  }, UPLOAD_TRIES);
   console.log(`✓ Upload de ${basename} (${(file.length / 1024 / 1024).toFixed(1)} MB) concluído`);
   return basename;
 }

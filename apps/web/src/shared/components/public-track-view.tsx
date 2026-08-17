@@ -14,7 +14,7 @@ import { usePublicTracking } from "@/hooks/use-public-tracking";
 import type { PublicShipment } from "@/types/public-tracking";
 import { formatDate, formatDateTime, formatRelativeTime } from "@/utils/format";
 import {
-  borderNames,
+  borderProgressLabel,
   tripEventTypeLabel,
   tripStatusBadgeTone,
   tripStatusMeta,
@@ -56,7 +56,7 @@ const columns: TrackingColumn[] = [
     id: "border",
     header: "Border",
     visible: (items) => items.some((item) => item.borders.length > 0),
-    render: (item) => borderNames(item.borders) ?? "—",
+    render: (item) => borderProgressLabel(item.currentStatus, item.borders),
   },
   {
     id: "cargo",
@@ -272,7 +272,13 @@ function SingleShipmentDetails({ shipment }: { shipment: PublicShipment }) {
               { label: "Driver Name", value: shipment.driverName ?? "—" },
               { label: "Container / Description", value: cargoDetail(shipment) ?? "—" },
               { label: "Current Position", value: shipment.currentPosition ?? "—" },
-              { label: "Border", value: borderNames(shipment.borders) ?? "—" },
+              {
+                label: "Border",
+                value: borderProgressLabel(
+                  shipment.currentStatus,
+                  shipment.borders,
+                ),
+              },
               { label: "GMS Dispatch Date", value: formatDate(getDepartureDate(shipment)) },
               { label: "Arrive Date", value: formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate) },
             ],

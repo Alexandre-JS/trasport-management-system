@@ -7,6 +7,7 @@ export function usePublicTracking(token: string) {
   return useQuery({
     queryKey: ["public-track", token],
     queryFn: () => trackPublic(token),
-    retry: false,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   });
 }

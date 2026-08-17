@@ -14,7 +14,7 @@ import { StatusBadge } from "@/src/shared/components/status-badge";
 import { useMyShipment } from "@/hooks/use-portal";
 import { formatDate, formatDateTime } from "@/utils/format";
 import {
-  borderNames,
+  borderProgressLabel,
   tripEventTypeLabel,
   tripStatusBadgeTone,
   tripStatusMeta,
@@ -104,7 +104,13 @@ export function PortalShipmentDetail({ id }: { id: string }) {
               { label: "Mercadoria", value: shipment.cargo.description ?? "—" },
               { label: "Tonelagem", value: shipment.tonnage ? `${shipment.tonnage} t` : "—" },
               { label: "Posição atual", value: shipment.currentPosition ?? "—" },
-              { label: "Border (Fronteira)", value: borderNames(shipment.borders) ?? "—" },
+              {
+                label: "Border (Fronteira)",
+                value: borderProgressLabel(
+                  shipment.currentStatus,
+                  shipment.borders,
+                ),
+              },
               { label: "Data de saída (Beira)", value: formatDate(shipment.departureDate) },
               { label: "Chegada prevista", value: formatDate(shipment.arrivalEstimate) },
               { label: "Data de descarga", value: formatDate(shipment.dischargeDate) },
@@ -127,7 +133,10 @@ export function PortalShipmentDetail({ id }: { id: string }) {
           <Fact label="Mercadoria" value={shipment.cargo.description ?? "—"} />
           <Fact
             label="Border (Fronteira)"
-            value={borderNames(shipment.borders) ?? "—"}
+            value={borderProgressLabel(
+              shipment.currentStatus,
+              shipment.borders,
+            )}
           />
           <Fact
             label="Tonelagem"

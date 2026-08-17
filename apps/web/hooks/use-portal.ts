@@ -9,6 +9,8 @@ export function useMyShipments() {
   return useQuery({
     queryKey: [PORTAL_KEY, "trips"],
     queryFn: listMyShipments,
+    refetchInterval: 2 * 60_000,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -17,5 +19,7 @@ export function useMyShipment(id: string | null) {
     queryKey: [PORTAL_KEY, "trips", id ?? ""],
     queryFn: () => getMyShipment(id as string),
     enabled: id !== null,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   });
 }

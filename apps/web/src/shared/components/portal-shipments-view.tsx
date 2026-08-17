@@ -9,7 +9,11 @@ import { useAuth } from "@/src/shared/hooks/use-auth";
 import { useMyShipments } from "@/hooks/use-portal";
 import type { PortalShipment } from "@/types/portal";
 import { formatDate } from "@/utils/format";
-import { tripStatusBadgeTone, tripStatusMeta } from "@/utils/trip-status";
+import {
+  borderProgressLabel,
+  tripStatusBadgeTone,
+  tripStatusMeta,
+} from "@/utils/trip-status";
 
 // Alinhado ao Quadro Operacional: mostra os dados na linguagem da folha do
 // cliente (Horse, Motorista, Border), sem documentos internos do motorista.
@@ -20,9 +24,7 @@ function driverOf(s: PortalShipment) {
   return s.driverName ?? s.driver?.fullName ?? "—";
 }
 function bordersOf(s: PortalShipment) {
-  return s.borders.length > 0
-    ? s.borders.map((crossing) => crossing.border.name).join(" › ")
-    : "—";
+  return borderProgressLabel(s.currentStatus, s.borders);
 }
 
 export function PortalShipmentsView() {

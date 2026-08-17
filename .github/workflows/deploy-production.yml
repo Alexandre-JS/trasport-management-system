@@ -145,6 +145,7 @@ jobs:
         if: steps.scope.outputs.deploy_web == 'true'
         env:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          HOSTINGER_ENTRY_FILE: server.js
         run: node deploy/hostinger-deploy.mjs lumactraspots.com "$RUNNER_TEMP/web.zip"
 
       # Sempre termina com a API: o deploy Web da conta atual limpa a pasta

@@ -19,6 +19,7 @@ import path from 'node:path';
 
 const BASE = process.env.HOSTINGER_API_BASE || 'https://developers.hostinger.com';
 const TOKEN = process.env.HOSTINGER_API_TOKEN;
+const ENTRY_FILE = process.env.HOSTINGER_ENTRY_FILE;
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const flags = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')));
@@ -135,12 +136,18 @@ async function triggerBuild(username, archiveBasename) {
   );
   console.log(`✓ Build settings: ${JSON.stringify(settings).slice(0, 300)}`);
 
+  const buildSettings = {
+    ...settings,
+    ...(ENTRY_FILE ? { entry_file: ENTRY_FILE } : {}),
+  };
+  if (ENTRY_FILE) console.log(`✓ Entry file definido pelo deploy: ${ENTRY_FILE}`);
+
   const result = await api(
     'POST',
     `/api/hosting/v1/accounts/${username}/websites/${domain}/nodejs/builds`,
     {
-      ...settings,
-      node_version: settings?.node_version || 20,
+      ...buildSettings,
+      node_version: buildSettings?.node_version || 20,
       source_type: 'archive',
       source_options: { archive_path: archiveBasename },
     }

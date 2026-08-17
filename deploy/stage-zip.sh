@@ -124,15 +124,22 @@ else
 
   node -e '
     const fs = require("fs");
+    const path = require("path");
     const file = process.argv[1] + "/package.json";
     const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
     pkg.scripts = {
       build: "echo \"web pré-compilado no CI — sem build no servidor\"",
-      start: "node .next/standalone/server.js",
+      start: "node server.js",
     };
     pkg.dependencies = {};
     pkg.devDependencies = {};
     fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+    // A Hostinger classifica este pacote pré-compilado como "other". Um entry
+    // point na raiz permite ao Passenger arrancar o standalone sem adivinhar.
+    fs.writeFileSync(
+      path.join(process.argv[1], "server.js"),
+      "require(\"./.next/standalone/server.js\");\n",
+    );
   ' "$STAGE"
 fi
 

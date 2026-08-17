@@ -4,6 +4,7 @@ type RateLimitRequest = {
   body?: Record<string, unknown>;
   headers?: Record<string, string | string[] | undefined>;
   ip?: string;
+  params?: Record<string, unknown>;
 };
 
 function digest(value: string): string {
@@ -19,7 +20,18 @@ export function authenticatedOrIpTracker(request: RateLimitRequest): string {
   const value = Array.isArray(authorization) ? authorization[0] : authorization;
   const match = value?.match(/^Bearer\s+(.+)$/i);
 
-  return match?.[1] ? `session:${digest(match[1])}` : fallbackIp(request);
+  if (match?.[1]) {
+    return `session:${digest(match[1])}`;
+  }
+
+  // Public tracking requests do not carry a JWT. Keying them by their opaque
+  // token prevents users behind the same reverse proxy from blocking others.
+  const publicToken = request.params?.token;
+  if (typeof publicToken === 'string' && publicToken) {
+    return `public:${digest(publicToken)}`;
+  }
+
+  return fallbackIp(request);
 }
 
 export function loginAccountTracker(request: RateLimitRequest): string {

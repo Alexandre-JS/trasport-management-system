@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, PackageX } from "lucide-react";
+import { MapPin, Navigation, PackageX } from "lucide-react";
 import Image from "next/image";
 import { ClientSupportCard } from "@/src/shared/components/client-support-card";
 import { GpsLocationCard } from "@/src/shared/components/gps-location-card";
@@ -9,7 +9,7 @@ import { PrintButton } from "@/src/shared/components/print-button";
 import { PrintShipmentDocument } from "@/src/shared/components/print-shipment-document";
 import { StatusBadge } from "@/src/shared/components/status-badge";
 import { usePublicShipment } from "@/hooks/use-public-tracking";
-import { formatDate, formatDateTime } from "@/utils/format";
+import { formatDate, formatDateTime, formatRelativeTime } from "@/utils/format";
 import {
   borderNames,
   tripEventTypeLabel,
@@ -24,11 +24,12 @@ export function PublicTrackView({ token }: { token: string }) {
       event.type === "DISPATCHED_ORIGIN" ||
       event.toStatus === "DISPATCHED_ORIGIN",
   );
+  const departureDate = departureEvent?.occurredAt ?? shipment?.departureDate;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
           <Image
             src="/lumac-logo.png"
             alt="LUMAC Transportes & Logística"
@@ -43,7 +44,7 @@ export function PublicTrackView({ token }: { token: string }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-8">
         {isLoading ? (
           <PageLoader />
         ) : isError || !shipment ? (
@@ -59,49 +60,72 @@ export function PublicTrackView({ token }: { token: string }) {
           </div>
         ) : (
           <div className="flex flex-col gap-6">
-            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Carga
-                  </p>
-                  <p className="text-xl font-semibold text-slate-950 dark:text-white">
-                    {shipment.cargo.code}
-                  </p>
-                </div>
-                <StatusBadge tone={tripStatusBadgeTone[shipment.currentStatus]}>
-                  {tripStatusMeta[shipment.currentStatus].label}
-                </StatusBadge>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Acompanhamento da carga
+                </p>
+                <h1 className="text-xl font-semibold text-slate-950 dark:text-white">
+                  {shipment.cargo.code}
+                </h1>
               </div>
-
-              <div className="mt-4" data-print-hide>
+              <div data-print-hide>
                 <PrintButton label="Imprimir acompanhamento" />
               </div>
+            </div>
 
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-                {shipment.cargo.origin} → {shipment.cargo.destination}
-              </p>
-              {shipment.currentPosition ? (
-                <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                  <MapPin className="size-4 shrink-0" aria-hidden />
-                  {shipment.currentPosition}
-                </p>
-              ) : null}
-
-              <dl className="mt-5 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
-                <PublicFact
-                  label="Border (Fronteira)"
-                  value={borderNames(shipment.borders) ?? "—"}
-                />
-                <PublicFact
-                  label="Data de saída"
-                  value={formatDate(departureEvent?.occurredAt)}
-                />
-                <PublicFact
-                  label="Chegada prevista"
-                  value={formatDate(shipment.arrivalEstimate)}
-                />
-              </dl>
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="overflow-x-auto">
+                <table className="min-w-[1050px] text-left text-sm">
+                  <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                    <tr>
+                      <th className="whitespace-nowrap px-4 py-3">Carga</th>
+                      <th className="whitespace-nowrap px-4 py-3">Rota</th>
+                      <th className="whitespace-nowrap px-4 py-3">Estado</th>
+                      <th className="whitespace-nowrap px-4 py-3">Posição atual</th>
+                      <th className="whitespace-nowrap px-4 py-3">Fronteira</th>
+                      <th className="whitespace-nowrap px-4 py-3">Data de saída</th>
+                      <th className="whitespace-nowrap px-4 py-3">Chegada prevista</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="align-top">
+                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950 dark:text-white">
+                        {shipment.cargo.code}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {shipment.cargo.origin} → {shipment.cargo.destination}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <StatusBadge tone={tripStatusBadgeTone[shipment.currentStatus]}>
+                          {tripStatusMeta[shipment.currentStatus].label}
+                        </StatusBadge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                          <MapPin className="size-4 shrink-0 text-brand-500" aria-hidden />
+                          {shipment.currentPosition ?? "—"}
+                        </div>
+                        {shipment.lastLocation ? (
+                          <span className="mt-1 inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                            <Navigation className="size-3" aria-hidden />
+                            GPS {formatRelativeTime(shipment.lastLocation.recordedAt)}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {borderNames(shipment.borders) ?? "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {formatDate(departureDate)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {formatDate(shipment.arrivalEstimate)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {shipment.lastLocation ? (
@@ -122,25 +146,25 @@ export function PublicTrackView({ token }: { token: string }) {
                   title: "Informação da carga",
                   rows: [
                     { label: "Posição informada", value: shipment.currentPosition ?? "—" },
-                    { label: "Border (Fronteira)", value: borderNames(shipment.borders) ?? "—" },
-                    { label: "Data de saída", value: formatDate(departureEvent?.occurredAt) },
+                    { label: "Fronteira", value: borderNames(shipment.borders) ?? "—" },
+                    { label: "Data de saída", value: formatDate(departureDate) },
                     { label: "Chegada prevista", value: formatDate(shipment.arrivalEstimate) },
                   ],
                 },
               ]}
               events={shipment.events.map((event) => ({
                 date: formatDateTime(event.occurredAt),
-                description: event.toStatus ? tripStatusMeta[event.toStatus].label : tripEventTypeLabel[event.type],
+                description: event.toStatus
+                  ? tripStatusMeta[event.toStatus].label
+                  : tripEventTypeLabel[event.type],
                 note: event.note ?? undefined,
               }))}
               informational
             />
 
-            {/* TODO: Reativar o mapa quando a API fornecer coordenadas GPS reais. */}
-
             <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-                Acompanhamento
+                Histórico de acompanhamento
               </h2>
               {shipment.events.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
@@ -179,19 +203,6 @@ export function PublicTrackView({ token }: { token: string }) {
           </div>
         )}
       </main>
-    </div>
-  );
-}
-
-function PublicFact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid border-b border-slate-200 last:border-b-0 sm:grid-cols-[minmax(10rem,38%)_1fr] dark:border-slate-700">
-      <dt className="bg-slate-50 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-        {label}
-      </dt>
-      <dd className="px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100">
-        {value}
-      </dd>
     </div>
   );
 }

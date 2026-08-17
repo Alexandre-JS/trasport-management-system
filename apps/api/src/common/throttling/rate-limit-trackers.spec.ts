@@ -15,6 +15,20 @@ describe('rate limit trackers', () => {
     expect(tracker).not.toContain('secret-access-token');
   });
 
+  it('separates public tracking links behind the same proxy IP', () => {
+    const first = authenticatedOrIpTracker({
+      ip: '127.0.0.1',
+      params: { token: 'tracking-token-a' },
+    });
+    const second = authenticatedOrIpTracker({
+      ip: '127.0.0.1',
+      params: { token: 'tracking-token-b' },
+    });
+
+    expect(first).not.toBe(second);
+    expect(first).toMatch(/^public:[a-f0-9]{64}$/);
+  });
+
   it('normalizes the login account identifier', () => {
     expect(
       loginAccountTracker({ body: { identifier: ' User@Example.COM ' } }),

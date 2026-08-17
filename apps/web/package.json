@@ -8,10 +8,13 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "postbuild": "cp -R public .next/standalone/ && cp -R .next/static .next/standalone/.next/",
-    "start": "node .next/standalone/server.js",
-    "start:prod": "node .next/standalone/server.js",
+    "postbuild": "node scripts/prepare-standalone.mjs",
+    "start": "node scripts/start-standalone.mjs",
+    "start:prod": "node scripts/start-standalone.mjs",
     "lint": "eslint"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

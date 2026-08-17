@@ -2,13 +2,15 @@
 
 import { MapPin, Navigation, PackageX } from "lucide-react";
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { ClientSupportCard } from "@/src/shared/components/client-support-card";
 import { GpsLocationCard } from "@/src/shared/components/gps-location-card";
 import { PageLoader } from "@/src/shared/components/page-loader";
 import { PrintButton } from "@/src/shared/components/print-button";
 import { PrintShipmentDocument } from "@/src/shared/components/print-shipment-document";
 import { StatusBadge } from "@/src/shared/components/status-badge";
-import { usePublicShipment } from "@/hooks/use-public-tracking";
+import { usePublicTracking } from "@/hooks/use-public-tracking";
+import type { PublicShipment } from "@/types/public-tracking";
 import { formatDate, formatDateTime, formatRelativeTime } from "@/utils/format";
 import {
   borderNames,
@@ -17,19 +19,98 @@ import {
   tripStatusMeta,
 } from "@/utils/trip-status";
 
+type TrackingColumn = {
+  id: string;
+  header: string;
+  visible: (shipments: PublicShipment[]) => boolean;
+  render: (shipment: PublicShipment) => ReactNode;
+};
+
+const columns: TrackingColumn[] = [
+  {
+    id: "transporter",
+    header: "Transporter",
+    visible: (items) => items.some((item) => hasValue(item.transporterName)),
+    render: (item) => item.transporterName ?? "—",
+  },
+  {
+    id: "horse",
+    header: "Horse",
+    visible: (items) => items.some((item) => hasValue(item.horsePlate)),
+    render: (item) => item.horsePlate ?? "—",
+  },
+  {
+    id: "trailer",
+    header: "Trailer",
+    visible: (items) => items.some((item) => hasValue(item.trailerPlate)),
+    render: (item) => item.trailerPlate ?? "—",
+  },
+  {
+    id: "driver",
+    header: "Driver Name",
+    visible: (items) => items.some((item) => hasValue(item.driverName)),
+    render: (item) => item.driverName ?? "—",
+  },
+  {
+    id: "border",
+    header: "Border",
+    visible: (items) => items.some((item) => item.borders.length > 0),
+    render: (item) => borderNames(item.borders) ?? "—",
+  },
+  {
+    id: "cargo",
+    header: "Container / Description",
+    visible: (items) => items.some((item) => hasValue(cargoDetail(item))),
+    render: (item) => cargoDetail(item) ?? "—",
+  },
+  {
+    id: "route",
+    header: "Route",
+    visible: () => true,
+    render: (item) => `${item.cargo.origin} → ${item.cargo.destination}`,
+  },
+  {
+    id: "status",
+    header: "Status",
+    visible: () => true,
+    render: (item) => (
+      <StatusBadge tone={tripStatusBadgeTone[item.currentStatus]}>
+        {tripStatusMeta[item.currentStatus].label}
+      </StatusBadge>
+    ),
+  },
+  {
+    id: "dispatch",
+    header: "GMS Dispatch Date",
+    visible: (items) => items.some((item) => Boolean(getDepartureDate(item))),
+    render: (item) => formatDate(getDepartureDate(item)),
+  },
+  {
+    id: "arrival",
+    header: "Arrive Date",
+    visible: (items) =>
+      items.some((item) => Boolean(item.arrivalDate ?? item.arrivalEstimate)),
+    render: (item) => formatDate(item.arrivalDate ?? item.arrivalEstimate),
+  },
+  {
+    id: "position",
+    header: "Current Position",
+    visible: (items) =>
+      items.some((item) => hasValue(item.currentPosition) || item.lastLocation),
+    render: (item) => <CurrentPosition shipment={item} />,
+  },
+];
+
 export function PublicTrackView({ token }: { token: string }) {
-  const { data: shipment, isLoading, isError } = usePublicShipment(token);
-  const departureEvent = shipment?.events.find(
-    (event) =>
-      event.type === "DISPATCHED_ORIGIN" ||
-      event.toStatus === "DISPATCHED_ORIGIN",
-  );
-  const departureDate = departureEvent?.occurredAt ?? shipment?.departureDate;
+  const { data, isLoading, isError } = usePublicTracking(token);
+  const shipments = data?.shipments ?? [];
+  const visibleColumns = columns.filter((column) => column.visible(shipments));
+  const singleShipment = shipments.length === 1 ? shipments[0] : undefined;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
           <Image
             src="/lumac-logo.png"
             alt="LUMAC Transportes & Logística"
@@ -39,196 +120,239 @@ export function PublicTrackView({ token }: { token: string }) {
             className="h-8 w-auto"
           />
           <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            Rastreio de carga
+            Tracking
           </span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8">
         {isLoading ? (
           <PageLoader />
-        ) : isError || !shipment ? (
-          <div className="rounded-lg border border-slate-200 bg-white px-6 py-14 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <PackageX className="mx-auto size-8 text-slate-400" aria-hidden />
-            <h1 className="mt-3 text-base font-semibold text-slate-900 dark:text-slate-100">
-              Link de rastreio inválido
-            </h1>
-            <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
-              Este link não corresponde a nenhuma carga. Verifique o endereço ou
-              contacte a LUMAC.
-            </p>
-          </div>
+        ) : isError || !data ? (
+          <InvalidTracking />
         ) : (
           <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Cliente
+                  Client
                 </p>
                 <h1 className="text-xl font-semibold text-slate-950 dark:text-white">
-                  {shipment.clientName}
+                  {data.clientName}
                 </h1>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {shipments.length} {shipments.length === 1 ? "shipment" : "shipments"}
+                </p>
               </div>
-              <div data-print-hide>
-                <PrintButton label="Imprimir acompanhamento" />
-              </div>
+              {singleShipment ? (
+                <div data-print-hide>
+                  <PrintButton label="Print tracking" />
+                </div>
+              ) : null}
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="overflow-x-auto">
-                <table className="min-w-[1900px] text-left text-sm">
-                  <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
-                    <tr>
-                      <th className="whitespace-nowrap px-4 py-3">Client</th>
-                      <th className="whitespace-nowrap px-4 py-3">Transporter</th>
-                      <th className="whitespace-nowrap px-4 py-3">Horse</th>
-                      <th className="whitespace-nowrap px-4 py-3">Trailer</th>
-                      <th className="whitespace-nowrap px-4 py-3">Driver Name</th>
-                      <th className="whitespace-nowrap px-4 py-3">Border</th>
-                      <th className="whitespace-nowrap px-4 py-3">Container / Description</th>
-                      <th className="whitespace-nowrap px-4 py-3">Route</th>
-                      <th className="whitespace-nowrap px-4 py-3">Status</th>
-                      <th className="whitespace-nowrap px-4 py-3">GMS Dispatch Date</th>
-                      <th className="whitespace-nowrap px-4 py-3">Arrive Date</th>
-                      <th className="whitespace-nowrap px-4 py-3">Current Position</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="align-top">
-                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950 dark:text-white">
-                        {shipment.clientName}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {shipment.transporterName ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {shipment.horsePlate ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {shipment.trailerPlate ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {shipment.driverName ?? "—"}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {borderNames(shipment.borders) ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-700 dark:text-slate-200">
-                        {shipment.cargo.containerNumber ?? shipment.cargo.description ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {shipment.cargo.origin} → {shipment.cargo.destination}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <StatusBadge tone={tripStatusBadgeTone[shipment.currentStatus]}>
-                          {tripStatusMeta[shipment.currentStatus].label}
-                        </StatusBadge>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {formatDate(departureDate)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                          <MapPin className="size-4 shrink-0 text-brand-500" aria-hidden />
-                          {shipment.currentPosition ?? "—"}
-                        </div>
-                        {shipment.lastLocation ? (
-                          <span className="mt-1 inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-                            <Navigation className="size-3" aria-hidden />
-                            GPS {formatRelativeTime(shipment.lastLocation.recordedAt)}
-                          </span>
-                        ) : null}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+            {shipments.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-white px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  There are no shipments to track yet.
+                </p>
               </div>
-            </div>
+            ) : (
+              <TrackingTable shipments={shipments} columns={visibleColumns} />
+            )}
 
-            {shipment.lastLocation ? (
+            {singleShipment?.lastLocation ? (
               <GpsLocationCard
-                location={shipment.lastLocation}
-                label={shipment.cargo.containerNumber ?? shipment.horsePlate ?? "Current Position"}
+                location={singleShipment.lastLocation}
+                label={
+                  cargoDetail(singleShipment) ??
+                  singleShipment.horsePlate ??
+                  "Current Position"
+                }
               />
             ) : null}
 
             <ClientSupportCard />
-            <PrintShipmentDocument
-              title="Acompanhamento da carga"
-              reference={shipment.cargo.containerNumber ?? shipment.horsePlate ?? "Tracking"}
-              status={tripStatusMeta[shipment.currentStatus].label}
-              route={`${shipment.cargo.origin} → ${shipment.cargo.destination}`}
-              sections={[
-                {
-                  title: "Informação da carga",
-                  rows: [
-                    { label: "Client", value: shipment.clientName },
-                    { label: "Transporter", value: shipment.transporterName ?? "—" },
-                    { label: "Horse", value: shipment.horsePlate ?? "—" },
-                    { label: "Trailer", value: shipment.trailerPlate ?? "—" },
-                    { label: "Driver Name", value: shipment.driverName ?? "—" },
-                    { label: "Container / Description", value: shipment.cargo.containerNumber ?? shipment.cargo.description ?? "—" },
-                    { label: "Current Position", value: shipment.currentPosition ?? "—" },
-                    { label: "Border", value: borderNames(shipment.borders) ?? "—" },
-                    { label: "GMS Dispatch Date", value: formatDate(departureDate) },
-                    { label: "Arrive Date", value: formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate) },
-                  ],
-                },
-              ]}
-              events={shipment.events.map((event) => ({
-                date: formatDateTime(event.occurredAt),
-                description: event.toStatus
-                  ? tripStatusMeta[event.toStatus].label
-                  : tripEventTypeLabel[event.type],
-                note: event.note ?? undefined,
-              }))}
-              informational
-            />
-
-            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-                Histórico de acompanhamento
-              </h2>
-              {shipment.events.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                  Ainda não há marcos registados.
-                </p>
-              ) : (
-                <ol className="mt-4 flex flex-col">
-                  {shipment.events.map((event, index) => (
-                    <li key={event.id} className="flex gap-3">
-                      <div className="flex flex-col items-center">
-                        <span className="size-3 rounded-full bg-brand-500" />
-                        {index < shipment.events.length - 1 ? (
-                          <span className="w-px flex-1 bg-slate-200 dark:bg-slate-700" />
-                        ) : null}
-                      </div>
-                      <div className="pb-6">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          {event.toStatus
-                            ? tripStatusMeta[event.toStatus].label
-                            : tripEventTypeLabel[event.type]}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {formatDateTime(event.occurredAt)}
-                          {event.note ? ` · ${event.note}` : ""}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
+            {singleShipment ? <SingleShipmentDetails shipment={singleShipment} /> : null}
 
             <p className="text-center text-xs text-slate-400 dark:text-slate-500">
-              Acompanhamento fornecido por LUMAC Transportes &amp; Logística
+              Tracking provided by LUMAC Transportes &amp; Logística
             </p>
           </div>
         )}
       </main>
     </div>
   );
+}
+
+function TrackingTable({
+  shipments,
+  columns: visibleColumns,
+}: {
+  shipments: PublicShipment[];
+  columns: TrackingColumn[];
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+            <tr>
+              {visibleColumns.map((column) => (
+                <th key={column.id} className="whitespace-nowrap px-4 py-3">
+                  {column.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {shipments.map((shipment, index) => (
+              <tr key={`${shipment.cargo.code}-${index}`} className="align-top">
+                {visibleColumns.map((column) => (
+                  <td
+                    key={column.id}
+                    className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300"
+                  >
+                    {column.render(shipment)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function CurrentPosition({ shipment }: { shipment: PublicShipment }) {
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+        <MapPin className="size-4 shrink-0 text-brand-500" aria-hidden />
+        {shipment.currentPosition ?? "—"}
+      </div>
+      {shipment.lastLocation ? (
+        <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+          <span className="inline-flex items-center gap-1">
+            <Navigation className="size-3" aria-hidden />
+            GPS {formatRelativeTime(shipment.lastLocation.recordedAt)}
+          </span>
+          <a
+            href={`https://www.openstreetmap.org/?mlat=${shipment.lastLocation.latitude}&mlon=${shipment.lastLocation.longitude}#map=12/${shipment.lastLocation.latitude}/${shipment.lastLocation.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-brand-600 hover:underline dark:text-brand-400"
+          >
+            View map
+          </a>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SingleShipmentDetails({ shipment }: { shipment: PublicShipment }) {
+  return (
+    <>
+      <PrintShipmentDocument
+        title="Shipment tracking"
+        reference={cargoDetail(shipment) ?? shipment.horsePlate ?? "Tracking"}
+        status={tripStatusMeta[shipment.currentStatus].label}
+        route={`${shipment.cargo.origin} → ${shipment.cargo.destination}`}
+        sections={[
+          {
+            title: "Operational information",
+            rows: [
+              { label: "Client", value: shipment.clientName },
+              { label: "Transporter", value: shipment.transporterName ?? "—" },
+              { label: "Horse", value: shipment.horsePlate ?? "—" },
+              { label: "Trailer", value: shipment.trailerPlate ?? "—" },
+              { label: "Driver Name", value: shipment.driverName ?? "—" },
+              { label: "Container / Description", value: cargoDetail(shipment) ?? "—" },
+              { label: "Current Position", value: shipment.currentPosition ?? "—" },
+              { label: "Border", value: borderNames(shipment.borders) ?? "—" },
+              { label: "GMS Dispatch Date", value: formatDate(getDepartureDate(shipment)) },
+              { label: "Arrive Date", value: formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate) },
+            ],
+          },
+        ]}
+        events={shipment.events.map((event) => ({
+          date: formatDateTime(event.occurredAt),
+          description: event.toStatus
+            ? tripStatusMeta[event.toStatus].label
+            : tripEventTypeLabel[event.type],
+          note: event.note ?? undefined,
+        }))}
+        informational
+      />
+
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+          Tracking history
+        </h2>
+        {shipment.events.length === 0 ? (
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            No milestones have been recorded yet.
+          </p>
+        ) : (
+          <ol className="mt-4 flex flex-col">
+            {shipment.events.map((event, index) => (
+              <li key={event.id} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <span className="size-3 rounded-full bg-brand-500" />
+                  {index < shipment.events.length - 1 ? (
+                    <span className="w-px flex-1 bg-slate-200 dark:bg-slate-700" />
+                  ) : null}
+                </div>
+                <div className="pb-6">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {event.toStatus
+                      ? tripStatusMeta[event.toStatus].label
+                      : tripEventTypeLabel[event.type]}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {formatDateTime(event.occurredAt)}
+                    {event.note ? ` · ${event.note}` : ""}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </>
+  );
+}
+
+function InvalidTracking() {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-6 py-14 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <PackageX className="mx-auto size-8 text-slate-400" aria-hidden />
+      <h1 className="mt-3 text-base font-semibold text-slate-900 dark:text-slate-100">
+        Invalid tracking link
+      </h1>
+      <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
+        This link does not match any shipment. Check the address or contact LUMAC.
+      </p>
+    </div>
+  );
+}
+
+function cargoDetail(shipment: PublicShipment) {
+  return shipment.cargo.containerNumber ?? shipment.cargo.description;
+}
+
+function getDepartureDate(shipment: PublicShipment) {
+  return (
+    shipment.events.find(
+      (event) =>
+        event.type === "DISPATCHED_ORIGIN" ||
+        event.toStatus === "DISPATCHED_ORIGIN",
+    )?.occurredAt ?? shipment.departureDate
+  );
+}
+
+function hasValue(value: string | null | undefined): value is string {
+  return Boolean(value?.trim());
 }

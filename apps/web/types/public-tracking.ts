@@ -39,7 +39,7 @@ export type PublicShipment = {
   events: PublicTrackEvent[];
 };
 
-export type PublicClientShipments = {
+export type PublicTrackingResult = {
   clientName: string;
   shipments: PublicShipment[];
 };

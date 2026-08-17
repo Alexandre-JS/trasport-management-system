@@ -7,6 +7,15 @@ const apiOrigin = (
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: "/track/client/:token",
+        destination: "/track/:token",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

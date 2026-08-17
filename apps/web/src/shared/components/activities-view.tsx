@@ -322,7 +322,8 @@ function SheetTracking({
     const lineH = 2.8;
     const maxLines = 2;
     const top = 44;
-    const bottom = pageH - 28;
+    // Reserve a real gap between the last table row and the shared footer.
+    const bottom = pageH - 34;
     let y = top;
 
     pdf.setFontSize(6.5);

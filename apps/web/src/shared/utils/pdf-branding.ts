@@ -50,17 +50,31 @@ export function addPdfFooter(pdf: jsPDF, note: string) {
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
   const right = pageW - PDF_MARGIN;
-  const lineY = pageH - 25;
-  const textY = pageH - 19;
+  const lineY = pageH - 22;
+  const textY = pageH - 16;
+  const usableW = right - PDF_MARGIN;
+  const noteWidth = usableW * 0.55;
+  const pageCount = pdf.getNumberOfPages();
+  const currentPage = pdf.getCurrentPageInfo().pageNumber;
 
-  pdf.setDrawColor(203, 213, 225);
-  pdf.setLineWidth(0.2);
-  pdf.line(PDF_MARGIN, lineY, right, lineY);
-  pdf.setTextColor(...TEXT_MUTED);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8);
-  pdf.text(note, PDF_MARGIN, textY);
-  pdf.text("LUMAC Transportes & Logística", right, textY, { align: "right" });
+  for (let page = 1; page <= pageCount; page += 1) {
+    pdf.setPage(page);
+    pdf.setDrawColor(203, 213, 225);
+    pdf.setLineWidth(0.2);
+    pdf.line(PDF_MARGIN, lineY, right, lineY);
+    pdf.setTextColor(...TEXT_MUTED);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+
+    const noteLine = (pdf.splitTextToSize(note, noteWidth) as string[])[0] ?? "";
+    pdf.text(noteLine, PDF_MARGIN, textY, { maxWidth: noteWidth });
+    pdf.text("LUMAC Transportes & Logística", right, textY, {
+      align: "right",
+      maxWidth: usableW * 0.4,
+    });
+  }
+
+  pdf.setPage(currentPage);
 }
 
 type LoadedImage = { dataUrl: string; width: number; height: number };

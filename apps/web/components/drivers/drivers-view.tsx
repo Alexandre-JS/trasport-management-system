@@ -159,29 +159,29 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
 
   function handleExport() {
     if (rows.length === 0) {
-      toast({ title: "Nada para exportar", type: "warning" });
+      toast({ title: "Nothing to export", type: "warning" });
       return;
     }
 
-    exportToCsv("motoristas.csv", rows, [
-      { header: "Código", value: (row) => shortCode(row.id) },
-      { header: "Nome", value: (row) => row.fullName },
-      { header: "Carta", value: (row) => row.licenseNumber },
-      { header: "Passaporte", value: (row) => row.passportNumber ?? "" },
-      { header: "Telefone", value: (row) => row.phone ?? "" },
+    exportToCsv("drivers.csv", rows, [
+      { header: "Code", value: (row) => shortCode(row.id) },
+      { header: "Name", value: (row) => row.fullName },
+      { header: "Driving Licence", value: (row) => row.licenseNumber },
+      { header: "Passport", value: (row) => row.passportNumber ?? "" },
+      { header: "Phone", value: (row) => row.phone ?? "" },
       { header: "Email", value: (row) => row.email ?? "" },
       {
-        header: "Disponibilidade",
+        header: "Availability",
         value: (row) => driverStatusMeta[row.status].label,
       },
       {
-        header: "Estado",
-        value: (row) => (row.status === "INACTIVE" ? "Inativo" : "Ativo"),
+        header: "Status",
+        value: (row) => (row.status === "INACTIVE" ? "Inactive" : "Active"),
       },
-      { header: "Data Cadastro", value: (row) => formatDate(row.createdAt) },
+      { header: "Created at", value: (row) => formatDate(row.createdAt) },
     ]);
 
-    toast({ title: "Exportação concluída", type: "success" });
+    toast({ title: "Export completed", type: "success" });
   }
 
   function runStatusAction(
@@ -195,7 +195,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
         onSuccess: () => toast({ title: successMessage, type: "success" }),
         onError: (mutationError) =>
           toast({
-            title: "Não foi possível atualizar",
+            title: "Could not update the driver",
             description: extractErrorMessage(mutationError),
             type: "error",
           }),
@@ -210,12 +210,12 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
 
     deleteDriver.mutate(deleteTarget.id, {
       onSuccess: () => {
-        toast({ title: "Motorista eliminado", type: "success" });
+        toast({ title: "Driver deleted", type: "success" });
         setDeleteTarget(null);
       },
       onError: (mutationError) =>
         toast({
-          title: "Não foi possível eliminar",
+          title: "Could not delete the driver",
           description: extractErrorMessage(mutationError),
           type: "error",
         }),
@@ -225,7 +225,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
   const columns: Column<Driver>[] = [
     {
       id: "code",
-      header: "Código",
+      header: "Code",
       cell: (driver) => (
         <span className="font-mono text-xs font-medium text-slate-500 dark:text-slate-400">
           {shortCode(driver.id)}
@@ -234,7 +234,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
     },
     {
       id: "fullName",
-      header: "Nome",
+      header: "Name",
       sortable: true,
       sortKey: "fullName",
       cell: (driver) => (
@@ -252,7 +252,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
     },
     {
       id: "licenseNumber",
-      header: "Carta",
+      header: "Driving Licence",
       sortable: true,
       sortKey: "licenseNumber",
       cell: (driver) => (
@@ -263,21 +263,21 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
     },
     {
       id: "phone",
-      header: "Telefone",
+      header: "Phone",
       cell: (driver) => driver.phone ?? "—",
     },
     {
       id: "estado",
-      header: "Estado",
+      header: "Status",
       cell: (driver) => (
         <Badge tone={driver.status === "INACTIVE" ? "red" : "green"}>
-          {driver.status === "INACTIVE" ? "Inativo" : "Ativo"}
+          {driver.status === "INACTIVE" ? "Inactive" : "Active"}
         </Badge>
       ),
     },
     {
       id: "status",
-      header: "Disponibilidade",
+      header: "Availability",
       sortable: true,
       sortKey: "status",
       cell: (driver) => {
@@ -287,32 +287,32 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
     },
     {
       id: "lastTrip",
-      header: "Última Viagem",
+      header: "Last Trip",
       cell: () => <span className="text-slate-400 dark:text-slate-500">—</span>,
     },
     {
       id: "updatedAt",
-      header: "Atualização",
+      header: "Last Updated",
       cell: (driver) => formatDateTime(driver.updatedAt),
     },
   ];
 
   const hideableColumns = [
-    { id: "phone", label: "Telefone" },
-    { id: "lastTrip", label: "Última Viagem" },
-    { id: "updatedAt", label: "Atualização" },
+    { id: "phone", label: "Phone" },
+    { id: "lastTrip", label: "Last Trip" },
+    { id: "updatedAt", label: "Last Updated" },
   ];
 
   function buildActions(driver: Driver): ActionItem[] {
     const items: ActionItem[] = [
       {
-        label: "Detalhes",
+        label: "Details",
         icon: Eye,
         tone: "info",
         onSelect: () => setDetailsDriver(driver),
       },
       {
-        label: "Editar",
+        label: "Edit",
         icon: Pencil,
         tone: "warning",
         onSelect: () => openEdit(driver),
@@ -321,7 +321,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
 
     if (!driver.userId) {
       items.push({
-        label: "Dar acesso mobile",
+        label: "Grant mobile access",
         icon: Smartphone,
         tone: "default",
         onSelect: () => setAccountDriver(driver),
@@ -330,35 +330,35 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
 
     if (driver.status !== "AVAILABLE" && driver.status !== "INACTIVE") {
       items.push({
-        label: "Marcar disponível",
+        label: "Mark available",
         icon: Power,
         tone: "success",
         onSelect: () =>
-          runStatusAction(driver, "available", "Motorista disponível"),
+          runStatusAction(driver, "available", "Driver available"),
       });
     }
 
     if (driver.status === "AVAILABLE") {
       items.push({
-        label: "Marcar offline",
+        label: "Mark offline",
         icon: CircleSlash,
         tone: "muted",
-        onSelect: () => runStatusAction(driver, "offline", "Motorista offline"),
+        onSelect: () => runStatusAction(driver, "offline", "Driver offline"),
       });
     }
 
     if (driver.status !== "INACTIVE") {
       items.push({
-        label: "Desativar",
+        label: "Deactivate",
         icon: CircleSlash,
         tone: "muted",
         onSelect: () =>
-          runStatusAction(driver, "deactivate", "Motorista desativado"),
+          runStatusAction(driver, "deactivate", "Driver deactivated"),
       });
     }
 
     items.push({
-      label: "Eliminar",
+      label: "Delete",
       icon: Trash2,
       tone: "danger",
       separatorBefore: true,
@@ -372,8 +372,8 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
     <>
       {showHeader ? (
         <PageHeader
-          title="Motoristas"
-          description="Gestão dos motoristas, disponibilidade e estado operacional."
+          title="Drivers"
+          description="Manage drivers, availability, and operational status."
           actions={
             <>
               <Button
@@ -384,7 +384,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
                 onClick={() => refetch()}
                 loading={isFetching}
               >
-                Atualizar
+                Refresh
               </Button>
               <Button
                 variant="outline"
@@ -393,7 +393,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
                 icon={<FileSpreadsheet className="size-4" />}
                 onClick={handleExport}
               >
-                Exportar para Excel
+                Export to Excel
               </Button>
               <Button
                 size="sm"
@@ -401,7 +401,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
                 icon={<Plus className="size-4" />}
                 onClick={openCreate}
               >
-                Novo Motorista
+                New Driver
               </Button>
             </>
           }
@@ -418,7 +418,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
             onClick={() => refetch()}
             loading={isFetching}
           >
-            Atualizar
+            Refresh
           </Button>
           <Button
             variant="outline"
@@ -427,7 +427,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
             icon={<FileSpreadsheet className="size-4" />}
             onClick={handleExport}
           >
-            Exportar para Excel
+            Export to Excel
           </Button>
           <Button
             size="sm"
@@ -435,7 +435,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
             icon={<Plus className="size-4" />}
             onClick={openCreate}
           >
-            Novo Motorista
+            New Driver
           </Button>
         </div>
       ) : null}
@@ -448,12 +448,12 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               setSearchInput(value);
               resetToFirstPage();
             }}
-            placeholder="Pesquisar por nome, carta ou email..."
+            placeholder="Search by name, licence, or email..."
             className="sm:max-w-sm sm:flex-1"
           />
           <div className="flex flex-wrap items-center gap-3">
             <Select
-              aria-label="Filtrar por disponibilidade"
+              aria-label="Filter by availability"
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value as StatusFilter);
@@ -478,20 +478,20 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               {extractErrorMessage(error)}
             </p>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Tentar novamente
+              Try again
             </Button>
           </div>
         ) : null}
 
         {selectedKeys.size > 0 ? (
           <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
-            <span>{selectedKeys.size} selecionado(s)</span>
+            <span>{selectedKeys.size} selected</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedKeys(new Set())}
             >
-              Limpar seleção
+              Clear selection
             </Button>
           </div>
         ) : null}
@@ -533,44 +533,44 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
       <Modal
         open={detailsDriver !== null}
         size="lg"
-        title={detailsDriver?.fullName ?? "Motorista"}
+        title={detailsDriver?.fullName ?? "Driver"}
         description={detailsDriver ? shortCode(detailsDriver.id) : undefined}
         onClose={() => setDetailsDriver(null)}
       >
         {detailsDriver ? (
           <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow
-              label="Carta de condução"
+              label="Driving Licence"
               value={detailsDriver.licenseNumber}
             />
             <DetailRow
-              label="Passaporte"
+              label="Passport"
               value={detailsDriver.passportNumber}
             />
-            <DetailRow label="Telefone" value={detailsDriver.phone} />
+            <DetailRow label="Phone" value={detailsDriver.phone} />
             <DetailRow label="Email" value={detailsDriver.email} />
             <DetailRow
-              label="Disponibilidade"
+              label="Availability"
               value={driverStatusMeta[detailsDriver.status].label}
             />
             <DetailRow
-              label="Estado"
-              value={detailsDriver.status === "INACTIVE" ? "Inativo" : "Ativo"}
+              label="Status"
+              value={detailsDriver.status === "INACTIVE" ? "Inactive" : "Active"}
             />
             <DetailRow
-              label="Conta de acesso mobile"
+              label="Mobile access account"
               value={
                 detailsDriver.userId
-                  ? (linkedAccount.data?.email ?? "Associada")
-                  : "Sem conta"
+                  ? (linkedAccount.data?.email ?? "Linked")
+                  : "No account"
               }
             />
             <DetailRow
-              label="Data de cadastro"
+              label="Created at"
               value={formatDateTime(detailsDriver.createdAt)}
             />
             <DetailRow
-              label="Última atualização"
+              label="Last updated"
               value={formatDateTime(detailsDriver.updatedAt)}
             />
           </dl>
@@ -585,7 +585,7 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
                 setDetailsDriver(null);
               }}
             >
-              Dar acesso mobile
+              Grant mobile access
             </Button>
           </div>
         ) : null}
@@ -593,8 +593,8 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
           <div className="mt-4 flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
             <div>
               <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                Acesso mobile{" "}
-                {linkedAccount.data.isActive ? "ativo" : "desativado"}
+                Mobile access{" "}
+                {linkedAccount.data.isActive ? "active" : "inactive"}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {linkedAccount.data.email}
@@ -614,13 +614,13 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
                     onSuccess: () =>
                       toast({
                         title: linkedAccount.data.isActive
-                          ? "Acesso mobile desativado"
-                          : "Acesso mobile ativado",
+                          ? "Mobile access deactivated"
+                          : "Mobile access activated",
                         type: "success",
                       }),
                     onError: (error) =>
                       toast({
-                        title: "Não foi possível alterar o acesso",
+                        title: "Could not change mobile access",
                         description: extractErrorMessage(error),
                         type: "error",
                       }),
@@ -629,8 +629,8 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
               }
             >
               {linkedAccount.data.isActive
-                ? "Desativar acesso"
-                : "Ativar acesso"}
+                ? "Deactivate access"
+                : "Activate access"}
             </Button>
           </div>
         ) : null}
@@ -649,13 +649,13 @@ export function DriversView({ showHeader = true }: DriversViewProps = {}) {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Eliminar motorista"
+        title="Delete driver"
         description={
           deleteTarget
-            ? `Tem a certeza que pretende eliminar “${deleteTarget.fullName}”? Esta ação desativa o registo.`
+            ? `Are you sure you want to delete “${deleteTarget.fullName}”? This action deactivates the record.`
             : undefined
         }
-        confirmLabel="Eliminar"
+        confirmLabel="Delete"
         tone="danger"
         loading={deleteDriver.isPending}
         onConfirm={confirmDelete}

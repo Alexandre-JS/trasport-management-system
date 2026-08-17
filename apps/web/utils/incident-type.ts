@@ -5,24 +5,24 @@ export const incidentTypeMeta: Record<
   IncidentType,
   { label: string; tone: BadgeTone }
 > = {
-  ACCIDENT: { label: "Acidente", tone: "red" },
-  BREAKDOWN: { label: "Avaria", tone: "amber" },
+  ACCIDENT: { label: "Accident", tone: "red" },
+  BREAKDOWN: { label: "Breakdown", tone: "amber" },
   TRAFFIC: { label: "Traffic", tone: "blue" },
-  ROAD_BLOCKED: { label: "Via bloqueada", tone: "violet" },
-  OTHER: { label: "Outro", tone: "slate" },
+  ROAD_BLOCKED: { label: "Road blocked", tone: "violet" },
+  OTHER: { label: "Other", tone: "slate" },
 };
 
 export const incidentTypeOptions = [
-  { label: "Todos os tipos", value: "all" },
-  { label: "Acidente", value: "ACCIDENT" },
-  { label: "Avaria", value: "BREAKDOWN" },
+  { label: "All types", value: "all" },
+  { label: "Accident", value: "ACCIDENT" },
+  { label: "Breakdown", value: "BREAKDOWN" },
   { label: "Traffic", value: "TRAFFIC" },
-  { label: "Via bloqueada", value: "ROAD_BLOCKED" },
-  { label: "Outro", value: "OTHER" },
+  { label: "Road blocked", value: "ROAD_BLOCKED" },
+  { label: "Other", value: "OTHER" },
 ];
 
 export const incidentStateOptions = [
   { label: "All statuses", value: "all" },
-  { label: "Abertos", value: "open" },
-  { label: "Resolvidos", value: "resolved" },
+  { label: "Open", value: "open" },
+  { label: "Resolved", value: "resolved" },
 ];

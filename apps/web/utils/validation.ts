@@ -4,11 +4,11 @@ import { z } from "zod";
 // utilizador ter feedback imediato em vez de erro do servidor.
 export const passwordSchema = z
   .string()
-  .min(8, "Mínimo 8 caracteres")
-  .max(128, "Máximo 128 caracteres")
+  .min(8, "Minimum 8 characters")
+  .max(128, "Maximum 128 characters")
   .regex(
     /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    "Deve conter maiúsculas, minúsculas e números",
+    "Must contain uppercase letters, lowercase letters, and numbers",
   );
 
 export const phonePattern = /^\+?[\d\s\-()]{7,20}$/;
@@ -18,5 +18,5 @@ export const optionalPhoneSchema = z
   .optional()
   .refine(
     (value) => !value?.trim() || phonePattern.test(value.trim()),
-    "Telefone inválido — use dígitos, espaços e o indicativo (+)",
+    "Invalid phone number — use digits, spaces, and the country code (+)",
   );

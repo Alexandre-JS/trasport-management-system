@@ -17,12 +17,12 @@ export function FormActions({
   onSaveAndContinue,
   loading = false,
   showContinue = true,
-  submitLabel = "Guardar",
+  submitLabel = "Save",
 }: FormActionsProps) {
   return (
     <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
       <Button type="button" variant="ghost" onClick={onReset} disabled={loading}>
-        Limpar
+        Clear
       </Button>
       <Button
         type="button"
@@ -30,7 +30,7 @@ export function FormActions({
         onClick={onCancel}
         disabled={loading}
       >
-        Cancelar
+        Cancel
       </Button>
       {showContinue && onSaveAndContinue ? (
         <Button
@@ -39,7 +39,7 @@ export function FormActions({
           onClick={onSaveAndContinue}
           loading={loading}
         >
-          Guardar e Continuar
+          Save and Continue
         </Button>
       ) : null}
       <Button type="submit" loading={loading}>

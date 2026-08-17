@@ -29,8 +29,8 @@ import {
 // Na edição a senha não é alterada aqui (ação "Repor senha" nos detalhes)
 // e o perfil muda pela ação dedicada "Mudar perfil".
 const baseSchema = z.object({
-  firstName: z.string().min(1, "Nome é obrigatório"),
-  lastName: z.string().min(1, "Apelido é obrigatório"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   email: z.string(),
   phone: optionalPhoneSchema,
   password: z.string(),
@@ -93,7 +93,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
       ctx.addIssue({
         code: "custom",
         path: ["roleId"],
-        message: "Perfil é obrigatório",
+        message: "Role is required",
       });
       return;
     }
@@ -102,12 +102,12 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
     const email = values.email.trim();
 
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-      ctx.addIssue({ code: "custom", path: ["email"], message: "Email inválido" });
+      ctx.addIssue({ code: "custom", path: ["email"], message: "Invalid email" });
     } else if (!email && !driver) {
       ctx.addIssue({
         code: "custom",
         path: ["email"],
-        message: "Email é obrigatório",
+        message: "Email is required",
       });
     }
 
@@ -116,14 +116,14 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
         ctx.addIssue({
           code: "custom",
           path: ["phone"],
-          message: "Telefone é obrigatório para o acesso mobile",
+          message: "Phone number is required for mobile access",
         });
       }
       if (!values.licenseNumber.trim()) {
         ctx.addIssue({
           code: "custom",
           path: ["licenseNumber"],
-          message: "Nº da carta de condução é obrigatório",
+          message: "Driving licence number is required",
         });
       }
     } else {
@@ -132,7 +132,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
         ctx.addIssue({
           code: "custom",
           path: ["password"],
-          message: result.error.issues[0]?.message ?? "Senha inválida",
+          message: result.error.issues[0]?.message ?? "Invalid password",
         });
       }
     }
@@ -167,7 +167,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
   // Motoristas podem agora ser criados aqui: além da conta, o sistema cria o
   // registo do motorista (com carta) e gera o código de acesso mobile.
   const roleOptions = [
-    { label: "Selecionar perfil...", value: "" },
+    { label: "Select role...", value: "" },
     ...(roles ?? []).map((role) => ({
       label: roleLabelMap[role.name] ?? role.name,
       value: role.id,
@@ -191,7 +191,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
             phone: emptyToUndefined(values.phone?.trim()),
           },
         });
-        toast({ title: "Usuário atualizado", type: "success" });
+        toast({ title: "User updated", type: "success" });
         onClose();
         return;
       }
@@ -206,23 +206,23 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
           passportNumber: emptyToUndefined(values.passportNumber?.trim()),
         });
         toast({
-          title: "Conta de motorista criada",
+          title: "Driver account created",
           description:
-            "Entregue ao motorista o telefone e o código de acesso à app.",
+            "Provide the driver with the phone number and app access code.",
           type: "success",
         });
         setCreatedAccess({
           recipientName: `${result.firstName} ${result.lastName}`.trim(),
           email: result.phone ?? values.phone!.trim(),
-          identifierLabel: "Telefone",
+          identifierLabel: "Phone",
           password: result.accessCode,
-          secretLabel: "Código de acesso",
+          secretLabel: "Access code",
           changeableSecret: false,
           destinationUrl:
             process.env.NEXT_PUBLIC_DRIVER_APP_URL?.trim() ||
             "https://play.google.com/store/apps",
-          destinationLabel: "App do motorista (Play Store)",
-          documentTitle: "Dados de acesso do motorista",
+          destinationLabel: "Driver app (Play Store)",
+          documentTitle: "Driver access details",
         });
         reset(emptyValues);
         return;
@@ -236,7 +236,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
         password: values.password,
         roleId: values.roleId,
       });
-      toast({ title: "Usuário criado", type: "success" });
+      toast({ title: "User created", type: "success" });
 
       if (continueAfter) {
         reset(emptyValues);
@@ -245,7 +245,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
       }
     } catch (error) {
       toast({
-        title: "Não foi possível guardar",
+        title: "Could not save the user",
         description: extractErrorMessage(error),
         type: "error",
       });
@@ -256,11 +256,11 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
     <Modal
       open={open}
       size="lg"
-      title={isEdit ? "Editar usuário" : "Novo usuário"}
+      title={isEdit ? "Edit User" : "New User"}
       description={
         isEdit
-          ? "O perfil e a senha mudam pelas ações dedicadas nos detalhes."
-          : "A senha definida aqui é provisória — o usuário deve alterá-la no primeiro acesso. Para motoristas o sistema gera o código de acesso à app."
+          ? "Use the dedicated actions in user details to change the role or password."
+          : "This password is temporary and must be changed on first sign-in. Driver access codes are generated automatically."
       }
       onClose={handleClose}
     >
@@ -273,26 +273,26 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             id="firstName"
-            label="Nome *"
+            label="First name *"
             error={errors.firstName?.message}
             {...register("firstName")}
           />
           <Input
             id="lastName"
-            label="Apelido *"
+            label="Last name *"
             error={errors.lastName?.message}
             {...register("lastName")}
           />
           <Input
             id="email"
-            label={driverSelected ? "Email (opcional)" : "Email *"}
+            label={driverSelected ? "Email (optional)" : "Email *"}
             type="email"
             error={errors.email?.message}
             {...register("email")}
           />
           <Input
             id="phone"
-            label={driverSelected ? "Telefone *" : "Telefone"}
+            label={driverSelected ? "Phone *" : "Phone"}
             error={errors.phone?.message}
             {...register("phone")}
           />
@@ -302,13 +302,13 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
                 <>
                   <Input
                     id="licenseNumber"
-                    label="Nº carta de condução *"
+                    label="Driving licence number *"
                     error={errors.licenseNumber?.message}
                     {...register("licenseNumber")}
                   />
                   <Input
                     id="passportNumber"
-                    label="Nº passaporte"
+                    label="Passport number"
                     error={errors.passportNumber?.message}
                     {...register("passportNumber")}
                   />
@@ -343,7 +343,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
                   htmlFor="roleId"
                   className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
-                  Perfil *
+                  Role *
                 </label>
                 <Select
                   id="roleId"
@@ -357,8 +357,8 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
                 ) : null}
                 <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                   {driverSelected
-                    ? "Login na app: telefone + código de acesso (gerado ao criar). A senha não é definida à mão."
-                    : "Motoristas entram na app com telefone + código gerado pelo sistema."}
+                    ? "App sign-in: phone number and an access code generated when the account is created."
+                    : "Drivers sign in to the app with their phone number and a system-generated code."}
                 </p>
               </div>
             </>
@@ -371,7 +371,7 @@ export function UserFormModal({ open, user, onClose }: UserFormModalProps) {
           onSaveAndContinue={handleSubmit((values) => onSubmit(values, true))}
           loading={loading}
           showContinue={!isEdit && !driverSelected}
-          submitLabel={driverSelected ? "Criar e gerar código" : undefined}
+          submitLabel={driverSelected ? "Create and generate code" : undefined}
         />
       </form>
     </Modal>

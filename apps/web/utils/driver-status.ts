@@ -8,13 +8,13 @@ export const driverStatusMeta: Record<
   AVAILABLE: { label: "Available", tone: "green" },
   ON_TRIP: { label: "On trip", tone: "blue" },
   OFFLINE: { label: "Offline", tone: "slate" },
-  INACTIVE: { label: "Inativo", tone: "red" },
+  INACTIVE: { label: "Inactive", tone: "red" },
 };
 
 export const driverStatusOptions = [
-  { label: "Todas as disponibilidades", value: "all" },
+  { label: "All availability statuses", value: "all" },
   { label: "Available", value: "AVAILABLE" },
   { label: "On trip", value: "ON_TRIP" },
   { label: "Offline", value: "OFFLINE" },
-  { label: "Inativo", value: "INACTIVE" },
+  { label: "Inactive", value: "INACTIVE" },
 ];

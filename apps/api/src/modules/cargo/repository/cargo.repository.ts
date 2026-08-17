@@ -212,9 +212,7 @@ export class CargoRepository {
         : {}),
       ...(query.clientId ? { clientId: query.clientId } : {}),
       ...(query.status ? { status: query.status } : {}),
-      ...(query.origin
-        ? { origin: { contains: query.origin } }
-        : {}),
+      ...(query.origin ? { origin: { contains: query.origin } } : {}),
       ...(query.destination
         ? {
             destination: {

@@ -8,17 +8,17 @@ export const roleToneMap: Record<string, BadgeTone> = {
 };
 
 export const roleLabelMap: Record<string, string> = {
-  ADMIN: "Administrador",
-  DISPATCHER: "Operador logístico",
-  DRIVER: "Motorista",
-  CLIENT: "Cliente",
+  ADMIN: "Administrator",
+  DISPATCHER: "Dispatcher",
+  DRIVER: "Driver",
+  CLIENT: "Client",
 };
 
 // Referência (espelha o mapa de permissões do backend em core/auth/permissions.ts).
 export const roleCatalog = [
   {
     name: "ADMIN",
-    description: "Acesso total à administração do sistema.",
+    description: "Full access to system administration.",
     permissions: [
       "users:manage",
       "clients:manage",
@@ -34,7 +34,7 @@ export const roleCatalog = [
   },
   {
     name: "DISPATCHER",
-    description: "Gestão operacional de cargas, viagens e frota.",
+    description: "Operational management of cargo, trips, and fleet.",
     permissions: [
       "operations:manage",
       "clients:manage",
@@ -50,7 +50,7 @@ export const roleCatalog = [
   },
   {
     name: "DRIVER",
-    description: "Operação no terreno pela app do motorista.",
+    description: "Field operations through the driver app.",
     permissions: [
       "driver:operate",
       "tracking:manage",
@@ -60,7 +60,7 @@ export const roleCatalog = [
   },
   {
     name: "CLIENT",
-    description: "Consulta das próprias cargas e notificações.",
+    description: "View own cargo and notifications.",
     permissions: ["cargo:read-own", "notifications:read"],
   },
 ];

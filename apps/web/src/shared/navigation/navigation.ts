@@ -21,13 +21,13 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       {
         href: "/",
-        label: "Quadro operacional",
-        description: "Registo de viagens em grelha",
+        label: "Operational Board",
+        description: "Enter multiple trips in a grid",
         icon: Table2,
       },
       {
         href: "/viagens",
-        label: "Atividades",
+        label: "Activities",
         description: "Client and route sheets with shipment tracking",
         icon: ClipboardList,
       },
@@ -35,17 +35,17 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: "acompanhamento",
-    label: "Acompanhamento",
+    label: "Monitoring",
     items: [
       {
         href: "/rastreamento",
-        label: "Rastreamento",
+        label: "Tracking",
         description: "Trip GPS locations",
         icon: MapPin,
       },
       {
         href: "/incidentes",
-        label: "Incidentes",
+        label: "Incidents",
         description: "Operational incidents and alerts",
         icon: AlertTriangle,
       },
@@ -53,7 +53,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: "dados-apoio",
-    label: "Dados de apoio",
+    label: "Reference Data",
     items: [
       {
         href: "/fronteiras",

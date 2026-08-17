@@ -72,7 +72,9 @@ export class DeliveryController {
   }
 
   @Post('trips/:tripId/pod')
-  @ApiOperation({ summary: 'Attach or replace the delivery POD after discharge' })
+  @ApiOperation({
+    summary: 'Attach or replace the delivery POD after discharge',
+  })
   attachPod(
     @Param('tripId') tripId: string,
     @Body() dto: AttachDeliveryPodDto,

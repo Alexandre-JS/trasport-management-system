@@ -31,42 +31,42 @@ export function UserDetailsModal({
     <Modal
       open={user !== null}
       size="lg"
-      title={user ? `${user.firstName} ${user.lastName}` : "Usuário"}
+      title={user ? `${user.firstName} ${user.lastName}` : "User"}
       description={user?.email}
       onClose={onClose}
     >
       {user ? (
         <div className="flex flex-col gap-5">
           <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <DetailRow label="Nome completo">
+            <DetailRow label="Full name">
               {user.firstName} {user.lastName}
             </DetailRow>
             <DetailRow label="Email">{user.email}</DetailRow>
-            <DetailRow label="Telefone">{user.phone ?? "—"}</DetailRow>
-            <DetailRow label="Perfil">
+            <DetailRow label="Phone">{user.phone ?? "—"}</DetailRow>
+            <DetailRow label="Role">
               <Badge tone={roleToneMap[user.role.name] ?? "slate"}>
                 {roleLabelMap[user.role.name] ?? user.role.name}
               </Badge>
             </DetailRow>
-            <DetailRow label="Estado">
+            <DetailRow label="Status">
               <Badge tone={user.isActive ? "green" : "red"}>
-                {user.isActive ? "Ativo" : "Inativo"}
+                {user.isActive ? "Active" : "Inactive"}
               </Badge>
             </DetailRow>
-            <DetailRow label="Último acesso">
-              {user.lastLogin ? formatDateTime(user.lastLogin) : "Nunca"}
+            <DetailRow label="Last login">
+              {user.lastLogin ? formatDateTime(user.lastLogin) : "Never"}
             </DetailRow>
-            <DetailRow label="Criado em">
+            <DetailRow label="Created at">
               {formatDateTime(user.createdAt)}
             </DetailRow>
-            <DetailRow label="Última atualização">
+            <DetailRow label="Last updated">
               {formatDateTime(user.updatedAt)}
             </DetailRow>
           </dl>
 
           <div className="flex flex-col gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Ações
+              Actions
             </p>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -75,7 +75,7 @@ export function UserDetailsModal({
                 icon={<Pencil className="size-4" />}
                 onClick={() => onEdit(user)}
               >
-                Editar dados
+                Edit details
               </Button>
               <Button
                 variant="outline"
@@ -83,7 +83,7 @@ export function UserDetailsModal({
                 icon={<ShieldCheck className="size-4" />}
                 onClick={() => onChangeRole(user)}
               >
-                Mudar perfil
+                Change role
               </Button>
               <Button
                 variant="outline"
@@ -91,7 +91,7 @@ export function UserDetailsModal({
                 icon={<KeyRound className="size-4" />}
                 onClick={() => onResetPassword(user)}
               >
-                Repor senha
+                Reset password
               </Button>
               <Button
                 variant="outline"
@@ -99,7 +99,7 @@ export function UserDetailsModal({
                 icon={<Power className="size-4" />}
                 onClick={() => onToggleActive(user)}
               >
-                {user.isActive ? "Desativar" : "Ativar"}
+                {user.isActive ? "Deactivate" : "Activate"}
               </Button>
               <Button
                 variant="danger"
@@ -107,7 +107,7 @@ export function UserDetailsModal({
                 icon={<Trash2 className="size-4" />}
                 onClick={() => onDelete(user)}
               >
-                Apagar
+                Delete
               </Button>
             </div>
           </div>

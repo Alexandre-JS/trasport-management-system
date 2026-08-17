@@ -95,7 +95,7 @@ export function LoginForm() {
       <div className="mb-6">
         {/* <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 ring-1 ring-brand-100 dark:bg-brand-950/50 dark:text-brand-200 dark:ring-brand-900">
           <ShieldCheck className="size-4" aria-hidden />
-          Acesso seguro
+          Secure access
         </div> */}
         <h1 className="text-xl font-semibold text-slate-950 dark:text-white">
           Sign in

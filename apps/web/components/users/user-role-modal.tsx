@@ -39,11 +39,11 @@ export function UserRoleModal({ user, onClose }: UserRoleModalProps) {
 
     try {
       await changeRole.mutateAsync({ id: user.id, roleId });
-      toast({ title: "Perfil atualizado", type: "success" });
+      toast({ title: "Role updated", type: "success" });
       onClose();
     } catch (error) {
       toast({
-        title: "Não foi possível mudar o perfil",
+        title: "Could not change the role",
         description: extractErrorMessage(error),
         type: "error",
       });
@@ -53,7 +53,7 @@ export function UserRoleModal({ user, onClose }: UserRoleModalProps) {
   return (
     <Modal
       open={user !== null}
-      title="Mudar perfil"
+      title="Change Role"
       description={
         user ? `${user.firstName} ${user.lastName} — ${user.email}` : undefined
       }
@@ -65,7 +65,7 @@ export function UserRoleModal({ user, onClose }: UserRoleModalProps) {
             htmlFor="user-role"
             className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
           >
-            Perfil
+            Role
           </label>
           <Select
             id="user-role"
@@ -75,16 +75,16 @@ export function UserRoleModal({ user, onClose }: UserRoleModalProps) {
           />
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {user?.role.name === "DRIVER"
-              ? "Atenção: ao mudar o perfil, esta conta perde o acesso à app do motorista."
-              : "O perfil define as permissões. Contas de motorista criam-se na página Motoristas → \u201cDar acesso mobile\u201d."}
+              ? "Warning: changing the role removes this account's access to the driver app."
+              : "The role defines permissions. Create driver accounts under Driver Access."}
           </p>
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button onClick={handleSave} loading={changeRole.isPending}>
-            Guardar
+            Save
           </Button>
         </div>
       </div>

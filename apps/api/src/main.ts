@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { Server } from 'node:http';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
 import helmet from 'helmet';
@@ -61,7 +62,7 @@ async function bootstrap() {
 
   // Keep upstream proxy connections reusable. This avoids needless TCP
   // reconnects under concurrent traffic and aligns with common Nginx defaults.
-  const server = app.getHttpServer();
+  const server = app.getHttpServer() as Server;
   server.keepAliveTimeout = 65_000;
   server.headersTimeout = 66_000;
   server.requestTimeout = 120_000;

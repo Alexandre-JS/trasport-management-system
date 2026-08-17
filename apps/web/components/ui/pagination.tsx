@@ -30,12 +30,12 @@ export function Pagination({
     <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row dark:border-slate-800">
       <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
         <span>
-          {from}–{to} de {total}
+          {from}–{to} of {total}
         </span>
         <div className="flex items-center gap-2">
-          <span className="hidden sm:inline">Por página</span>
+          <span className="hidden sm:inline">Per page</span>
           <Select
-            aria-label="Registos por página"
+            aria-label="Records per page"
             value={String(limit)}
             onChange={(event) => onLimitChange(Number(event.target.value))}
             options={pageSizeOptions.map((size) => ({
@@ -52,19 +52,19 @@ export function Pagination({
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          aria-label="Página anterior"
+          aria-label="Previous page"
           className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           <ChevronLeft className="size-4" aria-hidden />
         </button>
         <span className="text-sm text-slate-600 dark:text-slate-400">
-          Página {page} de {safeTotalPages}
+          Page {page} of {safeTotalPages}
         </span>
         <button
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= safeTotalPages}
-          aria-label="Página seguinte"
+          aria-label="Next page"
           className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           <ChevronRight className="size-4" aria-hidden />

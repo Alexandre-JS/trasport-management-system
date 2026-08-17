@@ -30,13 +30,13 @@ export function ColumnsMenu({ columns, onToggle }: ColumnsMenuProps) {
         className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
       >
         <SlidersHorizontal className="size-4" aria-hidden />
-        <span className="hidden sm:inline">Colunas</span>
+        <span className="hidden sm:inline">Columns</span>
       </button>
 
       {open ? (
         <div className="absolute right-0 top-full z-40 mt-2 w-56 overflow-hidden rounded-md border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-800 dark:bg-slate-900">
           <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Colunas visíveis
+            Visible columns
           </p>
           {columns.map((column) => (
             <button

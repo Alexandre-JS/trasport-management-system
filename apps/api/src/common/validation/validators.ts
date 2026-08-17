@@ -15,8 +15,12 @@ import {
 export function IsStrongPassword() {
   return applyDecorators(
     IsString(),
-    MinLength(8, { message: 'A palavra-passe deve ter pelo menos 8 caracteres.' }),
-    MaxLength(128, { message: 'A palavra-passe deve ter no máximo 128 caracteres.' }),
+    MinLength(8, {
+      message: 'A palavra-passe deve ter pelo menos 8 caracteres.',
+    }),
+    MaxLength(128, {
+      message: 'A palavra-passe deve ter no máximo 128 caracteres.',
+    }),
     Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
       message: 'A palavra-passe deve conter maiúsculas, minúsculas e números.',
     }),

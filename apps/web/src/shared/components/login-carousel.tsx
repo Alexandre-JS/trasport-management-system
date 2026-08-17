@@ -4,9 +4,9 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const slides = [
-  { src: "/Container.png", alt: "Transporte de carga em contentor", label: "Contentores" },
-  { src: "/Carga Geral.png", alt: "Transporte de carga geral", label: "Carga geral" },
-  { src: "/Granel.png", alt: "Transporte de carga a granel", label: "Carga a granel" },
+  { src: "/Container.png", alt: "Container cargo transport", label: "Containers" },
+  { src: "/Carga Geral.png", alt: "General cargo transport", label: "General cargo" },
+  { src: "/Granel.png", alt: "Bulk cargo transport", label: "Bulk cargo" },
 ];
 
 export function LoginCarousel() {
@@ -23,7 +23,7 @@ export function LoginCarousel() {
   return (
     <section
       className="relative hidden min-h-screen overflow-hidden bg-slate-950 lg:block"
-      aria-label="Serviços de transporte da LUMAC"
+      aria-label="LUMAC transport services"
     >
       {slides.map((slide, index) => (
         <figure
@@ -45,11 +45,11 @@ export function LoginCarousel() {
 
       <div className="absolute inset-x-10 bottom-10 z-20 flex items-end justify-between gap-6">
         <div className="max-w-md text-white">
-          <p className="text-xl font-semibold">Logística que acompanha cada carga.</p>
-          <p className="mt-1.5 text-sm text-white/75">Operação, acompanhamento e entrega num só lugar.</p>
+          <p className="text-xl font-semibold">Logistics that follows every shipment.</p>
+          <p className="mt-1.5 text-sm text-white/75">Operations, tracking, and delivery in one place.</p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/45 p-2 backdrop-blur-md" role="tablist" aria-label="Selecionar tipo de carga">
+        <div className="flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/45 p-2 backdrop-blur-md" role="tablist" aria-label="Select cargo type">
           {slides.map((slide, index) => (
             <button
               key={slide.src}

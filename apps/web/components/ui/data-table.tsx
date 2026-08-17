@@ -74,7 +74,7 @@ export function DataTable<T>({
                 <th scope="col" className="w-9 border-r border-slate-200 px-2 py-2 dark:border-slate-700">
                   <input
                     type="checkbox"
-                    aria-label="Selecionar todos"
+                    aria-label="Select all"
                     checked={allSelected}
                     ref={(element) => {
                       if (element) {
@@ -131,7 +131,7 @@ export function DataTable<T>({
                   scope="col"
                   className="w-24 whitespace-nowrap px-2.5 py-2 text-right text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-600 dark:text-slate-300"
                 >
-                  Ações
+                  Actions
                 </th>
               ) : null}
             </tr>
@@ -152,7 +152,7 @@ export function DataTable<T>({
                 <td colSpan={columnCount} className="px-4 py-12">
                   {emptyState ?? (
                     <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-                      Sem registos para apresentar.
+                      No records to display.
                     </p>
                   )}
                 </td>
@@ -174,7 +174,7 @@ export function DataTable<T>({
                       <td className="border-b border-r border-slate-200 px-2 py-1.5 dark:border-slate-800">
                         <input
                           type="checkbox"
-                          aria-label="Selecionar registo"
+                          aria-label="Select record"
                           checked={isSelected}
                           onChange={() => onToggleRow?.(key)}
                           className="size-4 rounded border-slate-300 accent-slate-900 dark:border-slate-600 dark:accent-slate-100"

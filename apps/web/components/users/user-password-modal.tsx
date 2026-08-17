@@ -28,21 +28,21 @@ export function UserPasswordModal({ user, onClose }: UserPasswordModalProps) {
 
     const result = passwordSchema.safeParse(newPassword);
     if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Senha inválida");
+      setError(result.error.issues[0]?.message ?? "Invalid password");
       return;
     }
 
     try {
       await resetPassword.mutateAsync({ id: user.id, newPassword });
       toast({
-        title: "Senha reposta",
-        description: "Comunique a nova senha ao utilizador.",
+        title: "Password reset",
+        description: "Provide the new password to the user.",
         type: "success",
       });
       onClose();
     } catch (mutationError) {
       toast({
-        title: "Não foi possível repor a senha",
+        title: "Could not reset the password",
         description: extractErrorMessage(mutationError),
         type: "error",
       });
@@ -52,7 +52,7 @@ export function UserPasswordModal({ user, onClose }: UserPasswordModalProps) {
   return (
     <Modal
       open={user !== null}
-      title="Repor senha"
+      title="Reset Password"
       description={
         user ? `${user.firstName} ${user.lastName} — ${user.email}` : undefined
       }
@@ -61,7 +61,7 @@ export function UserPasswordModal({ user, onClose }: UserPasswordModalProps) {
       <div className="flex flex-col gap-4">
         <Input
           id="new-password"
-          label="Nova senha provisória"
+          label="New temporary password"
           type="password"
           autoComplete="new-password"
           value={newPassword}
@@ -73,10 +73,10 @@ export function UserPasswordModal({ user, onClose }: UserPasswordModalProps) {
         />
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            Cancel
           </Button>
           <Button onClick={handleSave} loading={resetPassword.isPending}>
-            Repor senha
+            Reset password
           </Button>
         </div>
       </div>

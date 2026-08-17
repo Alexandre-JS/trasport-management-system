@@ -49,7 +49,7 @@ export function DriverAccountModal({
     if (!driver) return;
     const normalizedPhone = phone.trim();
     if (!normalizedPhone) {
-      setFormError("Informe o telefone que o motorista usará no login.");
+      setFormError("Enter the phone number the driver will use to sign in.");
       return;
     }
 
@@ -64,19 +64,19 @@ export function DriverAccountModal({
       setCreatedAccess({
         recipientName: driver.fullName,
         email: result.phone ?? normalizedPhone,
-        identifierLabel: "Telefone",
+        identifierLabel: "Phone",
         password: result.accessCode,
-        secretLabel: "Código de acesso",
+        secretLabel: "Access code",
         changeableSecret: false,
         destinationUrl:
           process.env.NEXT_PUBLIC_DRIVER_APP_URL?.trim() ||
           "https://play.google.com/store/apps",
-        destinationLabel: "App do motorista (Play Store)",
-        documentTitle: "Dados de acesso do motorista",
+        destinationLabel: "Driver app (Play Store)",
+        documentTitle: "Driver access details",
       });
       toast({
-        title: "Acesso mobile ativado",
-        description: "Envie agora o telefone e o código ao motorista.",
+        title: "Mobile access activated",
+        description: "Send the phone number and access code to the driver.",
         type: "success",
       });
     } catch (error) {
@@ -88,9 +88,9 @@ export function DriverAccountModal({
     <Modal
       open={driver !== null}
       size="lg"
-      title="Conta de acesso mobile"
+      title="Mobile Access Account"
       description={
-        driver ? `Ativar o acesso à app para “${driver.fullName}”.` : undefined
+        driver ? `Activate app access for “${driver.fullName}”.` : undefined
       }
       onClose={onClose}
     >
@@ -98,19 +98,19 @@ export function DriverAccountModal({
         <div className="flex flex-col gap-4">
           <AccessDeliveryPanel access={createdAccess} />
           <div className="flex justify-end">
-            <Button onClick={onClose}>Concluir</Button>
+            <Button onClick={onClose}>Done</Button>
           </div>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="rounded-md border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-800 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-200">
-            O motorista entrará com o telefone e um código gerado pelo sistema.
-            A conta ficará ligada ao registo operacional já existente.
+            The driver will sign in with a phone number and a system-generated code.
+            The account will be linked to the existing operational record.
           </div>
 
           <Input
             id="driver-access-phone"
-            label="Telefone de acesso *"
+            label="Sign-in phone number *"
             type="tel"
             value={phone}
             placeholder="+258 84 123 4567"
@@ -118,16 +118,16 @@ export function DriverAccountModal({
           />
           <Input
             id="driver-access-email"
-            label="Email (opcional)"
+            label="Email (optional)"
             type="email"
             value={email}
-            placeholder="motorista@exemplo.com"
+            placeholder="driver@example.com"
             onChange={(event) => setEmail(event.target.value)}
           />
 
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Depois de ativar, o código será mostrado uma única vez para envio
-            por WhatsApp ou PDF com QR Code.
+            Once activated, the code is shown only once and can be shared by
+            WhatsApp or as a PDF with a QR code.
           </p>
 
           {formError ? (
@@ -138,13 +138,13 @@ export function DriverAccountModal({
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
-              Cancelar
+              Cancel
             </Button>
             <Button
               onClick={() => void activateAccess()}
               loading={provisionAccess.isPending}
             >
-              Gerar e ativar acesso
+              Generate and activate access
             </Button>
           </div>
         </div>

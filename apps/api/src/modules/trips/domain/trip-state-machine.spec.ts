@@ -92,9 +92,9 @@ describe('TripStateMachine', () => {
     });
 
     it('occupies resources for every state except the terminal ones', () => {
-      expect(
-        machine.occupiesResources(TripStatus.WAITING_APPOINTMENT),
-      ).toBe(true);
+      expect(machine.occupiesResources(TripStatus.WAITING_APPOINTMENT)).toBe(
+        true,
+      );
       expect(machine.occupiesResources(TripStatus.DISCHARGED)).toBe(false);
       expect(machine.occupiesResources(TripStatus.CANCELLED)).toBe(false);
     });
@@ -120,9 +120,9 @@ describe('TripStateMachine', () => {
     });
 
     it('rejects STATUS_CHANGE as a milestone event (no single target status)', () => {
-      expect(() =>
-        machine.statusForEvent(TripEventType.STATUS_CHANGE),
-      ).toThrow(BadRequestException);
+      expect(() => machine.statusForEvent(TripEventType.STATUS_CHANGE)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('maps a milestone status to its specific type, else STATUS_CHANGE', () => {

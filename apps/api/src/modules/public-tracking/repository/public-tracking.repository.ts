@@ -70,7 +70,9 @@ const publicTrackSelect = {
   },
 } satisfies Prisma.TripSelect;
 
-type RawPublicTrip = Prisma.TripGetPayload<{ select: typeof publicTrackSelect }>;
+type RawPublicTrip = Prisma.TripGetPayload<{
+  select: typeof publicTrackSelect;
+}>;
 
 /** Extrai a última posição GPS como números e remove o array cru. */
 function withLastLocation({

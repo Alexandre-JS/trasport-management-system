@@ -183,10 +183,7 @@ export class DriverMobileService {
           // viagem "atual" do motorista até confirmar a devolução.
           {
             currentStatus: {
-              in: [
-                TripStatus.DISCHARGED,
-                TripStatus.CONTAINER_RETURN_PENDING,
-              ],
+              in: [TripStatus.DISCHARGED, TripStatus.CONTAINER_RETURN_PENDING],
             },
             cargo: { type: 'CONTAINER' },
           },
@@ -243,10 +240,7 @@ export class DriverMobileService {
       throw new NotFoundException('Trip not found for this driver');
     }
 
-    const nextStatus = await this.resolveNextStatus(
-      tripId,
-      trip.currentStatus,
-    );
+    const nextStatus = await this.resolveNextStatus(tripId, trip.currentStatus);
 
     if (!nextStatus) {
       throw new BadRequestException('Trip cannot be advanced from this status');

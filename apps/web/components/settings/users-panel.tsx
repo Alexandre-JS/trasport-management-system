@@ -24,17 +24,17 @@ import { formatDate, formatDateTime } from "@/utils/format";
 import { roleLabelMap, roleToneMap } from "@/utils/role-permissions";
 
 const roleOptions = [
-  { label: "Todos os perfis", value: "all" },
-  { label: "Administrador", value: "ADMIN" },
-  { label: "Operador logístico", value: "DISPATCHER" },
-  { label: "Motorista", value: "DRIVER" },
-  { label: "Cliente", value: "CLIENT" },
+  { label: "All roles", value: "all" },
+  { label: "Administrator", value: "ADMIN" },
+  { label: "Dispatcher", value: "DISPATCHER" },
+  { label: "Driver", value: "DRIVER" },
+  { label: "Client", value: "CLIENT" },
 ];
 
 const statusOptions = [
-  { label: "Todos os estados", value: "all" },
-  { label: "Ativos", value: "active" },
-  { label: "Inativos", value: "inactive" },
+  { label: "All statuses", value: "all" },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
 ];
 
 type StatusFilter = "all" | "active" | "inactive";
@@ -102,12 +102,12 @@ export function UsersPanel() {
       {
         onSuccess: () =>
           toast({
-            title: user.isActive ? "Utilizador desativado" : "Utilizador ativado",
+            title: user.isActive ? "User deactivated" : "User activated",
             type: "success",
           }),
         onError: (mutationError) =>
           toast({
-            title: "Não foi possível atualizar",
+            title: "Could not update the user",
             description: extractErrorMessage(mutationError),
             type: "error",
           }),
@@ -118,7 +118,7 @@ export function UsersPanel() {
   const columns: Column<User>[] = [
     {
       id: "firstName",
-      header: "Nome",
+      header: "Name",
       sortable: true,
       sortKey: "firstName",
       cell: (user) => (
@@ -134,7 +134,7 @@ export function UsersPanel() {
     },
     {
       id: "role",
-      header: "Perfil",
+      header: "Role",
       cell: (user) => (
         <Badge tone={roleToneMap[user.role.name] ?? "slate"}>
           {roleLabelMap[user.role.name] ?? user.role.name}
@@ -143,22 +143,22 @@ export function UsersPanel() {
     },
     {
       id: "isActive",
-      header: "Estado",
+      header: "Status",
       cell: (user) => (
         <Badge tone={user.isActive ? "green" : "red"}>
-          {user.isActive ? "Ativo" : "Inativo"}
+          {user.isActive ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
       id: "lastLogin",
-      header: "Último acesso",
+      header: "Last login",
       cell: (user) =>
-        user.lastLogin ? formatDateTime(user.lastLogin) : "Nunca",
+        user.lastLogin ? formatDateTime(user.lastLogin) : "Never",
     },
     {
       id: "createdAt",
-      header: "Criado em",
+      header: "Created at",
       sortable: true,
       sortKey: "createdAt",
       cell: (user) => formatDate(user.createdAt),
@@ -170,17 +170,17 @@ export function UsersPanel() {
   function buildActions(user: User): ActionItem[] {
     return [
       {
-        label: "Ver",
+        label: "View",
         icon: Eye,
         onSelect: () => setDetailsUser(user),
       },
       {
-        label: "Editar",
+        label: "Edit",
         icon: Pencil,
         onSelect: () => openEdit(user),
       },
       {
-        label: user.isActive ? "Desativar" : "Ativar",
+        label: user.isActive ? "Deactivate" : "Activate",
         icon: Power,
         onSelect: () => handleToggleActive(user),
       },
@@ -200,12 +200,12 @@ export function UsersPanel() {
 
     deleteUser.mutate(deleteTarget.id, {
       onSuccess: () => {
-        toast({ title: "Usuário apagado", type: "success" });
+        toast({ title: "User deleted", type: "success" });
         setDeleteTarget(null);
       },
       onError: (mutationError) => {
         toast({
-          title: "Não foi possível apagar",
+          title: "Could not delete the user",
           description: extractErrorMessage(mutationError),
           type: "error",
         });
@@ -223,12 +223,12 @@ export function UsersPanel() {
             setSearchInput(value);
             resetToFirstPage();
           }}
-          placeholder="Pesquisar por nome ou email..."
+          placeholder="Search by name or email..."
           className="sm:max-w-sm sm:flex-1"
         />
         <div className="flex flex-wrap items-center gap-3">
           <Select
-            aria-label="Filtrar por perfil"
+            aria-label="Filter by role"
             value={role}
             onChange={(event) => {
               setRole(event.target.value);
@@ -238,7 +238,7 @@ export function UsersPanel() {
             className="w-44"
           />
           <Select
-            aria-label="Filtrar por estado"
+            aria-label="Filter by status"
             value={status}
             onChange={(event) => {
               setStatus(event.target.value as StatusFilter);
@@ -254,7 +254,7 @@ export function UsersPanel() {
             onClick={() => refetch()}
             loading={isFetching}
           >
-            Atualizar
+            Refresh
           </Button>
           <Button
             size="sm"
@@ -264,7 +264,7 @@ export function UsersPanel() {
               setFormOpen(true);
             }}
           >
-            Novo usuário
+            New User
           </Button>
         </div>
       </div>
@@ -275,7 +275,7 @@ export function UsersPanel() {
             {extractErrorMessage(error)}
           </p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            Tentar novamente
+            Try again
           </Button>
         </div>
       ) : null}
@@ -344,13 +344,13 @@ export function UsersPanel() {
       />
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Apagar usuário"
+        title="Delete user"
         description={
           deleteTarget
-            ? `Tem a certeza que pretende apagar “${deleteTarget.firstName} ${deleteTarget.lastName}” (${deleteTarget.email})? A conta deixa de poder iniciar sessão.`
+            ? `Are you sure you want to delete “${deleteTarget.firstName} ${deleteTarget.lastName}” (${deleteTarget.email})? This account will no longer be able to sign in.`
             : undefined
         }
-        confirmLabel="Apagar"
+        confirmLabel="Delete"
         tone="danger"
         loading={deleteUser.isPending}
         onConfirm={confirmDelete}

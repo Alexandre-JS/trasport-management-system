@@ -19,12 +19,12 @@ const statusOptions = [
   { label: "Disponível", value: "AVAILABLE" },
   { label: "Em viagem", value: "ON_TRIP" },
   { label: "Offline", value: "OFFLINE" },
-  { label: "Inativo", value: "INACTIVE" },
+  { label: "Inactive", value: "INACTIVE" },
 ];
 
 const schema = z.object({
-  fullName: z.string().min(1, "Nome é obrigatório"),
-  licenseNumber: z.string().min(1, "Carta de condução é obrigatória"),
+  fullName: z.string().min(1, "Full name is required"),
+  licenseNumber: z.string().min(1, "Driving licence is required"),
   passportNumber: z.string().max(30, "Máximo 30 caracteres").optional(),
   phone: optionalPhoneSchema,
   email: z.union([z.literal(""), z.string().email("Email inválido")]),
@@ -104,11 +104,11 @@ export function DriverFormModal({
     try {
       if (isEdit && driver) {
         await updateDriver.mutateAsync({ id: driver.id, payload });
-        toast({ title: "Motorista atualizado", type: "success" });
+        toast({ title: "Driver updated", type: "success" });
         onClose();
       } else {
         await createDriver.mutateAsync(payload);
-        toast({ title: "Motorista criado", type: "success" });
+        toast({ title: "Driver created", type: "success" });
 
         if (continueAfter) {
           reset(emptyValues);
@@ -118,7 +118,7 @@ export function DriverFormModal({
       }
     } catch (error) {
       toast({
-        title: "Não foi possível guardar",
+        title: "Could not save the driver",
         description: extractErrorMessage(error),
         type: "error",
       });
@@ -129,7 +129,7 @@ export function DriverFormModal({
     <Modal
       open={open}
       size="lg"
-      title={isEdit ? "Editar motorista" : "Novo motorista"}
+      title={isEdit ? "Edit Driver" : "New Driver"}
       description="Os campos marcados são obrigatórios."
       onClose={onClose}
     >
@@ -141,24 +141,24 @@ export function DriverFormModal({
           <div className="sm:col-span-2">
             <Input
               id="fullName"
-              label="Nome completo *"
+              label="Full name *"
               error={errors.fullName?.message}
               {...register("fullName")}
             />
           </div>
           <Input
             id="licenseNumber"
-            label="Carta de condução *"
+            label="Driving licence *"
             error={errors.licenseNumber?.message}
             {...register("licenseNumber")}
           />
           <Input
             id="passportNumber"
-            label="Passaporte"
+            label="Passport"
             error={errors.passportNumber?.message}
             {...register("passportNumber")}
           />
-          <Input id="phone" label="Telefone" {...register("phone")} />
+          <Input id="phone" label="Phone" {...register("phone")} />
           <Input
             id="email"
             label="Email"
@@ -171,7 +171,7 @@ export function DriverFormModal({
               htmlFor="status"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Disponibilidade
+              Availability
             </label>
             <Select id="status" options={statusOptions} {...register("status")} />
           </div>

@@ -14,8 +14,8 @@ import { extractErrorMessage } from "@/services/http";
 import type { Border, BorderInput } from "@/types/border";
 
 const activeOptions = [
-  { label: "Ativa", value: "true" },
-  { label: "Inativa", value: "false" },
+  { label: "Active", value: "true" },
+  { label: "Inactive", value: "false" },
 ];
 
 const coordinate = (min: number, max: number) =>
@@ -28,13 +28,13 @@ const coordinate = (min: number, max: number) =>
         (!Number.isNaN(Number(value)) &&
           Number(value) >= min &&
           Number(value) <= max),
-      "Coordenada inválida",
+      "Invalid coordinate",
     );
 
 const schema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  countryA: z.string().min(1, "País é obrigatório"),
-  countryB: z.string().min(1, "País é obrigatório"),
+  name: z.string().min(1, "Name is required"),
+  countryA: z.string().min(1, "Country is required"),
+  countryB: z.string().min(1, "Country is required"),
   lat: coordinate(-90, 90),
   lng: coordinate(-180, 180),
   isActive: z.string(),
@@ -113,11 +113,11 @@ export function BorderFormModal({
     try {
       if (isEdit && border) {
         await updateBorder.mutateAsync({ id: border.id, payload });
-        toast({ title: "Fronteira atualizada", type: "success" });
+        toast({ title: "Border updated", type: "success" });
         onClose();
       } else {
         await createBorder.mutateAsync(payload);
-        toast({ title: "Fronteira criada", type: "success" });
+        toast({ title: "Border created", type: "success" });
 
         if (continueAfter) {
           reset(emptyValues);
@@ -127,7 +127,7 @@ export function BorderFormModal({
       }
     } catch (error) {
       toast({
-        title: "Não foi possível guardar",
+        title: "Could not save the border",
         description: extractErrorMessage(error),
         type: "error",
       });
@@ -138,8 +138,8 @@ export function BorderFormModal({
     <Modal
       open={open}
       size="lg"
-      title={isEdit ? "Editar fronteira" : "Nova fronteira"}
-      description="Os campos marcados são obrigatórios."
+      title={isEdit ? "Edit Border" : "New Border"}
+      description="Fields marked with an asterisk are required."
       onClose={onClose}
     >
       <form
@@ -150,23 +150,23 @@ export function BorderFormModal({
           <div className="sm:col-span-2">
             <Input
               id="name"
-              label="Nome do posto *"
-              placeholder="Ex.: Machipanda / Forbes"
+              label="Border post name *"
+              placeholder="E.g. Machipanda / Forbes"
               error={errors.name?.message}
               {...register("name")}
             />
           </div>
           <Input
             id="countryA"
-            label="País A *"
-            placeholder="Ex.: Moçambique"
+            label="Country A *"
+            placeholder="E.g. Mozambique"
             error={errors.countryA?.message}
             {...register("countryA")}
           />
           <Input
             id="countryB"
-            label="País B *"
-            placeholder="Ex.: Zimbabué"
+            label="Country B *"
+            placeholder="E.g. Zimbabwe"
             error={errors.countryB?.message}
             {...register("countryB")}
           />
@@ -174,7 +174,7 @@ export function BorderFormModal({
             id="lat"
             label="Latitude"
             inputMode="decimal"
-            placeholder="Ex.: -18.94"
+            placeholder="E.g. -18.94"
             error={errors.lat?.message}
             {...register("lat")}
           />
@@ -182,7 +182,7 @@ export function BorderFormModal({
             id="lng"
             label="Longitude"
             inputMode="decimal"
-            placeholder="Ex.: 32.70"
+            placeholder="E.g. 32.70"
             error={errors.lng?.message}
             {...register("lng")}
           />
@@ -191,7 +191,7 @@ export function BorderFormModal({
               htmlFor="isActive"
               className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
-              Estado
+              Status
             </label>
             <Select
               id="isActive"

@@ -118,25 +118,25 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
   const resolutionRate =
     reportTotal > 0 ? Math.round((resolvedTotal / reportTotal) * 100) : 0;
   const selectedTypeLabel =
-    type === "all" ? "Todos os tipos" : incidentTypeMeta[type].label;
+    type === "all" ? "All types" : incidentTypeMeta[type].label;
   const metrics: DashboardMetric[] = [
     {
-      label: state === "all" ? "Incidentes registados" : "Resultado filtrado",
+      label: state === "all" ? "Reported incidents" : "Filtered results",
       value: String(visibleTotal),
       tone: "blue",
     },
     {
-      label: "Abertos",
+      label: "Open",
       value: String(openTotal),
       tone: "amber",
     },
     {
-      label: "Resolvidos",
+      label: "Resolved",
       value: String(resolvedTotal),
       tone: "green",
     },
     {
-      label: `Taxa resolvida · ${selectedTypeLabel}`,
+      label: `Resolution rate · ${selectedTypeLabel}`,
       value: `${resolutionRate}%`,
       tone: "slate",
     },
@@ -196,27 +196,27 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
 
   function handleExport() {
     if (rows.length === 0) {
-      toast({ title: "Nada para exportar", type: "warning" });
+      toast({ title: "Nothing to export", type: "warning" });
       return;
     }
 
-    exportToCsv("incidentes.csv", rows, [
-      { header: "Tipo", value: (row) => incidentTypeMeta[row.type].label },
-      { header: "Motorista", value: (row) => row.trip.driver?.fullName ?? "—" },
-      { header: "Viagem", value: (row) => row.trip.cargo.code },
+    exportToCsv("incidents.csv", rows, [
+      { header: "Type", value: (row) => incidentTypeMeta[row.type].label },
+      { header: "Driver", value: (row) => row.trip.driver?.fullName ?? "—" },
+      { header: "Trip", value: (row) => row.trip.cargo.code },
       {
-        header: "Local",
+        header: "Location",
         value: (row) => formatLocation(row.latitude, row.longitude),
       },
-      { header: "Data", value: (row) => formatDateTime(row.reportedAt) },
+      { header: "Date", value: (row) => formatDateTime(row.reportedAt) },
       {
-        header: "Estado",
-        value: (row) => (row.resolvedAt ? "Resolvido" : "Aberto"),
+        header: "Status",
+        value: (row) => (row.resolvedAt ? "Resolved" : "Open"),
       },
-      { header: "Descrição", value: (row) => row.description ?? "" },
+      { header: "Description", value: (row) => row.description ?? "" },
     ]);
 
-    toast({ title: "Exportação concluída", type: "success" });
+    toast({ title: "Export completed", type: "success" });
   }
 
   function confirmResolve() {
@@ -226,12 +226,12 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
 
     resolveIncident.mutate(resolveTarget.id, {
       onSuccess: () => {
-        toast({ title: "Incidente resolvido", type: "success" });
+        toast({ title: "Incident resolved", type: "success" });
         setResolveTarget(null);
       },
       onError: (mutationError) =>
         toast({
-          title: "Não foi possível resolver",
+          title: "Could not resolve the incident",
           description: extractErrorMessage(mutationError),
           type: "error",
         }),
@@ -241,7 +241,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
   const columns: Column<Incident>[] = [
     {
       id: "code",
-      header: "Código",
+      header: "Code",
       cell: (incident) => (
         <span className="font-mono text-xs font-medium text-slate-500 dark:text-slate-400">
           {incident.id.slice(0, 8).toUpperCase()}
@@ -250,7 +250,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
     },
     {
       id: "type",
-      header: "Tipo",
+      header: "Type",
       sortable: true,
       sortKey: "type",
       cell: (incident) => {
@@ -260,12 +260,12 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
     },
     {
       id: "driver",
-      header: "Motorista",
+      header: "Driver",
       cell: (incident) => incident.trip.driver?.fullName ?? "—",
     },
     {
       id: "trip",
-      header: "Viagem",
+      header: "Trip",
       cell: (incident) => (
         <span className="font-mono text-xs text-slate-900 dark:text-white">
           {incident.trip.cargo.code}
@@ -274,7 +274,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
     },
     {
       id: "location",
-      header: "Local",
+      header: "Location",
       cell: (incident) => (
         <span className="font-mono text-xs text-slate-600 dark:text-slate-300">
           {formatLocation(incident.latitude, incident.longitude)}
@@ -283,31 +283,31 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
     },
     {
       id: "reportedAt",
-      header: "Data",
+      header: "Date",
       sortable: true,
       sortKey: "reportedAt",
       cell: (incident) => formatDateTime(incident.reportedAt),
     },
     {
       id: "state",
-      header: "Estado",
+      header: "Status",
       cell: (incident) => (
         <Badge tone={incident.resolvedAt ? "green" : "red"}>
-          {incident.resolvedAt ? "Resolvido" : "Aberto"}
+          {incident.resolvedAt ? "Resolved" : "Open"}
         </Badge>
       ),
     },
   ];
 
   const hideableColumns = [
-    { id: "driver", label: "Motorista" },
-    { id: "location", label: "Local" },
+    { id: "driver", label: "Driver" },
+    { id: "location", label: "Location" },
   ];
 
   function buildActions(incident: Incident): ActionItem[] {
     const items: ActionItem[] = [
       {
-        label: "Visualizar",
+        label: "View details",
         icon: Eye,
         onSelect: () => setDetailsIncident(incident),
       },
@@ -315,7 +315,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
 
     if (!incident.resolvedAt) {
       items.push({
-        label: "Resolver",
+        label: "Resolve",
         icon: CheckCircle2,
         onSelect: () => setResolveTarget(incident),
       });
@@ -327,8 +327,8 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
   return (
     <>
       <PageHeader
-        title="Relatório de incidentes"
-        description="Ocorrências reportadas durante as viagens, com filtros por tipo, estado e exportação para análise operacional."
+        title="Incident Report"
+        description="Events reported during trips, with type and status filters and export for operational analysis."
         actions={
           <>
             <Button
@@ -338,7 +338,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
               onClick={() => refetch()}
               loading={isFetching}
             >
-              Atualizar
+              Refresh
             </Button>
             <Button
               variant="outline"
@@ -346,7 +346,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
               icon={<FileSpreadsheet className="size-4" />}
               onClick={handleExport}
             >
-              Exportar para Excel
+              Export to Excel
             </Button>
           </>
         }
@@ -362,7 +362,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
         <div className="flex flex-col gap-3 rounded-md border border-slate-200 bg-white p-3 sm:flex-row sm:items-center dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-center gap-3">
             <Select
-              aria-label="Filtrar por tipo"
+              aria-label="Filter by type"
               value={type}
               onChange={(event) => {
                 setType(event.target.value as TypeFilter);
@@ -372,7 +372,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
               className="w-44"
             />
             <Select
-              aria-label="Filtrar por estado"
+              aria-label="Filter by status"
               value={state}
               onChange={(event) => {
                 setState(event.target.value as StateFilter);
@@ -399,20 +399,20 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
               {extractErrorMessage(error)}
             </p>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Tentar novamente
+              Try again
             </Button>
           </div>
         ) : null}
 
         {selectedKeys.size > 0 ? (
           <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
-            <span>{selectedKeys.size} selecionado(s)</span>
+            <span>{selectedKeys.size} selected</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedKeys(new Set())}
             >
-              Limpar seleção
+              Clear selection
             </Button>
           </div>
         ) : null}
@@ -457,7 +457,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
         title={
           detailsIncident
             ? incidentTypeMeta[detailsIncident.type].label
-            : "Incidente"
+            : "Incident"
         }
         description={detailsIncident?.trip.cargo.code}
         onClose={() => setDetailsIncident(null)}
@@ -465,27 +465,27 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
         {detailsIncident ? (
           <dl className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <DetailRow
-              label="Motorista"
+              label="Driver"
               value={detailsIncident.trip.driver?.fullName ?? "—"}
             />
-            <DetailRow label="Viagem" value={detailsIncident.trip.cargo.code} />
+            <DetailRow label="Trip" value={detailsIncident.trip.cargo.code} />
             <DetailRow
-              label="Local"
+              label="Location"
               value={formatLocation(
                 detailsIncident.latitude,
                 detailsIncident.longitude,
               )}
             />
             <DetailRow
-              label="Data"
+              label="Date"
               value={formatDateTime(detailsIncident.reportedAt)}
             />
             <DetailRow
-              label="Estado"
-              value={detailsIncident.resolvedAt ? "Resolvido" : "Aberto"}
+              label="Status"
+              value={detailsIncident.resolvedAt ? "Resolved" : "Open"}
             />
             <DetailRow
-              label="Resolvido em"
+              label="Resolved at"
               value={
                 detailsIncident.resolvedAt
                   ? formatDateTime(detailsIncident.resolvedAt)
@@ -493,7 +493,7 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
               }
             />
             <DetailRow
-              label="Descrição"
+              label="Description"
               value={detailsIncident.description}
             />
           </dl>
@@ -502,14 +502,14 @@ export function IncidentsView({ initialState = "all" }: IncidentsViewProps) {
 
       <ConfirmDialog
         open={resolveTarget !== null}
-        title="Resolver incidente"
+        title="Resolve incident"
         description={
           resolveTarget
-            ? `Marcar o incidente (${incidentTypeMeta[resolveTarget.type].label}) da viagem “${resolveTarget.trip.cargo.code}” como resolvido?`
+            ? `Mark the ${incidentTypeMeta[resolveTarget.type].label} incident for trip “${resolveTarget.trip.cargo.code}” as resolved?`
             : undefined
         }
-        confirmLabel="Resolver"
-        cancelLabel="Voltar"
+        confirmLabel="Resolve"
+        cancelLabel="Back"
         loading={resolveIncident.isPending}
         onConfirm={confirmResolve}
         onCancel={() => setResolveTarget(null)}

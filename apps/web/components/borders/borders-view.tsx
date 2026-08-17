@@ -22,9 +22,9 @@ import type { Border, BorderSortBy, ListBordersParams } from "@/types/border";
 type ActiveFilter = "all" | "active" | "inactive";
 
 const activeFilterOptions = [
-  { label: "Todas", value: "all" },
-  { label: "Ativas", value: "active" },
-  { label: "Inativas", value: "inactive" },
+  { label: "All", value: "all" },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
 ];
 
 export function BordersView() {
@@ -82,12 +82,12 @@ export function BordersView() {
 
     deleteBorder.mutate(deleteTarget.id, {
       onSuccess: () => {
-        toast({ title: "Fronteira eliminada", type: "success" });
+        toast({ title: "Border deleted", type: "success" });
         setDeleteTarget(null);
       },
       onError: (mutationError) =>
         toast({
-          title: "Não foi possível eliminar",
+          title: "Could not delete the border",
           description: extractErrorMessage(mutationError),
           type: "error",
         }),
@@ -97,7 +97,7 @@ export function BordersView() {
   const columns: Column<Border>[] = [
     {
       id: "name",
-      header: "Posto fronteiriço",
+      header: "Border post",
       sortable: true,
       sortKey: "name",
       cell: (border) => (
@@ -108,12 +108,12 @@ export function BordersView() {
     },
     {
       id: "countries",
-      header: "Liga",
+      header: "Connects",
       cell: (border) => `${border.countryA} — ${border.countryB}`,
     },
     {
       id: "coordinates",
-      header: "Coordenadas",
+      header: "Coordinates",
       cell: (border) =>
         border.lat && border.lng ? (
           <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
@@ -125,10 +125,10 @@ export function BordersView() {
     },
     {
       id: "isActive",
-      header: "Estado",
+      header: "Status",
       cell: (border) => (
         <Badge tone={border.isActive ? "green" : "slate"}>
-          {border.isActive ? "Ativa" : "Inativa"}
+          {border.isActive ? "Active" : "Inactive"}
         </Badge>
       ),
     },
@@ -137,7 +137,7 @@ export function BordersView() {
   function buildActions(border: Border): ActionItem[] {
     return [
       {
-        label: "Editar",
+        label: "Edit",
         icon: Pencil,
         tone: "warning",
         onSelect: () => {
@@ -146,7 +146,7 @@ export function BordersView() {
         },
       },
       {
-        label: "Eliminar",
+        label: "Delete",
         icon: Trash2,
         tone: "danger",
         separatorBefore: true,
@@ -158,8 +158,8 @@ export function BordersView() {
   return (
     <>
       <PageHeader
-        title="Fronteiras"
-        description="Postos fronteiriços usados nas rotas das viagens."
+        title="Borders"
+        description="Border posts used along trip routes."
         actions={
           <>
             <Button
@@ -169,7 +169,7 @@ export function BordersView() {
               onClick={() => refetch()}
               loading={isFetching}
             >
-              Atualizar
+              Refresh
             </Button>
             <Button
               size="sm"
@@ -179,7 +179,7 @@ export function BordersView() {
                 setFormOpen(true);
               }}
             >
-              Nova Fronteira
+              New Border
             </Button>
           </>
         }
@@ -193,11 +193,11 @@ export function BordersView() {
               setSearchInput(value);
               setPage(1);
             }}
-            placeholder="Pesquisar por nome ou país..."
+            placeholder="Search by name or country..."
             className="sm:max-w-sm sm:flex-1"
           />
           <Select
-            aria-label="Filtrar por estado"
+            aria-label="Filter by status"
             value={activeFilter}
             onChange={(event) => {
               setActiveFilter(event.target.value as ActiveFilter);
@@ -214,7 +214,7 @@ export function BordersView() {
               {extractErrorMessage(error)}
             </p>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Tentar novamente
+              Try again
             </Button>
           </div>
         ) : null}
@@ -254,13 +254,13 @@ export function BordersView() {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Eliminar fronteira"
+        title="Delete border"
         description={
           deleteTarget
-            ? `Tem a certeza que pretende eliminar “${deleteTarget.name}”? Viagens já registadas mantêm o histórico.`
+            ? `Are you sure you want to delete “${deleteTarget.name}”? Existing trips will keep their history.`
             : undefined
         }
-        confirmLabel="Eliminar"
+        confirmLabel="Delete"
         tone="danger"
         loading={deleteBorder.isPending}
         onConfirm={confirmDelete}

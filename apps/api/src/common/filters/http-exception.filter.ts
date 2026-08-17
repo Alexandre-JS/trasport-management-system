@@ -31,14 +31,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       'message' in exceptionResponse
         ? (exceptionResponse as { message: string | string[] }).message
         : exceptionResponse;
-    const rateLimited = status === HttpStatus.TOO_MANY_REQUESTS;
+    const rateLimited = status === 429;
     const retryAfterHeader = response.getHeader('Retry-After');
     const retryAfterSeconds = rateLimited
       ? Math.max(1, Number(retryAfterHeader) || 60)
       : undefined;
 
     if (rateLimited) {
-      this.logger.warn('Request temporarily rate limited', HttpExceptionFilter.name);
+      this.logger.warn(
+        'Request temporarily rate limited',
+        HttpExceptionFilter.name,
+      );
     } else {
       this.logger.error(
         'Request failed',
@@ -49,9 +52,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     response.status(status).json({
       statusCode: status,
-      message: rateLimited
-        ? 'Please wait before trying again.'
-        : message,
+      message: rateLimited ? 'Please wait before trying again.' : message,
       ...(retryAfterSeconds ? { retryAfterSeconds } : {}),
       path: request.url,
       timestamp: new Date().toISOString(),

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Jest mocks expose call arguments as any. */
 import {
   BadRequestException,
   ConflictException,
@@ -114,9 +115,9 @@ describe('TripsRepository (transactional integrity)', () => {
         status: DriverStatus.ON_TRIP,
       });
 
-      await expect(repo.assignDriver(TRIP_ID, DRIVER_ID)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(
+        repo.assignDriver(TRIP_ID, DRIVER_ID),
+      ).rejects.toBeInstanceOf(ConflictException);
       expect(tx.driver.update).not.toHaveBeenCalled();
       expect(tx.trip.update).not.toHaveBeenCalled();
     });
@@ -132,9 +133,9 @@ describe('TripsRepository (transactional integrity)', () => {
       });
       tx.trip.count.mockResolvedValue(1);
 
-      await expect(repo.assignDriver(TRIP_ID, DRIVER_ID)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(
+        repo.assignDriver(TRIP_ID, DRIVER_ID),
+      ).rejects.toBeInstanceOf(ConflictException);
       expect(tx.driver.update).not.toHaveBeenCalled();
       expect(tx.trip.update).not.toHaveBeenCalled();
     });
@@ -145,9 +146,9 @@ describe('TripsRepository (transactional integrity)', () => {
         currentStatus: TripStatus.DISCHARGED,
       });
 
-      await expect(repo.assignDriver(TRIP_ID, DRIVER_ID)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(
+        repo.assignDriver(TRIP_ID, DRIVER_ID),
+      ).rejects.toBeInstanceOf(ConflictException);
       expect(tx.driver.findFirst).not.toHaveBeenCalled();
     });
   });

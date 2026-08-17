@@ -139,29 +139,29 @@ export function OperationalBoardView() {
     const dup = (get: (r: BoardRow) => string, value: string) =>
       Boolean(value) &&
       rows.filter((r) => hasContent(r) && normalize(get(r)) === value).length >
-        1;
+      1;
 
-    if (!row.horse.trim()) e.horse = "Preencha o Horse";
+    if (!row.horse.trim()) e.horse = "Enter the Horse";
     else if (inUse.horses.has(nh))
-      e.horse = "Este Horse já está numa viagem em curso — use outro";
+      e.horse = "This Horse is already assigned to an active trip — use another one";
     else if (dup((r) => r.horse, nh))
-      e.horse = "Horse repetido noutra linha desta folha";
+      e.horse = "This Horse is repeated on another row";
 
-    if (!row.trailer.trim()) e.trailer = "Preencha o Trailer";
+    if (!row.trailer.trim()) e.trailer = "Enter the Trailer";
     else if (inUse.trailers.has(nt))
-      e.trailer = "Este Trailer já está numa viagem em curso — use outro";
+      e.trailer = "This Trailer is already assigned to an active trip — use another one";
     else if (dup((r) => r.trailer, nt))
-      e.trailer = "Trailer repetido noutra linha desta folha";
+      e.trailer = "This Trailer is repeated on another row";
 
-    if (!row.driver.trim()) e.driver = "Preencha o motorista";
+    if (!row.driver.trim()) e.driver = "Enter the driver";
     if (row.cargoType === "CONTAINER" && !row.cargoDetail.trim())
-      e.cargoDetail = "Indique o nº do container";
-    if (!row.license.trim()) e.license = "Preencha a carta de condução";
+      e.cargoDetail = "Enter the container number";
+    if (!row.license.trim()) e.license = "Enter the driving licence number";
     else if (inUse.drivers.has(nl)) {
-      e.license = "Este motorista já está numa viagem em curso — use outro";
+      e.license = "This driver is already assigned to an active trip — use another one";
       if (row.driver.trim()) e.driver = e.license;
     } else if (dup((r) => r.license, nl)) {
-      e.license = "Carta repetida noutra linha desta folha";
+      e.license = "This driving licence is repeated on another row";
       if (row.driver.trim()) e.driver = e.license;
     }
     return e;
@@ -211,13 +211,13 @@ export function OperationalBoardView() {
         current.map((row) =>
           row.key === key
             ? {
-                ...row,
-                driver: value,
-                passport: match?.passportNumber ?? row.passport,
-                license: match?.licenseNumber ?? row.license,
-                phone: match?.phone ?? row.phone,
-                dirty: true,
-              }
+              ...row,
+              driver: value,
+              passport: match?.passportNumber ?? row.passport,
+              license: match?.licenseNumber ?? row.license,
+              phone: match?.phone ?? row.phone,
+              dirty: true,
+            }
             : row,
         ),
       ),
@@ -228,7 +228,7 @@ export function OperationalBoardView() {
     const ctx = sheetCtx();
     if (!ctx.clientId || !ctx.origin || !ctx.destination) {
       toast({
-        title: "Defina o cliente e a rota no topo da folha",
+        title: "Select the client and route at the top of the sheet",
         type: "warning",
       });
       return;
@@ -243,7 +243,7 @@ export function OperationalBoardView() {
       const lineNo = pending.indexOf(row) + 1;
       const problems = rowProblems(row);
       if (problems.length > 0) {
-        errors.push(`Linha ${lineNo}: ${problems.join("; ")}`);
+        errors.push(`Row ${lineNo}: ${problems.join("; ")}`);
         continue;
       }
       try {
@@ -252,7 +252,7 @@ export function OperationalBoardView() {
       } catch (error) {
         // Rede de segurança: se o backend recusar (recurso ocupado entretanto),
         // dá uma mensagem clara em vez do 409 cru.
-        errors.push(`Linha ${lineNo}: ${translateSaveError(error, row)}`);
+        errors.push(`Row ${lineNo}: ${translateSaveError(error, row)}`);
       }
     }
     void resourcesInUseQuery.refetch();
@@ -275,24 +275,23 @@ export function OperationalBoardView() {
     setSaving(false);
 
     const savedCount = savedKeys.size;
-    const s = savedCount === 1 ? "" : "s";
     if (errors.length === 0) {
       toast({
-        title: `✓ ${savedCount} viagem${s} guardada${s}`,
+        title: `✓ ${savedCount} ${savedCount === 1 ? "trip" : "trips"} saved`,
         description:
-          "Já aparecem na página de Atividades. Pode continuar a inserir.",
+          "They are now available on the Activities page. You can continue adding trips.",
         type: "success",
       });
     } else if (savedCount === 0) {
       toast({
-        title: "Nenhuma viagem guardada",
-        description: `Corrija as células a vermelho: ${errors.slice(0, 2).join(" · ")}`,
+        title: "No trips were saved",
+        description: `Correct the cells highlighted in red: ${errors.slice(0, 2).join(" · ")}`,
         type: "error",
       });
     } else {
       toast({
-        title: `${savedCount} guardada${s} · ${errors.length} por corrigir`,
-        description: `As linhas a vermelho ficaram no quadro. ${errors.slice(0, 2).join(" · ")}`,
+        title: `${savedCount} saved · ${errors.length} to correct`,
+        description: `Rows highlighted in red remain on the board. ${errors.slice(0, 2).join(" · ")}`,
         type: "warning",
       });
     }
@@ -337,17 +336,17 @@ export function OperationalBoardView() {
       existingTrailer
         ? Promise.resolve(existingTrailer)
         : createTrailer({
-            plateNumber: row.trailer.trim(),
-            tonnage: numberOrUndefined(row.tonnage),
-          }),
+          plateNumber: row.trailer.trim(),
+          tonnage: numberOrUndefined(row.tonnage),
+        }),
       existingDriver
         ? Promise.resolve(existingDriver)
         : createDriver({
-            fullName: row.driver.trim(),
-            licenseNumber: row.license.trim(),
-            passportNumber: row.passport.trim() || undefined,
-            phone: row.phone.trim() || undefined,
-          }),
+          fullName: row.driver.trim(),
+          licenseNumber: row.license.trim(),
+          passportNumber: row.passport.trim() || undefined,
+          phone: row.phone.trim() || undefined,
+        }),
     ]);
 
     return createTrip({
@@ -378,11 +377,11 @@ export function OperationalBoardView() {
       setSheetClientId(client.id);
       setNewClientName("");
       setAddingClient(false);
-      toast({ title: "Cliente criado", type: "success" });
+      toast({ title: "Client created", type: "success" });
     } catch (error) {
       toast({
-        title: "Não foi possível criar o cliente",
-        description: error instanceof Error ? error.message : "erro",
+        title: "Could not create the client",
+        description: error instanceof Error ? error.message : "Unknown error",
         type: "error",
       });
     }
@@ -404,7 +403,7 @@ export function OperationalBoardView() {
       const imported = await parseBoardExcel(await file.arrayBuffer());
       if (imported.length === 0) {
         toast({
-          title: "Nenhuma linha encontrada no ficheiro",
+          title: "No rows were found in the file",
           type: "warning",
         });
         return;
@@ -435,15 +434,15 @@ export function OperationalBoardView() {
         return [...withContent, ...newRows, blankRow(ctx)];
       });
       toast({
-        title: `${newRows.length} linha(s) importada(s)`,
-        description: "Reveja os dados (fronteira e datas) e clique em Guardar.",
+        title: `${newRows.length} ${newRows.length === 1 ? "row" : "rows"} imported`,
+        description: "Review the border and date fields, then click Save.",
         type: "success",
       });
     } catch (error) {
       toast({
-        title: "Não foi possível importar o Excel",
+        title: "Could not import the Excel file",
         description:
-          error instanceof Error ? error.message : "erro ao ler o ficheiro",
+          error instanceof Error ? error.message : "Could not read the file",
         type: "error",
       });
     }
@@ -455,8 +454,8 @@ export function OperationalBoardView() {
     const visible = rows
       .filter(hasContent)
       .map((row, index) => ({ ...row, nu: index + 1 }));
-    exportToCsv("quadro-operacional.csv", visible, [
-      { header: "Nu.", value: (row) => String(row.nu) },
+    exportToCsv("operational-board.csv", visible, [
+      { header: "No.", value: (row) => String(row.nu) },
       { header: "Transporter", value: (row) => row.transporter },
       { header: "Horse", value: (row) => row.horse },
       { header: "Trailer", value: (row) => row.trailer },
@@ -467,16 +466,16 @@ export function OperationalBoardView() {
       { header: "Border", value: (row) => borderName(row.borderId) },
       { header: "Ton - Beira", value: (row) => row.tonnage },
       {
-        header: "Tipo",
+        header: "Type",
         value: (row) =>
           row.cargoType === "CONTAINER"
             ? "Container"
             : row.cargoType === "GERAL"
-              ? "Carga Geral"
-              : "Granel",
+              ? "General Cargo"
+              : "Bulk",
       },
-      { header: "Container / Descrição", value: (row) => row.cargoDetail },
-      { header: "Dispatched From Beira", value: (row) => row.dispatchedBy },
+      { header: "Container / Description", value: (row) => row.cargoDetail },
+      { header: "Dispatched From", value: (row) => row.dispatchedBy },
       { header: "GMS Dispatch Date", value: (row) => row.departureDate },
       { header: "Arrive Date", value: (row) => row.arrivalDate },
       { header: "Discharge Date", value: (row) => row.dischargeDate },
@@ -488,8 +487,8 @@ export function OperationalBoardView() {
   return (
     <div className="flex min-h-0 flex-col gap-4">
       <PageHeader
-        title="Quadro operacional"
-        description="Preencha várias viagens diretamente na grelha. Desloque horizontalmente para ver todas as colunas."
+        title="Operational Board"
+        description="Enter multiple trips directly in the grid. Scroll horizontally to view all columns."
         secondaryActions={
           <div className="flex gap-2">
             <input
@@ -507,13 +506,13 @@ export function OperationalBoardView() {
               icon={<Upload className="size-4" />}
               onClick={() => fileInputRef.current?.click()}
             >
-              Importar Excel
+              Import Excel
             </ActionButton>
             <ActionButton
               icon={<FileSpreadsheet className="size-4" />}
               onClick={exportBoard}
             >
-              Exportar
+              Export
             </ActionButton>
             <PrimaryButton
               icon={<Save className="size-4" />}
@@ -521,7 +520,7 @@ export function OperationalBoardView() {
               loading={saving}
               disabled={!pendingCount}
             >
-              Guardar{pendingCount ? ` ${pendingCount}` : ""}
+              Save{pendingCount ? ` ${pendingCount}` : ""}
             </PrimaryButton>
           </div>
         }
@@ -530,7 +529,7 @@ export function OperationalBoardView() {
       <div className="flex flex-wrap items-end gap-3 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/50">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            Cliente
+            Client
           </span>
           {addingClient ? (
             <div className="flex items-center gap-1">
@@ -542,7 +541,7 @@ export function OperationalBoardView() {
                   if (event.key === "Enter") void addClient();
                   if (event.key === "Escape") setAddingClient(false);
                 }}
-                placeholder="Nome da empresa"
+                placeholder="Company name"
                 className="h-9 min-w-44 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
               />
               <button
@@ -551,7 +550,7 @@ export function OperationalBoardView() {
                 disabled={createClientMutation.isPending}
                 className="h-9 rounded-md bg-brand-600 px-3 text-sm font-medium text-white disabled:opacity-60"
               >
-                Criar
+                Create
               </button>
               <button
                 type="button"
@@ -571,7 +570,7 @@ export function OperationalBoardView() {
                 onChange={(event) => setSheetClientId(event.target.value)}
                 className="h-9 min-w-44 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
               >
-                <option value="">Selecionar cliente…</option>
+                <option value="">Select client…</option>
                 {clients.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.companyName}
@@ -581,7 +580,7 @@ export function OperationalBoardView() {
               <button
                 type="button"
                 onClick={() => setAddingClient(true)}
-                title="Novo cliente"
+                title="New client"
                 className="h-9 rounded-md border border-slate-300 px-2 text-sm font-medium text-brand-700 hover:bg-brand-50 dark:border-slate-600 dark:text-brand-300"
               >
                 ＋
@@ -591,7 +590,7 @@ export function OperationalBoardView() {
         </div>
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            Origem
+            Origin
           </span>
           <input
             value={sheetOrigin}
@@ -602,18 +601,18 @@ export function OperationalBoardView() {
         <span className="pb-2 text-slate-400">→</span>
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            Destino
+            Destination
           </span>
           <input
             value={sheetDestination}
             onChange={(event) => setSheetDestination(event.target.value)}
-            placeholder="Ex.: Lusaka"
+            placeholder="E.g. Lusaka"
             className="h-9 w-40 rounded-md border border-slate-300 bg-white px-2 text-sm dark:border-slate-600 dark:bg-slate-900"
           />
         </label>
         <p className="flex items-center gap-1.5 pb-2 text-xs text-slate-500 dark:text-slate-400">
-          <Sheet className="size-3.5" aria-hidden /> Aplica-se às linhas novas.
-          Células azuis = alteradas por gravar.
+          <Sheet className="size-3.5" aria-hidden /> Applies to new rows. Blue
+          cells contain unsaved changes.
         </p>
       </div>
       <datalist id="board-horses">
@@ -750,9 +749,9 @@ export function OperationalBoardView() {
                       value={row.cargoType}
                       onChange={(v) => change(row.key, "cargoType", v)}
                       options={[
-                        ["GRANEL", "Granel"],
+                        ["GRANEL", "Bulk"],
                         ["CONTAINER", "Container"],
-                        ["GERAL", "Carga Geral"],
+                        ["GERAL", "General Cargo"],
                       ]}
                     />
                   </Cell>
@@ -767,8 +766,8 @@ export function OperationalBoardView() {
                         onChange={(v) => change(row.key, "cargoDetail", v)}
                         placeholder={
                           row.cargoType === "CONTAINER"
-                            ? "Nº do container"
-                            : "O que transporta"
+                            ? "Container number"
+                            : "Cargo description"
                         }
                         invalid={Boolean(fieldErrors.cargoDetail)}
                         title={fieldErrors.cargoDetail}
@@ -824,7 +823,7 @@ export function OperationalBoardView() {
                       <button
                         type="button"
                         onClick={() => removeBlank(row.key)}
-                        title="Remover linha"
+                        title="Remove row"
                       >
                         <Trash2 className="size-4 text-slate-400 hover:text-rose-600" />
                       </button>
@@ -841,8 +840,8 @@ export function OperationalBoardView() {
       <button
         type="button"
         onClick={() => addRows(1)}
-        title="Adicionar linha"
-        aria-label="Adicionar linha"
+        title="Add row"
+        aria-label="Add row"
         className="fixed bottom-6 right-6 z-40 flex size-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg transition hover:bg-brand-700 active:scale-95"
       >
         <Plus className="size-6" aria-hidden />
@@ -853,7 +852,7 @@ export function OperationalBoardView() {
 
 // Colunas exatamente como a folha do cliente (PDF LUMAC), na mesma ordem.
 const HEADERS = [
-  "Nu.",
+  "No.",
   "Transporter",
   "Horse",
   "Trailer",
@@ -863,9 +862,9 @@ const HEADERS = [
   "Phone Number",
   "Border",
   "Ton - Beira",
-  "Tipo",
-  "Container / Descrição",
-  "Dispatched From Beira",
+  "Type",
+  "Container / Description",
+  "Dispatched From",
   "GMS Dispatch Date",
   "Arrive Date",
   "Discharge Date",
@@ -953,9 +952,9 @@ function translateSaveError(error: unknown, row: BoardRow): string {
   const status = (error as { response?: { status?: number } })?.response
     ?.status;
   if (status === 409) {
-    return `um recurso (Horse ${row.horse || "?"} / motorista ${row.driver || "?"}) já está numa viagem ativa`;
+    return `a resource (Horse ${row.horse || "?"} / driver ${row.driver || "?"}) is already assigned to an active trip`;
   }
-  return error instanceof Error ? error.message : "erro ao guardar";
+  return error instanceof Error ? error.message : "Could not save the trip";
 }
 
 function normalize(value: string) {
@@ -1008,11 +1007,10 @@ function Input({
       list={list}
       placeholder={placeholder}
       title={title}
-      className={`h-7 min-w-24 w-full rounded-sm px-1.5 outline-none ${
-        invalid
-          ? "border border-rose-400 bg-rose-50 focus:border-rose-500 dark:border-rose-500 dark:bg-rose-950/40"
-          : "border border-transparent bg-transparent hover:border-slate-300 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-950"
-      }`}
+      className={`h-7 min-w-24 w-full rounded-sm px-1.5 outline-none ${invalid
+        ? "border border-rose-400 bg-rose-50 focus:border-rose-500 dark:border-rose-500 dark:bg-rose-950/40"
+        : "border border-transparent bg-transparent hover:border-slate-300 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-950"
+        }`}
     />
   );
 }

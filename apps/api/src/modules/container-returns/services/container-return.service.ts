@@ -57,9 +57,7 @@ export class ContainerReturnService {
       throw new NotFoundException('Trip not found');
     }
     if (ctx.currentStatus !== TripStatus.CONTAINER_RETURN_PENDING) {
-      throw new BadRequestException(
-        'Inicie a devolução antes de a confirmar.',
-      );
+      throw new BadRequestException('Inicie a devolução antes de a confirmar.');
     }
     return this.repository.confirm(tripId, dto, createdBy);
   }

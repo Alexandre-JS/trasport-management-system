@@ -70,13 +70,13 @@ export function ContainerReturnPanel({
       }),
     onSuccess: () => {
       setLocalStatus("CONTAINER_RETURNED");
-      toast({ title: "Devolução confirmada e POD registado", type: "success" });
+      toast({ title: "Container return confirmed and POD saved", type: "success" });
       void queryClient.invalidateQueries({ queryKey: ["container-return", tripId] });
       void queryClient.invalidateQueries({ queryKey: ["trips"] });
     },
     onError: (error) =>
       toast({
-        title: "Não foi possível confirmar a devolução",
+        title: "Could not confirm the container return",
         description: extractErrorMessage(error),
         type: "error",
       }),
@@ -102,8 +102,8 @@ export function ContainerReturnPanel({
     if (!file) return;
     if (file.size > MAX_FILE_SIZE) {
       toast({
-        title: "Ficheiro demasiado grande",
-        description: "O comprovativo deve ter no máximo 1 MB.",
+        title: "File is too large",
+        description: "The POD must be no larger than 1 MB.",
         type: "warning",
       });
       return;
@@ -111,8 +111,8 @@ export function ContainerReturnPanel({
 
     if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
       toast({
-        title: "Formato não suportado",
-        description: "Selecione uma imagem ou documento PDF.",
+        title: "Unsupported file format",
+        description: "Select an image or PDF document.",
         type: "warning",
       });
       return;
@@ -123,8 +123,8 @@ export function ContainerReturnPanel({
       setFileName(file.name);
     } catch {
       toast({
-        title: "Não foi possível ler o ficheiro",
-        description: "Selecione novamente o comprovativo.",
+        title: "Could not read the file",
+        description: "Select the POD file again.",
         type: "error",
       });
     }
@@ -164,10 +164,10 @@ export function ContainerReturnPanel({
           </span>
           <div>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Devolução do container
+              Container return
             </h3>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              Dados de receção e comprovativo POD
+              Receipt details and return POD
             </p>
           </div>
         </div>
@@ -183,25 +183,25 @@ export function ContainerReturnPanel({
           ) : (
             <CheckCircle2 className="size-3.5" aria-hidden />
           )}
-          {effectiveStatus === "CONTAINER_RETURN_PENDING" ? "Pendente" : "Devolvido"}
+          {effectiveStatus === "CONTAINER_RETURN_PENDING" ? "Pending" : "Returned"}
         </span>
       </div>
 
       {effectiveStatus === "CONTAINER_RETURN_PENDING" ? (
         <div className="flex flex-col gap-5 p-4">
           <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-            O container foi descarregado. Confirme a devolução e anexe o POD quando o depósito receber o container.
+            The container has been discharged. Confirm the return and attach the POD when the depot receives it.
           </p>
           <div>
             <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Dados de receção
+              Receipt details
             </h4>
             <div className="grid overflow-hidden rounded-md border border-slate-200 sm:grid-cols-2 dark:border-slate-700">
               <div className="border-b border-slate-200 p-3 sm:border-b-0 sm:border-r dark:border-slate-700">
-                <Field label="Devolvido a" value={returnedTo} onChange={setReturnedTo} />
+                <Field label="Returned to" value={returnedTo} onChange={setReturnedTo} />
               </div>
               <div className="p-3">
-                <Field label="Recebido por" value={receiverName} onChange={setReceiverName} />
+                <Field label="Received by" value={receiverName} onChange={setReceiverName} />
               </div>
             </div>
           </div>
@@ -210,7 +210,7 @@ export function ContainerReturnPanel({
               Remark
             </h4>
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Remark / Observações</span>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Remark / Notes</span>
               <textarea
                 value={observations}
                 onChange={(event) => setObservations(event.target.value)}
@@ -221,7 +221,7 @@ export function ContainerReturnPanel({
           </div>
           <div>
             <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Comprovativo POD
+              Return POD
             </h4>
             <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-brand-300 bg-brand-50/60 p-4 transition hover:bg-brand-50 dark:border-brand-800 dark:bg-brand-950/20 dark:hover:bg-brand-950/40">
             <span className="grid size-10 shrink-0 place-items-center rounded-md bg-white text-brand-600 shadow-sm dark:bg-slate-900 dark:text-brand-300">
@@ -229,10 +229,10 @@ export function ContainerReturnPanel({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {fileName || "Anexar comprovativo (POD)"}
+                {fileName || "Attach return POD"}
               </span>
               <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                Imagem ou PDF · máximo 1 MB
+                Image or PDF · maximum 1 MB
               </span>
             </span>
             <input
@@ -245,14 +245,14 @@ export function ContainerReturnPanel({
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              O POD é obrigatório para concluir a devolução.
+              A POD is required to complete the return.
             </p>
             <PrimaryButton
               onClick={() => confirmReturn.mutate()}
               loading={confirmReturn.isPending}
               disabled={!podDocument}
             >
-              Confirmar devolução
+              Confirm return
             </PrimaryButton>
           </div>
         </div>
@@ -263,20 +263,20 @@ export function ContainerReturnPanel({
           ) : (
           <dl className="overflow-hidden rounded-md border border-slate-300 dark:border-slate-700">
             <div className="grid grid-cols-[minmax(9rem,32%)_1fr] border-b border-slate-300 bg-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              <dt className="border-r border-slate-300 px-3 py-2 dark:border-slate-700">Campo</dt>
-              <dd className="px-3 py-2">Valor</dd>
+              <dt className="border-r border-slate-300 px-3 py-2 dark:border-slate-700">Field</dt>
+              <dd className="px-3 py-2">Value</dd>
             </div>
-            <Row label="Estado" value="Container devolvido" />
-            <Row label="Devolvido a" value={data?.returnedTo ?? "—"} />
-            <Row label="Recebido por" value={data?.receiverName ?? "—"} />
+            <Row label="Status" value="Container returned" />
+            <Row label="Returned to" value={data?.returnedTo ?? "—"} />
+            <Row label="Received by" value={data?.receiverName ?? "—"} />
             <Row
-              label="Data da devolução"
+              label="Return date"
               value={data?.returnedAt ? formatDateTime(data.returnedAt) : "—"}
             />
             <Row label="Remark" value={data?.observations ?? "—"} />
             <div className="grid border-b border-slate-200 last:border-b-0 sm:grid-cols-[minmax(9rem,32%)_1fr] dark:border-slate-800">
               <dt className="bg-slate-50 px-3 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                Comprovativo (POD)
+                Return POD
               </dt>
               <dd className="min-w-0 px-3 py-3 text-sm">
               {data?.podDocument ? (
@@ -303,7 +303,7 @@ export function ContainerReturnPanel({
                       {attachmentName(data.podDocument)}
                     </span>
                     <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                      Comprovativo de devolução · abrir em nova janela
+                      Return POD · open in a new window
                     </span>
                   </span>
                   <ExternalLink className="size-4 shrink-0 text-brand-600 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 dark:text-brand-300" aria-hidden />
@@ -313,7 +313,7 @@ export function ContainerReturnPanel({
                   <span className="grid size-10 shrink-0 place-items-center rounded-md bg-white dark:bg-slate-800">
                     <FileText className="size-5" aria-hidden />
                   </span>
-                  Nenhum comprovativo foi anexado.
+                  No return POD has been attached.
                 </span>
               )}
               </dd>
@@ -358,16 +358,16 @@ function fileToDataUrl(file: File): Promise<string> {
 
 function attachmentName(url: string) {
   if (url.startsWith("data:")) {
-    if (url.startsWith("data:application/pdf")) return "Comprovativo POD.pdf";
-    return "Comprovativo POD (imagem)";
+    if (url.startsWith("data:application/pdf")) return "Return POD.pdf";
+    return "Return POD (image)";
   }
 
   try {
     const pathname = new URL(url, "http://localhost").pathname;
     const name = pathname.split("/").filter(Boolean).at(-1);
-    return name ? decodeURIComponent(name) : "Comprovativo de devolução";
+    return name ? decodeURIComponent(name) : "Return POD";
   } catch {
-    return "Comprovativo de devolução";
+    return "Return POD";
   }
 }
 

@@ -22,7 +22,9 @@ export class PortalController {
   }
 
   @Get('trips/:id')
-  @ApiOperation({ summary: "Get one of the client's shipments with its history" })
+  @ApiOperation({
+    summary: "Get one of the client's shipments with its history",
+  })
   detail(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.portalService.getShipment(user.id, id);
   }

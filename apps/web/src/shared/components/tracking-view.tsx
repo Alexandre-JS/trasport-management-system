@@ -102,8 +102,8 @@ export function TrackingView() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <PageHeader
-        title="Rastreamento"
-        description="Localização das viagens ativas ao longo do corredor, em mapa de satélite."
+        title="Tracking"
+        description="Locations of active trips along the corridor on a satellite map."
       />
 
       {isLoading ? (
@@ -118,7 +118,7 @@ export function TrackingView() {
           <div className="flex min-h-0 flex-col gap-2 overflow-y-auto lg:col-span-1">
             {markers.length === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-                Não há viagens ativas para rastrear.
+                There are no active trips to track.
               </div>
             ) : (
               markers.map((marker) => {

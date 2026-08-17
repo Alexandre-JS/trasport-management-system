@@ -182,9 +182,7 @@ export class AuthService {
       this.signToken(user, permissions, 'refresh', refreshTokenId),
     ]);
 
-    const decoded = this.jwtService.decode(refreshToken) as {
-      exp: number;
-    } | null;
+    const decoded = this.jwtService.decode<{ exp?: number }>(refreshToken);
     const expiresAt = decoded?.exp
       ? new Date(decoded.exp * 1000)
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);

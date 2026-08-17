@@ -181,15 +181,9 @@ export class ClientsRepository {
             ],
           }
         : {}),
-      ...(query.city
-        ? { city: { contains: query.city } }
-        : {}),
-      ...(query.province
-        ? { province: { contains: query.province } }
-        : {}),
-      ...(query.country
-        ? { country: { contains: query.country } }
-        : {}),
+      ...(query.city ? { city: { contains: query.city } } : {}),
+      ...(query.province ? { province: { contains: query.province } } : {}),
+      ...(query.country ? { country: { contains: query.country } } : {}),
       ...(query.isActive === undefined ? {} : { isActive: query.isActive }),
     };
   }

@@ -7,7 +7,9 @@ export class RecordTripEventDto {
   @IsEnum(TripEventType)
   type!: TripEventType;
 
-  @ApiPropertyOptional({ description: 'When the milestone happened (defaults to now)' })
+  @ApiPropertyOptional({
+    description: 'When the milestone happened (defaults to now)',
+  })
   @IsOptional()
   @IsDateString()
   occurredAt?: string;

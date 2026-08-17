@@ -12,23 +12,23 @@ export function UsersView() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Gestão de Usuários"
-        description="Contas do sistema e acessos dos motoristas à aplicação mobile."
+        title="User Management"
+        description="System accounts and driver access to the mobile application."
       />
 
       <div className="grid gap-2 sm:max-w-2xl sm:grid-cols-2" role="tablist">
         <TabButton
           active={tab === "users"}
           icon={Users}
-          title="Utilizadores"
-          description="Administração, clientes e perfis"
+          title="Users"
+          description="Administrators, clients, and roles"
           onClick={() => setTab("users")}
         />
         <TabButton
           active={tab === "drivers"}
           icon={KeyRound}
-          title="Acesso de motoristas"
-          description="Criar, ativar ou desativar acesso mobile"
+          title="Driver Access"
+          description="Create, activate, or deactivate mobile access"
           onClick={() => setTab("drivers")}
         />
       </div>

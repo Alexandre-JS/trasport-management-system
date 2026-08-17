@@ -76,19 +76,22 @@ export function PublicTrackView({ token }: { token: string }) {
 
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="overflow-x-auto">
-                <table className="min-w-[1450px] text-left text-sm">
+                <table className="min-w-[1900px] text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                     <tr>
-                      <th className="whitespace-nowrap px-4 py-3">Cliente</th>
-                      <th className="whitespace-nowrap px-4 py-3">Camião</th>
-                      <th className="whitespace-nowrap px-4 py-3">Motorista</th>
-                      <th className="whitespace-nowrap px-4 py-3">Contentor</th>
-                      <th className="whitespace-nowrap px-4 py-3">Rota</th>
-                      <th className="whitespace-nowrap px-4 py-3">Estado</th>
-                      <th className="whitespace-nowrap px-4 py-3">Posição atual</th>
-                      <th className="whitespace-nowrap px-4 py-3">Fronteira</th>
-                      <th className="whitespace-nowrap px-4 py-3">Data de saída</th>
-                      <th className="whitespace-nowrap px-4 py-3">Chegada prevista</th>
+                      <th className="whitespace-nowrap px-4 py-3">Client</th>
+                      <th className="whitespace-nowrap px-4 py-3">Transporter</th>
+                      <th className="whitespace-nowrap px-4 py-3">Truck</th>
+                      <th className="whitespace-nowrap px-4 py-3">Horse</th>
+                      <th className="whitespace-nowrap px-4 py-3">Trailer</th>
+                      <th className="whitespace-nowrap px-4 py-3">Driver Name</th>
+                      <th className="whitespace-nowrap px-4 py-3">Border</th>
+                      <th className="whitespace-nowrap px-4 py-3">Container / Description</th>
+                      <th className="whitespace-nowrap px-4 py-3">Route</th>
+                      <th className="whitespace-nowrap px-4 py-3">Status</th>
+                      <th className="whitespace-nowrap px-4 py-3">GMS Dispatch Date</th>
+                      <th className="whitespace-nowrap px-4 py-3">Arrive Date</th>
+                      <th className="whitespace-nowrap px-4 py-3">Current Position</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -97,18 +100,25 @@ export function PublicTrackView({ token }: { token: string }) {
                         {shipment.clientName}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {shipment.transporterName ?? "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {shipment.truckPlate ?? "—"}
-                        {shipment.trailerPlate ? (
-                          <span className="block text-xs text-slate-400">
-                            Reboque: {shipment.trailerPlate}
-                          </span>
-                        ) : null}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {shipment.horsePlate ?? "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {shipment.trailerPlate ?? "—"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {shipment.driverName ?? "—"}
                       </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {borderNames(shipment.borders) ?? "—"}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-700 dark:text-slate-200">
-                        {shipment.cargo.containerNumber ?? "—"}
+                        {shipment.cargo.containerNumber ?? shipment.cargo.description ?? "—"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {shipment.cargo.origin} → {shipment.cargo.destination}
@@ -117,6 +127,12 @@ export function PublicTrackView({ token }: { token: string }) {
                         <StatusBadge tone={tripStatusBadgeTone[shipment.currentStatus]}>
                           {tripStatusMeta[shipment.currentStatus].label}
                         </StatusBadge>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {formatDate(departureDate)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
@@ -130,15 +146,6 @@ export function PublicTrackView({ token }: { token: string }) {
                           </span>
                         ) : null}
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {borderNames(shipment.borders) ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {formatDate(departureDate)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {formatDate(shipment.arrivalEstimate)}
-                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -148,29 +155,31 @@ export function PublicTrackView({ token }: { token: string }) {
             {shipment.lastLocation ? (
               <GpsLocationCard
                 location={shipment.lastLocation}
-                label={shipment.cargo.containerNumber ?? shipment.truckPlate ?? "Posição atual"}
+                label={shipment.cargo.containerNumber ?? shipment.horsePlate ?? shipment.truckPlate ?? "Current Position"}
               />
             ) : null}
 
             <ClientSupportCard />
             <PrintShipmentDocument
               title="Acompanhamento da carga"
-              reference={shipment.cargo.containerNumber ?? shipment.truckPlate ?? "Carga em acompanhamento"}
+              reference={shipment.cargo.containerNumber ?? shipment.horsePlate ?? shipment.truckPlate ?? "Tracking"}
               status={tripStatusMeta[shipment.currentStatus].label}
               route={`${shipment.cargo.origin} → ${shipment.cargo.destination}`}
               sections={[
                 {
                   title: "Informação da carga",
                   rows: [
-                    { label: "Cliente", value: shipment.clientName },
-                    { label: "Camião", value: shipment.truckPlate ?? "—" },
-                    { label: "Motorista", value: shipment.driverName ?? "—" },
-                    { label: "Contentor", value: shipment.cargo.containerNumber ?? "—" },
-                    { label: "Reboque", value: shipment.trailerPlate ?? "—" },
-                    { label: "Posição informada", value: shipment.currentPosition ?? "—" },
-                    { label: "Fronteira", value: borderNames(shipment.borders) ?? "—" },
-                    { label: "Data de saída", value: formatDate(departureDate) },
-                    { label: "Chegada prevista", value: formatDate(shipment.arrivalEstimate) },
+                    { label: "Client", value: shipment.clientName },
+                    { label: "Transporter", value: shipment.transporterName ?? "—" },
+                    { label: "Truck", value: shipment.truckPlate ?? "—" },
+                    { label: "Horse", value: shipment.horsePlate ?? "—" },
+                    { label: "Trailer", value: shipment.trailerPlate ?? "—" },
+                    { label: "Driver Name", value: shipment.driverName ?? "—" },
+                    { label: "Container / Description", value: shipment.cargo.containerNumber ?? shipment.cargo.description ?? "—" },
+                    { label: "Current Position", value: shipment.currentPosition ?? "—" },
+                    { label: "Border", value: borderNames(shipment.borders) ?? "—" },
+                    { label: "GMS Dispatch Date", value: formatDate(departureDate) },
+                    { label: "Arrive Date", value: formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate) },
                   ],
                 },
               ]}

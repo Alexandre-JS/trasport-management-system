@@ -8,7 +8,10 @@ import { PrismaService } from '../../../core/database/prisma.service';
 const publicTrackSelect = {
   currentStatus: true,
   currentPosition: true,
+  transporterName: true,
   departureDate: true,
+  arrivalDate: true,
+  dischargeDate: true,
   horsePlate: true,
   trailerPlate: true,
   driverName: true,
@@ -30,6 +33,8 @@ const publicTrackSelect = {
   cargo: {
     select: {
       code: true,
+      description: true,
+      type: true,
       containerNumber: true,
       origin: true,
       destination: true,
@@ -83,7 +88,8 @@ function withLastLocation({
   return {
     ...trip,
     clientName: cargo.client.companyName,
-    truckPlate: horsePlate ?? truck?.plateNumber ?? null,
+    truckPlate: truck?.plateNumber ?? null,
+    horsePlate,
     driverName: driverName ?? driver?.fullName ?? null,
     trailerPlate: trailerPlate ?? trailer?.plateNumber ?? null,
     cargo: {

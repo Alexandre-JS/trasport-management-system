@@ -69,22 +69,27 @@ export function PublicClientTrackView({ token }: { token: string }) {
             ) : (
               <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
+                  <table className="min-w-[1900px] text-left text-sm">
                     <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                       <tr>
-                        <th className="whitespace-nowrap px-4 py-3">Camião</th>
-                        <th className="whitespace-nowrap px-4 py-3">Motorista</th>
-                        <th className="whitespace-nowrap px-4 py-3">Contentor</th>
-                        <th className="whitespace-nowrap px-4 py-3">Rota</th>
-                        <th className="whitespace-nowrap px-4 py-3">Estado</th>
+                        <th className="whitespace-nowrap px-4 py-3">Client</th>
+                        <th className="whitespace-nowrap px-4 py-3">Transporter</th>
+                        <th className="whitespace-nowrap px-4 py-3">Truck</th>
+                        <th className="whitespace-nowrap px-4 py-3">Horse</th>
+                        <th className="whitespace-nowrap px-4 py-3">Trailer</th>
+                        <th className="whitespace-nowrap px-4 py-3">Driver Name</th>
+                        <th className="whitespace-nowrap px-4 py-3">Border</th>
+                        <th className="whitespace-nowrap px-4 py-3">Container / Description</th>
+                        <th className="whitespace-nowrap px-4 py-3">Route</th>
+                        <th className="whitespace-nowrap px-4 py-3">Status</th>
                         <th className="whitespace-nowrap px-4 py-3">
-                          Posição atual
+                          GMS Dispatch Date
                         </th>
                         <th className="whitespace-nowrap px-4 py-3">
-                          Data de saída
+                          Arrive Date
                         </th>
                         <th className="whitespace-nowrap px-4 py-3">
-                          Chegada prevista
+                          Current Position
                         </th>
                       </tr>
                     </thead>
@@ -95,18 +100,28 @@ export function PublicClientTrackView({ token }: { token: string }) {
                           className="align-top"
                         >
                           <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950 dark:text-white">
+                            {shipment.clientName}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {shipment.transporterName ?? "—"}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                             {shipment.truckPlate ?? "—"}
-                            {shipment.trailerPlate ? (
-                              <span className="block text-xs font-normal text-slate-400">
-                                Reboque: {shipment.trailerPlate}
-                              </span>
-                            ) : null}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {shipment.horsePlate ?? "—"}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {shipment.trailerPlate ?? "—"}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                             {shipment.driverName ?? "—"}
                           </td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {shipment.borders.map((item) => item.border.name).join(" / ") || "—"}
+                          </td>
                           <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-700 dark:text-slate-200">
-                            {shipment.cargo.containerNumber ?? "—"}
+                            {shipment.cargo.containerNumber ?? shipment.cargo.description ?? "—"}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                             {shipment.cargo.origin} → {shipment.cargo.destination}
@@ -117,6 +132,12 @@ export function PublicClientTrackView({ token }: { token: string }) {
                             >
                               {tripStatusMeta[shipment.currentStatus].label}
                             </StatusBadge>
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {formatDate(shipment.departureDate)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            {formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate)}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
@@ -145,12 +166,6 @@ export function PublicClientTrackView({ token }: { token: string }) {
                                 </a>
                               </div>
                             ) : null}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                            {formatDate(shipment.departureDate)}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                            {formatDate(shipment.arrivalEstimate)}
                           </td>
                         </tr>
                       ))}

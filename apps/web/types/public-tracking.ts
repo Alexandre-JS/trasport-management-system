@@ -17,16 +17,22 @@ export type LastLocation = {
 export type PublicShipment = {
   clientName: string;
   truckPlate: string | null;
+  horsePlate: string | null;
   driverName: string | null;
   trailerPlate: string | null;
+  transporterName: string | null;
   currentStatus: TripStatus;
   currentPosition: string | null;
   departureDate: string | null;
+  arrivalDate: string | null;
+  dischargeDate: string | null;
   borders: TripBorderRef[];
   arrivalEstimate: string | null;
   lastLocation: LastLocation | null;
   cargo: {
     code: string;
+    description: string | null;
+    type: "CONTAINER" | "GRANEL" | "GERAL";
     containerNumber: string | null;
     origin: string;
     destination: string;

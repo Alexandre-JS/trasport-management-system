@@ -15,7 +15,7 @@ Crie o ficheiro de ambiente local:
 cp .env.example .env.local
 ```
 
-Ajuste a URL da API, se necessario:
+Ajuste a origem da API, se necessario:
 
 ```env
 API_ORIGIN=http://localhost:3000
@@ -30,7 +30,12 @@ npm run dev
 
 Abra [http://localhost:3001](http://localhost:3001).
 
-## Producao
+## Produção
+
+Defina `API_ORIGIN` no ambiente do servidor Web. No Hostinger atual, o pacote
+standalone já é construído no GitHub Actions e publicado sem o source.
+
+## Validação local
 
 Antes de publicar, valide o codigo:
 
@@ -39,7 +44,7 @@ npm run lint
 npm run build
 ```
 
-Rodar o servidor Next em producao:
+Rodar o servidor Next em produção:
 
 ```bash
 PORT=3001 npm run start:prod

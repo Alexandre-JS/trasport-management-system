@@ -5,17 +5,17 @@ export const tripStatusMeta: Record<
   TripStatus,
   { label: string; tone: BadgeTone }
 > = {
-  WAITING_APPOINTMENT: { label: "Aguarda marcação", tone: "slate" },
-  APPOINTMENT_DONE: { label: "Marcação feita", tone: "violet" },
-  LOADED: { label: "Carregada", tone: "blue" },
-  DISPATCHED_ORIGIN: { label: "Despachada", tone: "blue" },
-  AT_BORDER: { label: "Na fronteira", tone: "amber" },
-  BORDER_CLEARED: { label: "Fronteira liberada", tone: "amber" },
-  ARRIVED: { label: "Chegou", tone: "green" },
-  DISCHARGED: { label: "Descarregada", tone: "green" },
-  CONTAINER_RETURN_PENDING: { label: "Container por devolver", tone: "amber" },
-  CONTAINER_RETURNED: { label: "Container devolvido", tone: "green" },
-  CANCELLED: { label: "Cancelada", tone: "red" },
+  WAITING_APPOINTMENT: { label: "Awaiting appointment", tone: "slate" },
+  APPOINTMENT_DONE: { label: "Appointment completed", tone: "violet" },
+  LOADED: { label: "Loaded", tone: "blue" },
+  DISPATCHED_ORIGIN: { label: "Dispatched", tone: "blue" },
+  AT_BORDER: { label: "At border", tone: "amber" },
+  BORDER_CLEARED: { label: "Border cleared", tone: "amber" },
+  ARRIVED: { label: "Arrived", tone: "green" },
+  DISCHARGED: { label: "Discharged", tone: "green" },
+  CONTAINER_RETURN_PENDING: { label: "Container return pending", tone: "amber" },
+  CONTAINER_RETURNED: { label: "Container returned", tone: "green" },
+  CANCELLED: { label: "Cancelled", tone: "red" },
 };
 
 /**
@@ -56,7 +56,7 @@ export function nextTripStatus(status: TripStatus): TripStatus | null {
 
 export const tripStatusOptions: { label: string; value: TripStatus | "all" }[] =
   [
-    { label: "Todos os estados", value: "all" },
+    { label: "All statuses", value: "all" },
     ...tripStatusSequence.map((status) => ({
       label: tripStatusMeta[status].label,
       value: status,
@@ -104,10 +104,10 @@ export function activeBorder<T extends BorderCrossing>(
 }
 
 export const tripEventTypeLabel: Record<TripEventType, string> = {
-  DISPATCHED_ORIGIN: "Despacho (origem)",
-  AT_BORDER: "Chegada à fronteira",
-  BORDER_CLEARED: "Fronteira liberada",
-  ARRIVED: "Chegada ao destino",
-  DISCHARGED: "Descarga",
-  STATUS_CHANGE: "Mudança de estado",
+  DISPATCHED_ORIGIN: "Dispatched from origin",
+  AT_BORDER: "Arrived at border",
+  BORDER_CLEARED: "Border cleared",
+  ARRIVED: "Arrived at destination",
+  DISCHARGED: "Discharged",
+  STATUS_CHANGE: "Status changed",
 };

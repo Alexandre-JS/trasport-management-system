@@ -5,16 +5,16 @@ export const truckStatusMeta: Record<
   TruckStatus,
   { label: string; tone: BadgeTone }
 > = {
-  AVAILABLE: { label: "Disponível", tone: "green" },
-  ON_TRIP: { label: "Em viagem", tone: "blue" },
-  MAINTENANCE: { label: "Manutenção", tone: "amber" },
+  AVAILABLE: { label: "Available", tone: "green" },
+  ON_TRIP: { label: "On trip", tone: "blue" },
+  MAINTENANCE: { label: "Maintenance", tone: "amber" },
   INACTIVE: { label: "Inativo", tone: "red" },
 };
 
 export const truckStatusOptions = [
-  { label: "Todos os estados", value: "all" },
-  { label: "Disponível", value: "AVAILABLE" },
-  { label: "Em viagem", value: "ON_TRIP" },
-  { label: "Manutenção", value: "MAINTENANCE" },
+  { label: "All statuses", value: "all" },
+  { label: "Available", value: "AVAILABLE" },
+  { label: "On trip", value: "ON_TRIP" },
+  { label: "Maintenance", value: "MAINTENANCE" },
   { label: "Inativo", value: "INACTIVE" },
 ];

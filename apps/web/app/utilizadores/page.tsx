@@ -5,7 +5,7 @@ import { ProtectedLayout } from "@/src/shared/layout/protected-layout";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Gestão de Usuários",
+  title: "User management",
 };
 
 export default function UtilizadoresPage() {

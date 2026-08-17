@@ -8,7 +8,7 @@ export function Pagination() {
         <button
           type="button"
           disabled
-          aria-label="Página anterior"
+          aria-label="Previous page"
           className="grid size-8 place-items-center rounded-md border border-slate-200 opacity-50 dark:border-slate-700"
         >
           <ChevronLeft className="size-4" aria-hidden />
@@ -17,7 +17,7 @@ export function Pagination() {
         <button
           type="button"
           disabled
-          aria-label="Página seguinte"
+          aria-label="Next page"
           className="grid size-8 place-items-center rounded-md border border-slate-200 opacity-50 dark:border-slate-700"
         >
           <ChevronRight className="size-4" aria-hidden />

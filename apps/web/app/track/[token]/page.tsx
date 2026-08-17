@@ -3,7 +3,7 @@ import { PublicTrackView } from "@/src/shared/components/public-track-view";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Rastreio de carga",
+  title: "Shipment tracking",
   robots: { index: false },
 };
 

@@ -59,7 +59,7 @@ export function Notifications() {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label={
-          unread > 0 ? `Notificações (${unread} por ler)` : "Notificações"
+          unread > 0 ? `Notifications (${unread} unread)` : "Notifications"
         }
         aria-expanded={open}
         className="relative grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -76,7 +76,7 @@ export function Notifications() {
         <div className="absolute right-0 top-full z-40 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
             <p className="text-sm font-semibold text-slate-950 dark:text-white">
-              Notificações
+              Notifications
             </p>
             {unread > 0 ? (
               <button
@@ -86,7 +86,7 @@ export function Notifications() {
                 className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 disabled:opacity-50 dark:text-brand-400"
               >
                 <CheckCheck className="size-3.5" aria-hidden />
-                Marcar todas como lidas
+                Mark all as read
               </button>
             ) : null}
           </div>
@@ -103,14 +103,14 @@ export function Notifications() {
                   aria-hidden
                 />
                 <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Não foi possível carregar as notificações.
+                  Unable to load notifications.
                 </p>
                 <button
                   type="button"
                   onClick={() => void notificationsQuery.refetch()}
                   className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
                 >
-                  Tentar novamente
+                  Try again
                 </button>
               </div>
             ) : notifications.length === 0 ? (
@@ -120,7 +120,7 @@ export function Notifications() {
                   aria-hidden
                 />
                 <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Sem notificações por agora.
+                  No notifications yet.
                 </p>
               </div>
             ) : (
@@ -172,7 +172,7 @@ export function Notifications() {
                         onClick={() =>
                           deleteNotification.mutate(notification.id)
                         }
-                        aria-label="Remover notificação"
+                        aria-label="Delete notification"
                         className="absolute right-2 top-2 grid size-6 place-items-center rounded text-slate-300 opacity-0 transition hover:bg-slate-100 hover:text-slate-500 group-hover:opacity-100 dark:hover:bg-slate-800"
                       >
                         <X className="size-3.5" aria-hidden />

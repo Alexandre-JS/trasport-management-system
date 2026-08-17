@@ -3,7 +3,7 @@ export function cargoTypeLabel(type: string | null | undefined): string {
     case "CONTAINER":
       return "Container";
     case "GERAL":
-      return "Carga Geral";
+      return "General Cargo";
     case "GRANEL":
       return "Granel";
     default:

@@ -9,8 +9,8 @@ type ErrorStateProps = {
 };
 
 export function ErrorState({
-  title = "Não foi possível carregar esta área",
-  description = "Tente novamente ou contacte o administrador do sistema.",
+  title = "Unable to load this area",
+  description = "Please try again or contact the system administrator.",
   actionLabel = "Tentar novamente",
   onAction,
 }: ErrorStateProps) {

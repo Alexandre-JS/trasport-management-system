@@ -29,18 +29,18 @@ export const navigationSections: NavigationSection[] = [
   },
   {
     id: "operacoes",
-    title: "Operações",
+    title: "Operations",
     items: [
       {
         href: "/cargas",
-        label: "Cargas",
-        description: "Cadastro e estado das cargas",
+        label: "Shipments",
+        description: "Shipment records and status",
         icon: Package,
       },
       {
         href: "/viagens",
         label: "Viagens",
-        description: "Planeamento e execução",
+        description: "Planning and execution",
         icon: Route,
       },
     ],
@@ -51,8 +51,8 @@ export const navigationSections: NavigationSection[] = [
     items: [
       {
         href: "/contas-cliente",
-        label: "Contas e clientes",
-        description: "Clientes, acessos e motoristas",
+        label: "Accounts and clients",
+        description: "Clients, access accounts and drivers",
         icon: Users,
       },
       {
@@ -63,26 +63,26 @@ export const navigationSections: NavigationSection[] = [
       },
       {
         href: "/fronteiras",
-        label: "Fronteiras",
-        description: "Postos fronteiriços das rotas",
+        label: "Borders",
+        description: "Route border posts",
         icon: Landmark,
       },
     ],
   },
   {
     id: "monitorizacao",
-    title: "Monitorização",
+    title: "Monitoring",
     items: [
       {
         href: "/rastreamento",
         label: "Rastreamento",
-        description: "GPS das cargas em curso",
+        description: "GPS for active shipments",
         icon: MapPin,
       },
       {
         href: "/incidentes",
         label: "Incidentes",
-        description: "Ocorrências da operação",
+        description: "Operational incidents",
         icon: AlertTriangle,
       },
     ],

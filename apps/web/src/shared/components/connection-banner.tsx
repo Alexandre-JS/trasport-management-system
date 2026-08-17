@@ -48,8 +48,8 @@ export function ConnectionBanner() {
         <CloudOff className="size-4 shrink-0" />
       )}
       {offline
-        ? "Sem ligação à internet. Verifique a sua rede — os dados voltam a carregar quando a ligação for reposta."
-        : "O servidor está temporariamente indisponível. As alterações não estão a ser guardadas; tente novamente em instantes."}
+        ? "No internet connection. Check your network; data will reload when the connection is restored."
+        : "The server is temporarily unavailable. Changes are not being saved; please try again shortly."}
     </div>
   );
 }

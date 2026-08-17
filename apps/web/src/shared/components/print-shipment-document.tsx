@@ -38,13 +38,13 @@ export function PrintShipmentDocument({
         />
         <div className="text-right">
           <h1>{title}</h1>
-          <p>Referência: {reference}</p>
+          <p>Reference: {reference}</p>
         </div>
       </header>
 
       <div className="print-document-summary">
-        <div><span>Estado</span><strong>{status}</strong></div>
-        <div><span>Rota</span><strong>{route}</strong></div>
+        <div><span>Status</span><strong>{status}</strong></div>
+        <div><span>Route</span><strong>{route}</strong></div>
       </div>
 
       {sections.map((section) => (
@@ -66,9 +66,9 @@ export function PrintShipmentDocument({
 
       {events.length > 0 ? (
         <section className="print-document-section">
-          <h2>Acompanhamento</h2>
+          <h2>Tracking history</h2>
           <table>
-            <thead><tr><th>Data/hora</th><th>Evento</th><th>Observação</th></tr></thead>
+            <thead><tr><th>Date/time</th><th>Event</th><th>Note</th></tr></thead>
             <tbody>
               {events.map((event, index) => (
                 <tr key={`${event.date}-${index}`}>
@@ -83,7 +83,7 @@ export function PrintShipmentDocument({
       ) : null}
 
       {signatures.length > 0 ? (
-        <section className="print-signatures" aria-label="Assinaturas">
+        <section className="print-signatures" aria-label="Signatures">
           {signatures.map((signature) => (
             <div key={signature}><span /><p>{signature}</p></div>
           ))}
@@ -93,10 +93,10 @@ export function PrintShipmentDocument({
       <footer className="print-document-footer">
         <p>
           {informational
-            ? "Documento informativo processado por computador; não requer assinatura."
-            : "Documento processado por computador. As assinaturas confirmam os dados operacionais acima."}
+            ? "Computer-generated information document; no signature required."
+            : "Computer-generated document. Signatures confirm the operational data above."}
         </p>
-        {phone || email ? <p>Contacto: {[phone, email].filter(Boolean).join(" · ")}</p> : null}
+        {phone || email ? <p>Contact: {[phone, email].filter(Boolean).join(" · ")}</p> : null}
       </footer>
     </article>
   );

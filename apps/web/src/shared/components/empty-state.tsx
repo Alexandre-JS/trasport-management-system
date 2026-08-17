@@ -8,8 +8,8 @@ type EmptyStateProps = {
 };
 
 export function EmptyState({
-  title = "Nenhum resultado encontrado",
-  description = "Não existem registos que correspondam aos critérios atuais.",
+  title = "No results found",
+  description = "No records match the current criteria.",
   action,
 }: EmptyStateProps) {
   return (

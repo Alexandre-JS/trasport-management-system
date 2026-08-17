@@ -4,7 +4,7 @@ import { PortalShell } from "@/src/shared/layout/portal-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Portal do cliente",
+  title: "Client portal",
 };
 
 export default function PortalPage() {

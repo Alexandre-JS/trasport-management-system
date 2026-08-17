@@ -196,26 +196,26 @@ type ApiErrorBody = {
   error?: string;
 };
 
-// Mensagens de negócio frequentes da API (em inglês) → PT.
+// Friendly messages for common API errors.
 const serverMessageTranslations: Record<string, string> = {
-  "Invalid credentials": "Email ou senha incorretos.",
-  "User is inactive": "Esta conta está desativada. Contacte o administrador.",
-  "User not found": "Utilizador não encontrado.",
-  "Email already in use": "Já existe uma conta com este email.",
+  "Invalid credentials": "Incorrect email or password.",
+  "User is inactive": "This account is disabled. Contact an administrator.",
+  "User not found": "User not found.",
+  "Email already in use": "An account with this email already exists.",
   "User is already linked to another driver":
-    "Esta conta já está associada a outro motorista.",
+    "This account is already linked to another driver.",
   "Internal server error":
-    "Erro no servidor. Tente novamente; se persistir, contacte o administrador.",
+    "Server error. Try again; if the problem persists, contact an administrator.",
 };
 
 const statusMessages: Record<number, string> = {
-  400: "Dados inválidos. Reveja os campos e tente novamente.",
-  401: "Sessão expirada. Inicie sessão para continuar.",
-  403: "Não tem permissão para executar esta ação.",
-  404: "O registo pedido não foi encontrado — pode ter sido removido.",
-  409: "A operação entra em conflito com dados existentes.",
-  422: "Dados inválidos. Reveja os campos e tente novamente.",
-  429: "Demasiadas tentativas seguidas. Aguarde um momento e tente novamente.",
+  400: "Invalid data. Review the fields and try again.",
+  401: "Your session has expired. Sign in to continue.",
+  403: "You do not have permission to perform this action.",
+  404: "The requested record was not found; it may have been removed.",
+  409: "This operation conflicts with existing data.",
+  422: "Invalid data. Review the fields and try again.",
+  429: "Too many attempts. Wait a moment and try again.",
 };
 
 function serverMessage(data: ApiErrorBody | undefined): string | null {
@@ -239,7 +239,7 @@ function serverMessage(data: ApiErrorBody | undefined): string | null {
 
 export function extractErrorMessage(
   error: unknown,
-  fallback = "Ocorreu um erro inesperado.",
+  fallback = "An unexpected error occurred.",
 ) {
   if (error instanceof AxiosError) {
     if (error.response) {
@@ -249,7 +249,7 @@ export function extractErrorMessage(
       if (status >= 500) {
         // Em erros do servidor a mensagem técnica não ajuda o utilizador.
         if ([502, 503, 504].includes(status)) {
-          return "O servidor está temporariamente indisponível. Tente novamente em instantes.";
+          return "The server is temporarily unavailable. Try again shortly.";
         }
         return (
           serverMessageTranslations["Internal server error"]
@@ -260,14 +260,14 @@ export function extractErrorMessage(
     }
 
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
-      return "Sem ligação à internet. Verifique a sua rede e tente novamente.";
+      return "No internet connection. Check your network and try again.";
     }
 
     if (error.code === "ECONNABORTED") {
-      return "O servidor demorou demasiado a responder. Tente novamente.";
+      return "The server took too long to respond. Try again.";
     }
 
-    return "Não foi possível contactar o servidor — pode estar temporariamente indisponível. Tente novamente em instantes.";
+    return "Unable to contact the server. It may be temporarily unavailable; try again shortly.";
   }
 
   if (error instanceof Error) {

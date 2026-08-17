@@ -8,8 +8,8 @@ export const cargoStatusMeta: Record<
   CREATED: { label: "Criada", tone: "slate" },
   WAITING_PICKUP: { label: "Aguarda recolha", tone: "amber" },
   PICKED_UP: { label: "Recolhida", tone: "blue" },
-  IN_TRANSIT: { label: "Em trânsito", tone: "blue" },
-  NEAR_DESTINATION: { label: "Próx. destino", tone: "violet" },
+  IN_TRANSIT: { label: "In transit", tone: "blue" },
+  NEAR_DESTINATION: { label: "Near destination", tone: "violet" },
   DELIVERED: { label: "Entregue", tone: "green" },
   CANCELLED: { label: "Cancelada", tone: "red" },
   INCIDENT: { label: "Com incidente", tone: "red" },
@@ -31,12 +31,12 @@ export const cargoStatusBadgeTone: Record<
 };
 
 export const cargoStatusOptions = [
-  { label: "Todos os estados", value: "all" },
+  { label: "All statuses", value: "all" },
   { label: "Criada", value: "CREATED" },
   { label: "Aguarda recolha", value: "WAITING_PICKUP" },
   { label: "Recolhida", value: "PICKED_UP" },
-  { label: "Em trânsito", value: "IN_TRANSIT" },
-  { label: "Próx. destino", value: "NEAR_DESTINATION" },
+  { label: "In transit", value: "IN_TRANSIT" },
+  { label: "Near destination", value: "NEAR_DESTINATION" },
   { label: "Entregue", value: "DELIVERED" },
   { label: "Cancelada", value: "CANCELLED" },
   { label: "Com incidente", value: "INCIDENT" },

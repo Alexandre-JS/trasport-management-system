@@ -4,7 +4,7 @@ import { ProtectedLayout } from "@/src/shared/layout/protected-layout";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Atividades",
+  title: "Activities",
 };
 
 // Rota /viagens reaproveitada como página de Atividades (acompanhamento das

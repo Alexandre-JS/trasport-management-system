@@ -17,7 +17,7 @@ import { APP_VERSION } from "@/version";
 export const navigationGroups: NavigationGroup[] = [
   {
     id: "operacao",
-    label: "Operações",
+    label: "Operations",
     items: [
       {
         href: "/",
@@ -28,7 +28,7 @@ export const navigationGroups: NavigationGroup[] = [
       {
         href: "/viagens",
         label: "Atividades",
-        description: "Folhas por cliente/rota e acompanhamento das cargas",
+        description: "Client and route sheets with shipment tracking",
         icon: ClipboardList,
       },
     ],
@@ -40,13 +40,13 @@ export const navigationGroups: NavigationGroup[] = [
       {
         href: "/rastreamento",
         label: "Rastreamento",
-        description: "Localização GPS das viagens",
+        description: "Trip GPS locations",
         icon: MapPin,
       },
       {
         href: "/incidentes",
         label: "Incidentes",
-        description: "Ocorrências e alertas",
+        description: "Operational incidents and alerts",
         icon: AlertTriangle,
       },
     ],
@@ -57,23 +57,23 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       {
         href: "/fronteiras",
-        label: "Fronteiras",
-        description: "Postos fronteiriços das rotas",
+        label: "Borders",
+        description: "Route border posts",
         icon: Signpost,
       },
     ],
   },
   {
     id: "administracao",
-    label: "Administração",
+    label: "Administration",
     items: [
       // Configurações fica fora do menu principal até retomarmos este módulo.
       // "Perfil" saiu do menu lateral — continua acessível pelo menu do
       // avatar (canto superior direito).
       {
         href: "/utilizadores",
-        label: "Gestão de utilizadores",
-        description: "Contas de acesso e perfis de permissões",
+        label: "User management",
+        description: "Access accounts and permission profiles",
         icon: UserCog,
         roles: ["ADMIN"],
       },

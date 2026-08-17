@@ -67,8 +67,8 @@ export function GlobalSearch() {
               navigate(results[0].href);
             }
           }}
-          placeholder="Pesquisar módulos ou registos… (Ctrl K)"
-          aria-label="Pesquisar módulos ou registos"
+          placeholder="Search modules or records… (Ctrl K)"
+          aria-label="Search modules or records"
           className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
         />
       </div>

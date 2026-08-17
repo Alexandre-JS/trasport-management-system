@@ -9,10 +9,10 @@ export function ClientSupportCard() {
   return (
     <section className="rounded-lg border border-rose-200 bg-rose-50/70 p-4 dark:border-rose-900 dark:bg-rose-950/20">
       <h2 className="text-sm font-semibold text-rose-900 dark:text-rose-100">
-        Contacto em caso de urgência
+        Emergency contact
       </h2>
       <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
-        Identifique o código da carga ao contactar a equipa LUMAC.
+        Provide the shipment details when contacting the LUMAC team.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {supportPhone ? (

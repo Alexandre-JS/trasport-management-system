@@ -11,8 +11,8 @@ import { extractErrorMessage } from "@/src/shared/services/api-client";
 import { useToast } from "@/providers/toast-provider";
 
 const loginSchema = z.object({
-  identifier: z.string().min(1, "Informe o email ou telefone"),
-  password: z.string().min(8, "A palavra-passe deve ter pelo menos 8 caracteres"),
+  identifier: z.string().min(1, "Enter your email or phone number"),
+  password: z.string().min(8, "Password must contain at least 8 characters"),
   rememberMe: z.boolean(),
 });
 
@@ -41,17 +41,17 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormValues) {
     try {
       const user = await login(values);
-      toast({ title: "Sessão iniciada", type: "success" });
+      toast({ title: "Signed in successfully", type: "success" });
       // Clients always land on their portal (never on admin routes, even if a
       // `next` pointed there); staff go to the requested/admin destination.
       const destination = user.role === "CLIENT" ? "/portal" : next;
       router.replace(destination);
     } catch (error) {
-      const message = extractErrorMessage(error, "Credenciais inválidas.");
+      const message = extractErrorMessage(error, "Invalid credentials.");
 
       setError("root", { message });
       toast({
-        title: "Falha na autenticação",
+        title: "Authentication failed",
         description: message,
         type: "error",
       });
@@ -69,17 +69,17 @@ export function LoginForm() {
           Acesso seguro
         </div> */}
         <h1 className="text-xl font-semibold text-slate-950 dark:text-white">
-          Iniciar sessão
+          Sign in
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-          Use as credenciais atribuídas pela administração.
+          Use the credentials provided by the administration team.
         </p>
       </div>
 
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Email ou telefone
+            Email or phone
           </span>
           <span className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-950">
             <Mail className="size-4 text-slate-400" aria-hidden />
@@ -90,7 +90,7 @@ export function LoginForm() {
               // hydrates, causing a benign SSR/client mismatch — suppress it.
               suppressHydrationWarning
               className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
-              placeholder="Email ou nº de telefone"
+              placeholder="Email or phone number"
               {...register("identifier")}
             />
           </span>
@@ -103,7 +103,7 @@ export function LoginForm() {
 
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Palavra-passe
+            Password
           </span>
           <span className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-950">
             <Lock className="size-4 text-slate-400" aria-hidden />
@@ -133,10 +133,10 @@ export function LoginForm() {
             className="size-4 rounded border-slate-300 accent-brand-600 dark:border-slate-700"
             {...register("rememberMe")}
           />
-          Manter sessão iniciada
+          Keep me signed in
         </label>
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          Esqueceu a palavra-passe? Contacte a administração.
+          Forgot your password? Contact an administrator.
         </span>
       </div>
 
@@ -147,7 +147,7 @@ export function LoginForm() {
       ) : null}
 
       <PrimaryButton type="submit" loading={isSubmitting} className="mt-6 w-full">
-        Entrar
+        Sign in
       </PrimaryButton>
     </form>
   );

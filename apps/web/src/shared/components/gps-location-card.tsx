@@ -22,17 +22,17 @@ export function GpsLocationCard({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-2.5 dark:border-slate-800">
         <span className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-200">
           <Navigation className="size-4 text-brand-500" aria-hidden />
-          Localização GPS
+          GPS location
         </span>
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          atualizado {formatRelativeTime(location.recordedAt)}
+          updated {formatRelativeTime(location.recordedAt)}
         </span>
       </div>
       <LiveMap
         markers={[
           {
             id: "gps",
-            label: label ?? "Posição atual",
+            label: label ?? "Current position",
             lat: location.latitude,
             lng: location.longitude,
           },
@@ -47,7 +47,7 @@ export function GpsLocationCard({
           className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
         >
           <MapPin className="size-3.5" aria-hidden />
-          Ver no mapa
+          View map
         </a>
       </div>
     </div>

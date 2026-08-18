@@ -1,5 +1,4 @@
-import { PortalShipmentsView } from "@/src/shared/components/portal-shipments-view";
-import { PortalShell } from "@/src/shared/layout/portal-shell";
+import { StaticPortalRoute } from "./static-portal-route";
 
 import type { Metadata } from "next";
 
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function PortalPage() {
-  return (
-    <PortalShell>
-      <PortalShipmentsView />
-    </PortalShell>
-  );
+  return <StaticPortalRoute />;
 }

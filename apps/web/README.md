@@ -1,6 +1,7 @@
 # SGRTC Web
 
-Frontend Next.js do sistema de gestao de transporte.
+Frontend Next.js do sistema de gestão de transporte, exportado como ficheiros
+estáticos para produção.
 
 ## Requisitos
 
@@ -15,10 +16,10 @@ Crie o ficheiro de ambiente local:
 cp .env.example .env.local
 ```
 
-Ajuste a origem da API, se necessario:
+Ajuste a URL pública da API, se necessário:
 
 ```env
-API_ORIGIN=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
 ```
 
 Instale dependencias e rode o servidor:
@@ -32,8 +33,16 @@ Abra [http://localhost:3001](http://localhost:3001).
 
 ## Produção
 
-Defina `API_ORIGIN` no ambiente do servidor Web. No Hostinger atual, o pacote
-standalone já é construído no GitHub Actions e publicado sem o source.
+Defina `NEXT_PUBLIC_API_URL` **durante o build**. O valor é incorporado no
+JavaScript e deve ser uma URL HTTPS autorizada no `CORS_ORIGIN` da API:
+
+```bash
+NEXT_PUBLIC_API_URL=https://api.exemplo.com/api/v1 npm run build
+```
+
+O resultado fica em `out/`. Publique apenas o conteúdo dessa pasta no diretório
+público do servidor. Não envie source, `node_modules`, `.next`, `package.json`
+ou `server.js`, e não arranque um processo Node para o Web.
 
 ## Validação local
 
@@ -44,15 +53,7 @@ npm run lint
 npm run build
 ```
 
-Rodar o servidor Next em produção:
-
-```bash
-PORT=3001 npm run start:prod
-```
-
-Este projeto usa `output: "standalone"` no `next.config.ts`. Depois de `npm run build`, o script `postbuild` copia automaticamente `public` e `.next/static` para `.next/standalone`, deixando o pacote pronto para iniciar com `npm start`.
-
-`API_ORIGIN` fica apenas no servidor. A URL usada pelo browser é sempre relativa
-(`/api/v1`), e o servidor Next encaminha os pedidos para a API. Assim, o mesmo
-build pode ser executado em VPS, Docker, serviços geridos ou hospedagem Node sem
-expor a origem interna da API nem depender de CORS no browser.
+O servidor estático deve preservar URLs com barra final e encaminhar
+`/track/*`, `/portal/*` e `/viagens/*` para o `index.html` da respetiva pasta.
+Na Hostinger/Apache essas regras já seguem no ficheiro `public/.htaccess`; o
+exemplo Nginx equivalente está em `deploy/nginx.conf.example`.

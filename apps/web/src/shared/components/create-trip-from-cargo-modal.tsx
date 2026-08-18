@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   PrimaryButton,
@@ -38,7 +37,6 @@ export function CreateTripFromCargoModal({
   cargo,
   onClose,
 }: CreateTripFromCargoModalProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const [driverId, setDriverId] = useState("");
   const [truckId, setTruckId] = useState("");
@@ -178,7 +176,7 @@ export function CreateTripFromCargoModal({
         onSuccess: (trip) => {
           toast({ title: "Viagem criada", type: "success" });
           close();
-          router.push(`/viagens/${trip.id}`);
+          window.location.assign(`/viagens/${trip.id}`);
         },
         onError: (error) =>
           toast({

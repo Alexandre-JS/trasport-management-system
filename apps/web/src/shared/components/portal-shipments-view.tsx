@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowRight, MapPin, PackageSearch } from "lucide-react";
-import Link from "next/link";
 import { ErrorState } from "@/src/shared/components/error-state";
 import { PageLoader } from "@/src/shared/components/page-loader";
 import { StatusBadge } from "@/src/shared/components/status-badge";
@@ -93,9 +92,9 @@ export function PortalShipmentsView() {
                 {shipments.map((shipment) => (
                   <tr key={shipment.id} className="odd:bg-white even:bg-slate-50/60 hover:bg-brand-50/70 dark:odd:bg-slate-900 dark:even:bg-slate-900/60 dark:hover:bg-brand-950/30">
                     <td className="border-b border-r border-slate-200 px-3 py-3 dark:border-slate-800">
-                      <Link href={`/portal/${shipment.id}`} className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
+                      <a href={`/portal/${shipment.id}`} className="font-semibold text-brand-700 hover:underline dark:text-brand-300">
                         {shipment.cargo.code}
-                      </Link>
+                      </a>
                       <span className="mt-0.5 block max-w-40 truncate text-xs text-slate-500 dark:text-slate-400">
                         {shipment.cargo.description ?? "Carga"}
                       </span>
@@ -130,10 +129,10 @@ export function PortalShipmentsView() {
                       {formatDate(shipment.arrivalDate ?? shipment.arrivalEstimate)}
                     </td>
                     <td className="border-b border-slate-200 px-3 py-3 text-right dark:border-slate-800">
-                      <Link href={`/portal/${shipment.id}`} className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline dark:text-brand-400">
+                      <a href={`/portal/${shipment.id}`} className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline dark:text-brand-400">
                         Ver
                         <ArrowRight className="size-3.5" aria-hidden />
-                      </Link>
+                      </a>
                     </td>
                   </tr>
                 ))}
@@ -144,7 +143,7 @@ export function PortalShipmentsView() {
 
         <div className="grid gap-4 md:hidden">
           {shipments.map((shipment) => (
-            <Link
+            <a
               key={shipment.id}
               href={`/portal/${shipment.id}`}
               className="group flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-brand-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700"
@@ -191,7 +190,7 @@ export function PortalShipmentsView() {
                   <ArrowRight className="size-3.5" aria-hidden />
                 </span>
               </div>
-            </Link>
+            </a>
           ))}
         </div>
         </>

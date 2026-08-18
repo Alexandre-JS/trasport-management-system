@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { StaticRedirect } from "@/src/shared/components/static-redirect";
 
 export default function CamioesPage() {
-  redirect("/frota?tab=camioes");
+  return <StaticRedirect to="/frota/?tab=camioes" />;
 }

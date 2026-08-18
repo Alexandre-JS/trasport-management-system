@@ -13,10 +13,11 @@ const targets = [
     expected: 'ready',
   },
   {
-    name: 'Web → API proxy',
-    url: process.env.WEB_API_HEALTH_URL ||
-      'https://lumactraspots.com/api/v1/auth/health',
+    name: 'API CORS para o Web',
+    url: process.env.API_HEALTH_URL ||
+      'https://api.lumactraspots.com/api/v1/auth/health',
     expected: 'ready',
+    origin: process.env.WEB_ORIGIN || 'https://lumactraspots.com',
   },
   {
     name: 'Web',
@@ -38,7 +39,10 @@ async function check(target) {
       const response = await fetch(target.url, {
         cache: 'no-store',
         redirect: 'follow',
-        headers: { 'User-Agent': 'lumac-deploy-health-check/1.0' },
+        headers: {
+          'User-Agent': 'lumac-deploy-health-check/1.0',
+          ...(target.origin ? { Origin: target.origin } : {}),
+        },
         signal: AbortSignal.timeout(15_000),
       });
       const body = await response.text();
@@ -48,6 +52,12 @@ async function check(target) {
       }
       if (target.expected && !body.toLowerCase().includes(target.expected)) {
         throw new Error(`resposta não contém "${target.expected}"`);
+      }
+      if (
+        target.origin &&
+        response.headers.get('access-control-allow-origin') !== target.origin
+      ) {
+        throw new Error(`CORS não autorizou ${target.origin}`);
       }
 
       console.log(`✓ ${target.name} saudável: ${target.url}`);

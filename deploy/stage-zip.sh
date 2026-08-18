@@ -9,8 +9,9 @@
 #        leva apenas dist/, Prisma, dependências de runtime e o `.env` de
 #        produção. Na Hostinger só correm npm install, prisma generate/migrate
 #        e o pequeno shim exigido pelo Passenger — nunca TypeScript/Nest build.
-# WEB  — o Next build também corre aqui. O zip leva apenas o standalone já
-#        pronto; o servidor não recebe source nem instala dependências.
+# WEB  — o Next build também corre aqui. O zip leva apenas HTML/CSS/JS/imagens
+#        de `apps/web/out`; o servidor não recebe source, package.json,
+#        node_modules nem arranca qualquer processo Node.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -100,62 +101,47 @@ if [[ "$APP" == "api" ]]; then
     fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
   ' "$STAGE"
 else
-  # Assets antigos sem qualquer referência no Web. Permanecem no repositório
-  # por enquanto, mas não entram no build/runtime publicado na Hostinger.
-  rm -f \
-    "$STAGE/public/Lumac B.png" \
-    "$STAGE/public/file.svg" \
-    "$STAGE/public/globe.svg" \
-    "$STAGE/public/login-bg.jpg" \
-    "$STAGE/public/lumac-logo.jpeg" \
-    "$STAGE/public/next.svg" \
-    "$STAGE/public/vercel.svg" \
-    "$STAGE/public/window.svg"
+  command -v pnpm >/dev/null 2>&1 || {
+    echo "ERRO: pnpm é necessário para compilar o Web antes de montar o zip" >&2
+    exit 1
+  }
 
-  # O rewrite same-origin /api/* é gerado durante o next build. Sem API_ORIGIN,
-  # o standalone ficaria preso ao fallback local 127.0.0.1:3000 e devolveria
-  # HTTP 500 no login da produção.
-  printf 'API_ORIGIN=%s\nNEXT_PUBLIC_API_URL=%s\n' \
-    "${API_ORIGIN:-https://api.lumactraspots.com}" \
-    "${NEXT_PUBLIC_API_URL:-https://api.lumactraspots.com/api/v1}" \
-    > "$STAGE/.env"
+  # Pré-compilação no CI/local. NEXT_PUBLIC_API_URL é embutido no JavaScript,
+  # porque já não existe servidor Next para encaminhar pedidos same-origin.
+  echo "→ A compilar o Web como exportação estática no CI/local…"
+  ( cd "$ROOT" && \
+    NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://api.lumactraspots.com/api/v1}" \
+    pnpm --filter web build )
 
-  # Pré-compilação no CI (não no servidor). Esta cópia isolada de apps/web não
-  # tem o pnpm-workspace, por isso o Next produz o standalone "flat"
-  # (.next/standalone/server.js) — exatamente o artefacto que o build que antes
-  # corria no servidor produzia. Assim o alojamento partilhado deixa de gastar
-  # CPU/RAM/E-S com o `next build` (a causa dos picos de recursos).
-  echo "→ A compilar o web (next build standalone) no CI…"
-  ( cd "$STAGE" && npm install --no-audit --no-fund --loglevel=error && npm run build )
+  [[ -f "$ROOT/apps/web/out/index.html" ]] || {
+    echo "ERRO: o build estático não gerou apps/web/out/index.html" >&2
+    exit 1
+  }
+  [[ -f "$ROOT/apps/web/out/.htaccess" ]] || {
+    echo "ERRO: o build estático não incluiu public/.htaccess" >&2
+    exit 1
+  }
 
-  # Cria um pacote novo apenas com o standalone. O source, o node_modules usado
-  # para compilar e a cache nunca chegam ao servidor.
+  # O arquivo contém somente o conteúdo pronto para public_html. Assets antigos
+  # ainda mantidos no repositório, mas sem referência, são excluídos daqui.
   RUNTIME_STAGE="$(mktemp -d)"
-  mkdir -p "$RUNTIME_STAGE/.next"
-  rsync -a "$STAGE/.next/standalone/" "$RUNTIME_STAGE/.next/standalone/"
-  cp "$STAGE/package.json" "$RUNTIME_STAGE/package.json"
+  rsync -a "$ROOT/apps/web/out/" "$RUNTIME_STAGE/"
+  rm -f \
+    "$RUNTIME_STAGE/Lumac B.png" \
+    "$RUNTIME_STAGE/file.svg" \
+    "$RUNTIME_STAGE/globe.svg" \
+    "$RUNTIME_STAGE/login-bg.jpg" \
+    "$RUNTIME_STAGE/lumac-logo.jpeg" \
+    "$RUNTIME_STAGE/next.svg" \
+    "$RUNTIME_STAGE/vercel.svg" \
+    "$RUNTIME_STAGE/window.svg"
   rm -rf "$STAGE"
   STAGE="$RUNTIME_STAGE"
 
-  node -e '
-    const fs = require("fs");
-    const path = require("path");
-    const file = process.argv[1] + "/package.json";
-    const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
-    pkg.scripts = {
-      build: "echo \"web pré-compilado no CI — sem build no servidor\"",
-      start: "node server.js",
-    };
-    pkg.dependencies = {};
-    pkg.devDependencies = {};
-    fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
-    // A Hostinger classifica este pacote pré-compilado como "other". Um entry
-    // point na raiz permite ao Passenger arrancar o standalone sem adivinhar.
-    fs.writeFileSync(
-      path.join(process.argv[1], "server.js"),
-      "require(\"./.next/standalone/server.js\");\n",
-    );
-  ' "$STAGE"
+  if find "$STAGE" -type f \( -name package.json -o -name server.js \) | grep -q .; then
+    echo "ERRO: o pacote Web contém ficheiros de runtime Node" >&2
+    exit 1
+  fi
 fi
 
 mkdir -p "$(dirname "$OUT")"

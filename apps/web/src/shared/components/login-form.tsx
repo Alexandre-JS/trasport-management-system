@@ -27,7 +27,7 @@ export function LoginForm() {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
   const next = searchParams.get("next") || "/";
   const {
@@ -43,6 +43,12 @@ export function LoginForm() {
       rememberMe: true,
     },
   });
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace(user?.role === "CLIENT" ? "/portal" : next);
+    }
+  }, [isAuthenticated, isLoading, next, router, user?.role]);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) {

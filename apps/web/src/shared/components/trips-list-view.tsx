@@ -126,7 +126,7 @@ export function TripsListView({
   }
 
   function openTrip(trip: Trip) {
-    router.push(`/viagens/${trip.id}`);
+    window.location.assign(`/viagens/${trip.id}`);
   }
 
   return (

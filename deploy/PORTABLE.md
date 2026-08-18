@@ -1,30 +1,29 @@
 # Deploy portátil — API + Web
 
-Esta configuração não depende de Vercel ou Hostinger. Requer Node.js 20.9+, pnpm,
-uma base MySQL e, em VPS, PM2 + Nginx.
+Esta configuração não depende de Vercel ou Hostinger. Requer Node.js 20.9+ e
+pnpm apenas para compilar, uma base MySQL e, em VPS, PM2 + Nginx.
 
 ## Contrato entre os serviços
 
 - API NestJS: porta `3000`, prefixo `/api/v1`.
-- Web Next.js: porta `3001`.
-- O browser chama sempre `/api/v1` na mesma origem da Web.
-- `API_ORIGIN` é privada e diz ao Next onde está a API.
-- Nginx pode encaminhar `/api/` diretamente para a API, evitando um salto.
+- Web Next.js: ficheiros estáticos em `apps/web/out`, sem porta ou processo.
+- O browser chama `NEXT_PUBLIC_API_URL` diretamente.
+- A API deve autorizar o domínio do Web em `CORS_ORIGIN`.
 
 Isso mantém links públicos como `/track/{token}` válidos em qualquer domínio e
-evita problemas de CORS e variáveis públicas antigas.
+reduz o consumo do servidor a um único processo Node.
 
 ## Build
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm --filter api exec prisma generate
-API_ORIGIN=http://127.0.0.1:3000 pnpm build
+NEXT_PUBLIC_API_URL=https://api.SEU-DOMINIO.com/api/v1 pnpm build
 pnpm --filter api exec prisma migrate deploy
 ```
 
-Para API e Web em servidores diferentes, defina `API_ORIGIN` com a URL privada
-ou HTTPS alcançável pela Web **antes do build**.
+Defina `NEXT_PUBLIC_API_URL` com a URL HTTPS alcançável pelo navegador **antes
+do build**. Publique apenas o conteúdo de `apps/web/out` no servidor estático.
 
 ## Execução com PM2
 
@@ -36,8 +35,9 @@ pm2 save
 pm2 status
 ```
 
-Copie `deploy/nginx.conf.example`, substitua os domínios, valide com `nginx -t`
-e ative HTTPS. Não exponha diretamente as portas 3000 e 3001 à Internet.
+Copie `deploy/nginx.conf.example`, substitua os domínios e o caminho do projeto,
+valide com `nginx -t` e ative HTTPS. Não exponha a porta 3000 diretamente à
+Internet.
 
 ## Capacidade e segurança
 

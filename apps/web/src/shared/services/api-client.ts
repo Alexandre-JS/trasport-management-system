@@ -12,9 +12,11 @@ import {
 } from "@/src/shared/utils/auth-session";
 import type { AuthResponse } from "@/src/shared/types/auth";
 
-// O browser usa sempre a origem da Web. O servidor Next encaminha /api/* para
-// API_ORIGIN, permitindo executar o mesmo build em qualquer infraestrutura.
-const apiBaseUrl = "/api/v1";
+// Em produção estática não existe servidor Next para encaminhar /api/*. A URL
+// pública da API é embutida pelo build; o fallback same-origin mantém o
+// desenvolvimento local compatível com o proxy que cada ambiente preferir.
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "/api/v1";
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;

@@ -1,0 +1,36 @@
+DirectoryIndex index.html
+Options -Indexes
+ErrorDocument 404 /404.html
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  <FilesMatch "\.(?:css|js|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(?:png|jpg|jpeg|svg|ico)$">
+    Header set Cache-Control "public, max-age=86400"
+  </FilesMatch>
+  <FilesMatch "\.(?:html|txt)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Ficheiros e diretórios realmente exportados pelo Next permanecem intactos.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Estas rotas contêm identificadores que só existem em runtime. O browser
+  # mantém a URL original e a página estática extrai token/id do pathname.
+  RewriteRule ^track(?:/.*)?$ /track/index.html [L]
+  RewriteRule ^portal(?:/.*)?$ /portal/index.html [L]
+  RewriteRule ^viagens(?:/.*)?$ /viagens/index.html [L]
+
+  RewriteRule ^ - [R=404,L]
+</IfModule>

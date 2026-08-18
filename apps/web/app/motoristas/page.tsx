@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { StaticRedirect } from "@/src/shared/components/static-redirect";
 
 export default function MotoristasPage() {
-  redirect("/contas-cliente?tab=motoristas");
+  return <StaticRedirect to="/contas-cliente/?tab=motoristas" />;
 }

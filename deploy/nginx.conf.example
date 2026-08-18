@@ -1,8 +1,8 @@
 # =============================================================================
 # Nginx reverse proxy — SGRTC / LUMAC
-# Two upstream Node apps behind one server:
+# One Node API plus one static Web:
 #   api.SEU-DOMINIO.com  -> 127.0.0.1:3000  (NestJS + WebSocket)
-#   app.SEU-DOMINIO.com  -> 127.0.0.1:3001  (Next.js)
+#   app.SEU-DOMINIO.com  -> apps/web/out     (HTML/CSS/JS)
 #
 # Copie para /etc/nginx/sites-available/lumac, ajuste os domínios,
 # ative com `ln -s` para sites-enabled e recarregue: `nginx -t && systemctl reload nginx`.
@@ -40,47 +40,49 @@ server {
     }
 }
 
-# ---- WEB (Next.js) ----
+# ---- WEB (exportação estática Next.js) ----
 server {
     listen 80;
     server_name app.SEU-DOMINIO.com;
 
+    # Substitua pelo caminho absoluto do repositório no servidor.
+    root /var/www/lumac/apps/web/out;
+    index index.html;
+    error_page 404 /404.html;
+
     gzip on;
     gzip_min_length 1024;
-    gzip_types application/json text/plain text/css application/javascript;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
 
-    # Same-origin API. This avoids browser CORS and bypasses an unnecessary
-    # Next.js hop when both processes run behind this reverse proxy.
-    location /api/ {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+    location /_next/static/ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
 
-        proxy_connect_timeout 15s;
-        proxy_send_timeout 120s;
-        proxy_read_timeout 120s;
+    # IDs e tokens são lidos no browser. Todas as variantes servem a página
+    # estática base, preservando a URL original no endereço.
+    location ~ ^/track(?:/.*)?$ {
+        try_files /track/index.html =404;
+    }
+
+    location ~ ^/portal(?:/.*)?$ {
+        try_files /portal/index.html =404;
+    }
+
+    location ~ ^/viagens(?:/.*)?$ {
+        try_files /viagens/index.html =404;
+    }
+
+    location = /404.html {
+        internal;
     }
 
     location / {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_http_version 1.1;
-
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        proxy_connect_timeout 15s;
-        proxy_send_timeout 120s;
-        proxy_read_timeout 120s;
+        try_files $uri $uri/ =404;
     }
 }

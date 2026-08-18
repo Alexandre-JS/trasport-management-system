@@ -12,6 +12,7 @@ on:
       - 'deploy/deploy-postbuild.js'
       - 'deploy/health-check.mjs'
       - 'deploy/hostinger-deploy.mjs'
+      - 'deploy/hostinger-static-deploy.mjs'
       - 'deploy/stage-zip.sh'
       - '.github/workflows/deploy-production.yml'
   workflow_dispatch:
@@ -69,8 +70,14 @@ jobs:
           deploy_web=false
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            [ "$REQUESTED_TARGET" != "web" ] && deploy_api=true
-            [ "$REQUESTED_TARGET" != "api" ] && deploy_web=true
+            if [ "$REQUESTED_TARGET" = "web" ]; then
+              deploy_web=true
+            else
+              # Depois do deploy Node da API, o Web estático é republicado para
+              # garantir que public_html continua com o entry point correto.
+              deploy_api=true
+              deploy_web=true
+            fi
           else
             if [ -n "$BEFORE_SHA" ] && ! printf '%s' "$BEFORE_SHA" | grep -Eq '^0+$'; then
               changed_files="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")"
@@ -79,11 +86,16 @@ jobs:
             fi
 
             printf '%s\n' "$changed_files"
-            if printf '%s\n' "$changed_files" | grep -Eq '^(apps/web/|package.json$|pnpm-lock.yaml$|pnpm-workspace.yaml$|deploy/|\.github/workflows/deploy-production.yml$)'; then
+            if printf '%s\n' "$changed_files" | grep -Eq '^(apps/web/)'; then
               deploy_web=true
+            fi
+            if printf '%s\n' "$changed_files" | grep -Eq '^(apps/api/)'; then
               deploy_api=true
-            elif printf '%s\n' "$changed_files" | grep -Eq '^apps/api/'; then
+              deploy_web=true
+            fi
+            if printf '%s\n' "$changed_files" | grep -Eq '^(package.json$|pnpm-lock.yaml$|pnpm-workspace.yaml$|deploy/|\.github/workflows/deploy-production.yml$)'; then
               deploy_api=true
+              deploy_web=true
             fi
           fi
 
@@ -123,7 +135,6 @@ jobs:
       - name: Montar Web pré-compilada
         if: steps.scope.outputs.deploy_web == 'true'
         env:
-          API_ORIGIN: https://api.lumactraspots.com
           NEXT_PUBLIC_API_URL: https://api.lumactraspots.com/api/v1
         run: bash deploy/stage-zip.sh web "$RUNNER_TEMP/web.zip"
 
@@ -137,6 +148,13 @@ jobs:
         run: |
           if [ "${{ steps.scope.outputs.deploy_web }}" = "true" ]; then
             unzip -t "$RUNNER_TEMP/web.zip"
+            unzip -Z1 "$RUNNER_TEMP/web.zip" > "$RUNNER_TEMP/web-files.txt"
+            grep -Fxq 'index.html' "$RUNNER_TEMP/web-files.txt"
+            grep -Fxq '.htaccess' "$RUNNER_TEMP/web-files.txt"
+            if grep -Eq '(^|/)(package.json|server.js)$|(^|/)node_modules/' "$RUNNER_TEMP/web-files.txt"; then
+              echo "::error::O ZIP do Web contém runtime Node"
+              exit 1
+            fi
           fi
           if [ "${{ steps.scope.outputs.deploy_api }}" = "true" ]; then
             unzip -t "$RUNNER_TEMP/api.zip"
@@ -148,9 +166,8 @@ jobs:
           fi
 
       # O subdomínio da API pertence à mesma website Hostinger do domínio
-      # principal. Publicá-lo por último pode substituir o processo/roteamento
-      # do Web e fazer /login responder pelo NestJS. A API é publicada primeiro
-      # e o Web restaura por último o entry point do domínio principal.
+      # principal. A API Node é publicada primeiro; o Web estático restaura por
+      # último o conteúdo de public_html sem criar um segundo processo Node.
       - name: Publicar API
         if: steps.scope.outputs.deploy_api == 'true'
         env:
@@ -161,8 +178,7 @@ jobs:
         if: steps.scope.outputs.deploy_web == 'true'
         env:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
-          HOSTINGER_ENTRY_FILE: server.js
-        run: node deploy/hostinger-deploy.mjs lumactraspots.com "$RUNNER_TEMP/web.zip"
+        run: node deploy/hostinger-static-deploy.mjs lumactraspots.com "$RUNNER_TEMP/web.zip"
 
       - name: Confirmar saúde em produção
         run: node deploy/health-check.mjs

@@ -357,7 +357,9 @@ export function CargasView({
                         <div className="flex flex-col gap-1">
                           <button
                             type="button"
-                            onClick={() => router.push(`/viagens/${trip.id}`)}
+                            onClick={() =>
+                              window.location.assign(`/viagens/${trip.id}`)
+                            }
                             className="w-fit font-mono text-xs font-medium text-brand-700 hover:text-brand-900 dark:text-brand-300 dark:hover:text-brand-100"
                           >
                             {trip.id.slice(0, 8).toUpperCase()}
@@ -530,7 +532,9 @@ export function CargasView({
                         </h3>
                         <button
                           type="button"
-                          onClick={() => router.push(`/viagens/${trip.id}`)}
+                          onClick={() =>
+                            window.location.assign(`/viagens/${trip.id}`)
+                          }
                           className="text-xs font-medium text-brand-700 hover:text-brand-900 dark:text-brand-300 dark:hover:text-brand-100"
                         >
                           Abrir viagem

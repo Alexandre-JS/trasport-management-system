@@ -1,8 +1,7 @@
-import {
-  AccountsClientsView,
-  type AccountsClientsTab,
-} from "@/src/shared/components/accounts-clients-view";
+import { Suspense } from "react";
+import { PageLoader } from "@/src/shared/components/page-loader";
 import { ProtectedLayout } from "@/src/shared/layout/protected-layout";
+import { AccountsClientsQueryPage } from "./accounts-clients-query-page";
 
 import type { Metadata } from "next";
 
@@ -10,27 +9,12 @@ export const metadata: Metadata = {
   title: "Accounts and clients",
 };
 
-type ClientAccountsPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-function normalizeTab(value: string | undefined): AccountsClientsTab {
-  if (value === "contas" || value === "motoristas") {
-    return value;
-  }
-
-  return "clientes";
-}
-
-export default async function ClientAccountsPage({
-  searchParams,
-}: ClientAccountsPageProps) {
-  const params = searchParams ? await searchParams : {};
-  const tab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
-
+export default function ClientAccountsPage() {
   return (
     <ProtectedLayout>
-      <AccountsClientsView initialTab={normalizeTab(tab)} />
+      <Suspense fallback={<PageLoader />}>
+        <AccountsClientsQueryPage />
+      </Suspense>
     </ProtectedLayout>
   );
 }

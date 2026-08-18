@@ -1,12 +1,12 @@
 # Guia de Deploy — SGRTC / LUMAC
 
-> ✅ **PRODUÇÃO ACTUAL (verificada em 2026-08-17): Hostinger Business (hospedagem partilhada).**
+> ✅ **ARQUITETURA PREPARADA EM 2026-08-18: Hostinger Business (hospedagem partilhada).**
 > Ao contrário do que este guia assumia, a hospedagem Node.js partilhada da
 > Hostinger suporta esta stack (processos persistentes via Passenger/lsnode e
 > WebSocket confirmado a funcionar). O plano VPS abaixo continua válido como
 > alternativa, mas **não é o que está em uso**.
 >
-> - Web: https://lumactraspots.com (Next.js)
+> - Web: https://lumactraspots.com (exportação estática do Next.js, sem Node)
 > - API: https://api.lumactraspots.com (NestJS, app em `~/domains/lumactraspots.com/nodejs/api`)
 > - BD: MySQL `u901633551_lumac` — o `DATABASE_URL` **tem de usar `127.0.0.1`**
 >   (com `localhost` o Prisma falha com P1000 por resolver para IPv6)
@@ -17,15 +17,11 @@
 >   `dist/main.js` (a Hostinger não copia o `.env` para a raiz da app).
 >   A API é compilada no GitHub; o servidor só instala dependências de runtime,
 >   executa `prisma generate`, `prisma migrate deploy` e cria o shim (sem seed).
-> - **Web: pré-compilado no CI** (desde 2026-07-21). O `stage-zip.sh web` corre
->   `next build` (output standalone) dentro de uma cópia isolada de `apps/web`
->   — que, sem o pnpm-workspace, gera o standalone "flat"
->   (`.next/standalone/server.js`, com o seu próprio `node_modules`). O zip leva
->   o standalone já construído, com `dependencies` vazias e `build` no-op, por
->   isso o servidor **não instala nem compila o Web** — só arranca
->   `node .next/standalone/server.js`. Elimina os picos de CPU/RAM do
->   `next build` no alojamento partilhado. O `NEXT_PUBLIC_API_URL` é embutido no
->   build do CI (não no servidor).
+> - **Web: totalmente estático**. O `stage-zip.sh web` corre `next build` no
+>   GitHub e empacota somente `apps/web/out` (HTML, CSS, JavaScript e imagens).
+>   O endpoint de website estático da Hostinger substitui `public_html` sem
+>   instalar dependências, executar build ou arrancar Node/Passenger. O
+>   `NEXT_PUBLIC_API_URL` aponta diretamente para a API pública.
 > - **Desde 2026-07-13 o deploy é automático via GitHub Actions** — ver a
 >   secção "Deploy automático (CI/CD)" abaixo.
 
@@ -38,26 +34,25 @@ aqui** — ele vai para a **Play Store** (ver a secção final). Só a **API** e
 Cada push para **`main`** (e só para `main`) passa por um único workflow. Outras
 branches não tocam na produção até fazer merge:
 
-- Mudanças só em `apps/api/**` → publica apenas `api.lumactraspots.com`.
-- Mudanças em `apps/web/**` → publica API e depois Web, porque os dois domínios
-  pertencem à mesma website Hostinger e o Web precisa restaurar por último o
-  entry point do domínio principal.
+- Mudanças em `apps/web/**` → valida e publica apenas o Web estático.
+- Mudanças em `apps/api/**` → publica a API e republica o Web estático por
+  último, protegendo o `public_html` do domínio principal.
 - Mudanças em `apps-mobile/**` → **nada** (vai para a Play Store)
 
 O workflow [deploy-production.yml](../.github/workflows/deploy-production.yml)
 instala, valida, testa e compila no GitHub. Só depois monta os ZIPs com
-`deploy/stage-zip.sh` e envia com
-`deploy/hostinger-deploy.mjs`, que replica o fluxo da API da Hostinger
-(upload TUS + ativação do runtime). Os dois serviços são verificados por HTTP
-no fim; deploys concorrentes entram numa fila única.
+`deploy/stage-zip.sh`. A API usa `deploy/hostinger-deploy.mjs` (upload TUS +
+runtime Node); o Web usa `deploy/hostinger-static-deploy.mjs` (upload TUS +
+extração direta em `public_html`). API, CORS e Web são verificados por HTTP no
+fim; deploys concorrentes entram numa fila única.
 
 > ⚠️ **Aplicações relacionadas na Hostinger**: `api.lumactraspots.com` está
 > registado como subdomínio da mesma website/conta de `lumactraspots.com`, não
 > como uma segunda website isolada. Em 2026-08-17 ficou comprovado que publicar
 > a API por último fazia o domínio principal arrancar o NestJS: `/login`
-> devolvia `Cannot GET /login`. Por isso, quando ambos mudam, o workflow publica
-> **API primeiro e Web por último** e só termina se API direta, proxy `/api` e
-> `/login` passarem nos testes externos. Diagnóstico: workflow manual "Debug Hostinger"
+> devolvia `Cannot GET /login`. Por isso, sempre que a API muda, o workflow
+> publica **API primeiro e Web estático por último** e só termina se API direta,
+> CORS e `/login` passarem nos testes externos. Diagnóstico: workflow manual "Debug Hostinger"
 > ([hostinger-debug.yml](../.github/workflows/hostinger-debug.yml)) lê logs de
 > build e corre comandos de leitura no servidor via cron temporário.
 >
@@ -82,10 +77,10 @@ no fim; deploys concorrentes entram numa fila única.
 bash deploy/stage-zip.sh api
 HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs api.lumactraspots.com deploy/dist-zips/api.zip
 
-# Web sempre por último para restaurar o entry point do domínio principal
+# Web estático sempre por último para restaurar public_html
 bash deploy/stage-zip.sh web
-HOSTINGER_API_TOKEN=… HOSTINGER_ENTRY_FILE=server.js \
-  node deploy/hostinger-deploy.mjs lumactraspots.com deploy/dist-zips/web.zip
+HOSTINGER_API_TOKEN=… node deploy/hostinger-static-deploy.mjs \
+  lumactraspots.com deploy/dist-zips/web.zip
 ```
 
 Também dá para disparar o workflow à mão no GitHub
@@ -102,7 +97,7 @@ os registos de demonstração apagados. Para o correr de propósito:
 | App | Stack | Porta | Precisa de |
 |-----|-------|-------|------------|
 | `apps/api` | NestJS + WebSocket | 3000 | Node persistente + MySQL |
-| `apps/web` | Next.js (SSR) | 3001 | Node persistente |
+| `apps/web` | Next.js exportado | — | Ficheiros estáticos em `public_html` |
 | `apps-mobile` | Ionic/Capacitor | — | **Não vai para o servidor** (Play Store) |
 
 > O `apps-mobile/` está fora do workspace pnpm (só `apps/*` e `packages/*`), por
@@ -112,9 +107,10 @@ os registos de demonstração apagados. Para o correr de propósito:
 
 ## Alternativa futura: VPS
 
-Esta stack tem **dois processos Node persistentes** e usa **WebSocket**. O plano
-Business atual suporta-os e continua a ser a produção. Um VPS daria mais
-controlo sobre processos e pastas, mas não é necessário para este deploy.
+Esta arquitetura tem **um único processo Node persistente**, a API, que também
+mantém o WebSocket. O Web é servido como ficheiros estáticos. O plano Business
+atual suporta esta configuração; um VPS daria mais controlo, mas não é
+necessário para este deploy.
 
 ---
 
@@ -209,8 +205,8 @@ pnpm --filter api exec prisma generate
 # Criar o super admin + roles (só na primeira vez):
 pnpm --filter api exec prisma db seed
 
-# Build da API (dist/) e do web (.next/) — o mobile é ignorado:
-pnpm build
+# Build da API (dist/) e do Web estático (out/) — o mobile é ignorado:
+NEXT_PUBLIC_API_URL=https://api.SEU-DOMINIO.com/api/v1 pnpm build
 ```
 
 Credenciais iniciais do seed: **`admin@sgrtc.local` / `Admin@12345`**
@@ -247,7 +243,7 @@ cd /var/www/lumac
 git pull
 pnpm install --frozen-lockfile
 pnpm --filter api exec prisma migrate deploy   # se houver novas migrations
-pnpm build
+NEXT_PUBLIC_API_URL=https://api.SEU-DOMINIO.com/api/v1 pnpm build
 pm2 reload deploy/ecosystem.config.js          # reinício sem downtime
 ```
 

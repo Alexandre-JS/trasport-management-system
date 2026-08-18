@@ -35,7 +35,7 @@ sequenceDiagram
 | Item | Estratégia |
 |---|---|
 | Access Token | Mantido apenas em memória. |
-| Refresh Token | Guardado em cookie `sgrtc_refresh_token` para suportar reload e middleware. |
+| Refresh Token | Guardado em cookie `sgrtc_refresh_token` para suportar reload. |
 | Dados mínimos do utilizador | Guardados em `sessionStorage`. |
 | Password | Nunca é guardada. |
 
@@ -99,21 +99,21 @@ apps/web/src/shared/services/auth.service.ts
 | `PermissionGuard` | Renderiza conteúdo apenas com permissão específica. |
 | `RoleGuard` | Renderiza conteúdo apenas para roles permitidas. |
 
-## Proxy
+## Proteção de rotas no Web estático
 
-O proxy Next.js fica em:
-
-```text
-apps/web/proxy.ts
-```
-
-Regras:
+Como a produção não executa servidor Next, a navegação é protegida pelos
+componentes `ProtectedRoute`, `ProtectedLayout`, `PermissionGuard` e
+`RoleGuard` no browser:
 
 | Condição | Ação |
 |---|---|
-| Sem refresh token e rota privada | Redireciona para `/login`. |
-| Com refresh token e rota `/login` | Redireciona para `/`. |
+| Sem sessão válida e rota privada | Redireciona para `/login`. |
+| Com sessão válida e rota `/login` | Redireciona para `/` ou `/portal`. |
 | Rota pública `/login` sem sessão | Permite acesso. |
+
+Isto melhora a experiência de navegação, mas a segurança real continua nos
+guards e permissões da API; esconder uma rota no frontend nunca substitui a
+autorização do backend.
 
 ## Rotas
 
@@ -213,7 +213,7 @@ hasRole(["ADMIN", "DISPATCHER"])
 2. Password nunca é persistida.
 3. Refresh token é removido no logout ou expiração.
 4. Requisições privadas usam Bearer token.
-5. Rotas privadas são protegidas no middleware e no cliente.
+5. Rotas privadas são protegidas no cliente e todos os dados/ações no backend.
 6. Permissões são fornecidas pelo backend.
 
 ## Limitação Atual

@@ -1,29 +1,12 @@
 import type { NextConfig } from "next";
 
-const apiOrigin = (
-  process.env.API_ORIGIN ?? "http://127.0.0.1:3000"
-).replace(/\/+$/, "");
-
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // O Web é compilado no GitHub e publicado como ficheiros estáticos. A API
+  // continua como a única aplicação Node no servidor.
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
   poweredByHeader: false,
-  async redirects() {
-    return [
-      {
-        source: "/track/client/:token",
-        destination: "/track/:token",
-        permanent: true,
-      },
-    ];
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${apiOrigin}/api/:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;

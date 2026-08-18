@@ -41,6 +41,17 @@ if [[ "$APP" == "api" ]]; then
     exit 1
   fi
 
+  # O motor Rust do Prisma/Tokio cria, por defeito, uma worker thread por CPU
+  # visível. Na hospedagem partilhada da Hostinger o processo vê 64 CPUs e
+  # reservava 64 threads mesmo em idle, consumindo mais de metade do limite de
+  # 120 processos da conta. Quatro workers mantêm boa concorrência de I/O para
+  # a API e evitam que a capacidade do servidor físico determine a quota desta
+  # aplicação. Removemos um valor antigo para garantir uma única definição.
+  sed -i.bak '/^TOKIO_WORKER_THREADS=/d' "$STAGE/.env"
+  rm -f "$STAGE/.env.bak"
+  printf '\nTOKIO_WORKER_THREADS=%s\n' \
+    "${TOKIO_WORKER_THREADS:-4}" >> "$STAGE/.env"
+
   cp "$ROOT/deploy/deploy-postbuild.js" "$STAGE/deploy-postbuild.js"
 
   command -v pnpm >/dev/null 2>&1 || {

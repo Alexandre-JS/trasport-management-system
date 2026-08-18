@@ -60,6 +60,13 @@ no fim; deploys concorrentes entram numa fila única.
 > `/login` passarem nos testes externos. Diagnóstico: workflow manual "Debug Hostinger"
 > ([hostinger-debug.yml](../.github/workflows/hostinger-debug.yml)) lê logs de
 > build e corre comandos de leitura no servidor via cron temporário.
+>
+> **Limite de processos**: a API define `TOKIO_WORKER_THREADS=4` no artefacto
+> de produção. Sem este limite, o motor Rust do Prisma detetava os 64 CPUs do
+> servidor Hostinger partilhado e criava 64 workers inativos, fazendo a API
+> ocupar 76 threads e aproximando a conta do limite de 120 processos. O valor
+> pode ser ajustado no CI com `TOKIO_WORKER_THREADS`, mas não deve ser removido
+> neste tipo de alojamento.
 
 **Secrets necessários no GitHub** (Settings → Secrets and variables → Actions):
 

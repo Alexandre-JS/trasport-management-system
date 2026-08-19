@@ -7,8 +7,8 @@
 #
 # API  — a compilação NestJS corre aqui (normalmente no GitHub Actions). O zip
 #        leva apenas dist/, Prisma, dependências de runtime e o `.env` de
-#        produção. Na Hostinger só correm npm install, prisma generate/migrate
-#        e o pequeno shim exigido pelo Passenger — nunca TypeScript/Nest build.
+#        produção. Na Hostinger só correm npm install, a verificação protegida
+#        do Prisma e o pequeno shim do Passenger — nunca TypeScript/Nest build.
 # WEB  — o Next build também corre aqui. O zip leva apenas HTML/CSS/JS/imagens
 #        de `apps/web/out`; o servidor não recebe source, package.json,
 #        node_modules nem arranca qualquer processo Node.
@@ -54,6 +54,8 @@ if [[ "$APP" == "api" ]]; then
     "${TOKIO_WORKER_THREADS:-4}" >> "$STAGE/.env"
 
   cp "$ROOT/deploy/deploy-postbuild.js" "$STAGE/deploy-postbuild.js"
+  cp "$ROOT/deploy/check-migration-safety.cjs" \
+    "$STAGE/deploy-migration-safety.cjs"
 
   command -v pnpm >/dev/null 2>&1 || {
     echo "ERRO: pnpm é necessário para compilar a API antes de montar o zip" >&2
@@ -90,9 +92,16 @@ if [[ "$APP" == "api" ]]; then
     // O CLI Prisma é necessário em runtime apenas para generate/migrate. Todo
     // o restante conjunto de devDependencies (Nest CLI, TS, ESLint, Jest) sai.
     pkg.dependencies.prisma = pkg.devDependencies.prisma;
+    const applyMigrations = process.env.APPLY_DATABASE_MIGRATIONS === "true";
+    const migrationCommand = applyMigrations
+      ? "prisma migrate deploy"
+      : "prisma migrate status";
     pkg.scripts = {
       postinstall: "prisma generate",
-      build: "prisma migrate deploy && node deploy-postbuild.js",
+      build:
+        "node deploy-migration-safety.cjs && " +
+        migrationCommand +
+        " && node deploy-postbuild.js",
       start: "node dist/main.js",
     };
     delete pkg.devDependencies;

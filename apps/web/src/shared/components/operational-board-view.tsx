@@ -464,7 +464,7 @@ export function OperationalBoardView() {
       { header: "Driving License", value: (row) => row.license },
       { header: "Phone Number", value: (row) => row.phone },
       { header: "Border", value: (row) => borderName(row.borderId) },
-      { header: "Ton - Beira", value: (row) => row.tonnage },
+      { header: "Ton", value: (row) => row.tonnage },
       {
         header: "Type",
         value: (row) =>
@@ -861,7 +861,7 @@ const HEADERS = [
   "Driving License",
   "Phone Number",
   "Border",
-  "Ton - Beira",
+  "Ton",
   "Type",
   "Container / Description",
   "Dispatched From",

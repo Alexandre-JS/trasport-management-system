@@ -19,7 +19,8 @@ reduz o consumo do servidor a um único processo Node.
 pnpm install --frozen-lockfile
 pnpm --filter api exec prisma generate
 NEXT_PUBLIC_API_URL=https://api.SEU-DOMINIO.com/api/v1 pnpm build
-pnpm --filter api exec prisma migrate deploy
+node deploy/check-migration-safety.cjs
+pnpm --filter api exec prisma migrate deploy # somente depois de backup
 ```
 
 Defina `NEXT_PUBLIC_API_URL` com a URL HTTPS alcançável pelo navegador **antes

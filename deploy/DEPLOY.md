@@ -16,7 +16,9 @@
 >   `deploy-postbuild.js` que copia o `.env` para `dist/` e cria um shim
 >   `dist/main.js` (a Hostinger não copia o `.env` para a raiz da app).
 >   A API é compilada no GitHub; o servidor só instala dependências de runtime,
->   executa `prisma generate`, `prisma migrate deploy` e cria o shim (sem seed).
+>   executa `prisma generate`, verifica a integridade das migrations e cria o
+>   shim. Num push normal apenas consulta `prisma migrate status` (sem escrever
+>   na base); migrations só são aplicadas no fluxo manual protegido (sem seed).
 > - **Web: totalmente estático**. O `stage-zip.sh web` corre `next build` no
 >   GitHub e empacota somente `apps/web/out` (HTML, CSS, JavaScript e imagens).
 >   O endpoint de website estático da Hostinger substitui `public_html` sem
@@ -75,6 +77,9 @@ fim; deploys concorrentes entram numa fila única.
 ```bash
 # API primeiro
 bash deploy/stage-zip.sh api
+# Se existir migration pendente, criar primeiro o backup no hPanel e usar esta
+# linha no lugar da anterior para montar o pacote no modo protegido:
+# APPLY_DATABASE_MIGRATIONS=true bash deploy/stage-zip.sh api
 HOSTINGER_API_TOKEN=… node deploy/hostinger-deploy.mjs api.lumactraspots.com deploy/dist-zips/api.zip
 
 # Web estático sempre por último para restaurar public_html
@@ -84,13 +89,45 @@ HOSTINGER_API_TOKEN=… node deploy/hostinger-static-deploy.mjs \
 ```
 
 Também dá para disparar o workflow à mão no GitHub
-(Actions → Deploy Production → *Run workflow*) e escolher `all`, `api` ou `web`. A API corre
-`prisma migrate deploy` no servidor — migrations novas são aplicadas
-automaticamente (nunca apaga dados; cuidado apenas ao escrever migrations
-destrutivas). O `prisma db seed` **não** corre no deploy desde 2026-07-13:
-só era preciso no primeiro arranque e, com dados reais na base, recriaria
-os registos de demonstração apagados. Para o correr de propósito:
-`pnpm --filter api exec prisma db seed`.
+(Actions → Deploy Production → *Run workflow*) e escolher `all`, `api` ou `web`.
+Num push normal, a API corre apenas `prisma migrate status`: o deploy **não
+altera a base de dados** e falha de forma segura se existir uma migration
+pendente. Para aplicar uma migration, primeiro cria um backup manual no hPanel,
+espera que termine e depois executa o workflow manual marcando
+`database_backup_confirmed`.
+
+O `prisma db seed` **não** corre no deploy desde 2026-07-13: só era preciso no
+primeiro arranque e, com dados reais na base, recriaria os registos de
+demonstração apagados. Nunca use `migrate reset`, `db push` ou `db seed` em
+produção.
+
+## Proteção dos dados durante deploy
+
+O deploy tem quatro barreiras:
+
+1. `deploy/check-migration-safety.cjs` bloqueia `DROP`, `TRUNCATE`, `DELETE`,
+   `UPDATE`, `REPLACE`, mudanças de colunas existentes e alterações às
+   migrations históricas. A mesma validação corre no GitHub e novamente no
+   servidor antes do Prisma.
+2. Pushes automáticos nunca aplicam migrations. Apenas um workflow manual com
+   o campo `database_backup_confirmed` marcado pode executar
+   `prisma migrate deploy`.
+3. O pacote de produção não contém os ficheiros de seed e não chama
+   `migrate reset` nem `db push`.
+4. O Web substitui `public_html`, mas essa pasta contém **somente artefactos
+   estáticos descartáveis**. Dados, utilizadores, viagens e documentos POD
+   ficam no MySQL; nunca devem ser guardados manualmente em `public_html`.
+
+Ao criar uma migration nova, use apenas operações aditivas (`CREATE TABLE`,
+`ADD COLUMN`, `CREATE INDEX`, etc.). Registe o caminho e o SHA-256 em
+`LOCKED_MIGRATIONS` no verificador. O hash torna o ficheiro imutável. Se uma
+mudança realmente exigir transformar ou remover dados, ela não pertence ao
+deploy automático: deve ter script manual, backup concluído, validação de
+contagens e plano de restauro.
+
+No plano Business, o backup manual é criado em **hPanel → Websites → Dashboard
+→ Backups → Create backup**. Confirme a data/hora e aguarde a conclusão antes
+de marcar o campo no GitHub Actions.
 
 ## O que corre no servidor
 
@@ -199,7 +236,8 @@ NEXT_PUBLIC_API_URL=https://api.SEU-DOMINIO.com/api/v1
 pnpm install --frozen-lockfile
 
 # Aplicar o schema na base (produção usa migrate deploy, nunca dev):
-pnpm --filter api exec prisma migrate deploy
+node deploy/check-migration-safety.cjs
+pnpm --filter api exec prisma migrate deploy  # somente depois de backup
 pnpm --filter api exec prisma generate
 
 # Criar o super admin + roles (só na primeira vez):
@@ -242,7 +280,8 @@ certbot --nginx -d api.SEU-DOMINIO.com -d app.SEU-DOMINIO.com
 cd /var/www/lumac
 git pull
 pnpm install --frozen-lockfile
-pnpm --filter api exec prisma migrate deploy   # se houver novas migrations
+node deploy/check-migration-safety.cjs
+pnpm --filter api exec prisma migrate deploy   # só após backup, se necessário
 NEXT_PUBLIC_API_URL=https://api.SEU-DOMINIO.com/api/v1 pnpm build
 pm2 reload deploy/ecosystem.config.js          # reinício sem downtime
 ```

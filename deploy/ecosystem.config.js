@@ -11,7 +11,8 @@
  * Usage (from the repo root on the server):
  *   pnpm install --frozen-lockfile
  *   NEXT_PUBLIC_API_URL=https://api.example.com/api/v1 pnpm build
- *   pnpm --filter api exec prisma migrate deploy
+ *   node deploy/check-migration-safety.cjs
+ *   pnpm --filter api exec prisma migrate deploy # somente depois de backup
  *   pm2 start deploy/ecosystem.config.js
  *   pm2 save
  */

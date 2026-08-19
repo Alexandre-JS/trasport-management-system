@@ -11,6 +11,8 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "deploy:check-migrations": "node deploy/check-migration-safety.cjs",
+    "deploy:test-safety": "node --test deploy/check-migration-safety.test.cjs",
     "version:set": "node scripts/set-version.mjs"
   },
   "pnpm": {

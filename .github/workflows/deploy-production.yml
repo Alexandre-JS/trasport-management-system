@@ -10,6 +10,8 @@ on:
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'deploy/deploy-postbuild.js'
+      - 'deploy/check-migration-safety.cjs'
+      - 'deploy/check-migration-safety.test.cjs'
       - 'deploy/health-check.mjs'
       - 'deploy/hostinger-deploy.mjs'
       - 'deploy/hostinger-static-deploy.mjs'
